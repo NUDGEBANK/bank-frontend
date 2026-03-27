@@ -1,0 +1,88 @@
+# =================================================================
+# 통합 .gitignore (OS, IDE, Java, React, Spring Boot, Security)
+# =================================================================
+
+### 1. 보안 및 로컬 설정 (핀테크 프로젝트 필수) ###
+# DB 접속 정보 및 API 키 유출 방지
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.secret
+*.p12
+*.jks
+
+# Spring Boot Local Config
+src/main/resources/application-local.properties
+src/main/resources/application-local.yml
+src/main/resources/application-secret.properties
+src/main/resources/application-secret.yml
+
+### 2. 빌드 결과물 및 의존성 ###
+# Java & Spring Boot
+target/
+build/
+out/
+bin/
+.gradle/
+.lazybirds/
+
+# Node.js (React)
+node_modules/
+bower_components/
+dist/
+/build
+
+### 3. IDE 설정 (IntelliJ, VS Code, STS/Eclipse) ###
+# IntelliJ
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# STS / Eclipse
+.metadata/
+.classpath
+.project
+.settings/
+*.launch
+
+### 4. 운영체제 (macOS, Windows) ###
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+### 5. 로그 및 기타 ###
+*.log
+logs/
+temp/
+hs_err_pid*
+replay_pid*
+
+# Docker / Podman
+.docker/

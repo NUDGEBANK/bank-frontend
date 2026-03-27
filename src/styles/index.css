@@ -1,0 +1,138 @@
+@import './fonts.css';
+@import './tailwind.css';
+@import './theme.css';
+
+/* Slick Slider 커스텀 스타일 */
+.slick-dots {
+  bottom: -40px;
+}
+
+.slick-dots li button:before {
+  color: white;
+  opacity: 0.5;
+  font-size: 12px;
+}
+
+.slick-dots li.slick-active button:before {
+  color: white;
+  opacity: 1;
+}
+
+/* Light glass support for bright background images outside the header, footer, and home slider */
+@layer components {
+  main :where(
+    [class*="bg-white/95"],
+    [class*="bg-white/50"],
+    [class*="bg-white/20"],
+    [class*="bg-white/15"],
+    [class*="bg-white/10"],
+    [class*="bg-gray-600/40"],
+    [class*="bg-gradient-to-br from-blue-500/30"],
+    [class*="bg-gradient-to-r from-blue-500/30"],
+    [class*="bg-gradient-to-r from-blue-500/20"],
+    [class*="bg-gray-50/80"],
+    [class*="bg-yellow-50/80"]
+  ) {
+    background: rgba(255, 255, 255, 0.58) !important;
+    border-color: rgba(255, 255, 255, 0.52) !important;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.14) !important;
+    backdrop-filter: blur(16px) saturate(140%) !important;
+  }
+
+  main :where(
+    [class*="text-blue-100"],
+    [class*="text-blue-200"]
+  ) {
+    color: rgb(51 65 85) !important;
+  }
+
+  main :where(
+    [class*="text-blue-300"]
+  ) {
+    color: rgb(37 99 235) !important;
+  }
+
+  main :where(
+    [class*="text-gray-600"],
+    [class*="text-gray-700"],
+    [class*="text-gray-800"],
+    [class*="text-gray-900"]
+  ) {
+    color: rgb(15 23 42) !important;
+  }
+
+  main :where(
+    h1[class*="text-white"],
+    h2[class*="text-white"],
+    h3[class*="text-white"],
+    h4[class*="text-white"],
+    p[class*="text-white"],
+    span[class*="text-white"],
+    label[class*="text-white"],
+    a[class*="text-white"],
+    button[class*="text-white"],
+    div[class*="text-white"]
+  ) {
+    color: rgb(15 23 42) !important;
+  }
+
+  main :where(
+    [class*="drop-shadow-lg"],
+    [class*="drop-shadow-md"]
+  ) {
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.35) !important;
+  }
+
+  main :where(
+    [class*="placeholder-blue-200"]
+  )::placeholder {
+    color: rgb(100 116 139) !important;
+  }
+
+  main :where(
+    [class*="border-white/20"],
+    [class*="border-white/30"],
+    [class*="border-white/40"],
+    [class*="border-white/50"],
+    [class*="border-gray-200"],
+    [class*="border-yellow-200"]
+  ) {
+    border-color: rgba(255, 255, 255, 0.52) !important;
+  }
+
+  main :where(
+    [class*="divide-white/10"],
+    [class*="divide-white/20"]
+  ) {
+    --tw-divide-opacity: 1 !important;
+    border-color: rgba(148, 163, 184, 0.25) !important;
+  }
+
+  main :where(
+    input[class*="bg-white/20"],
+    input[class*="bg-white/90"],
+    input[class*="bg-white/95"],
+    input[class*="border-white/40"],
+    input[class*="border-white/50"]
+  ) {
+    background: rgba(255, 255, 255, 0.74) !important;
+    color: rgb(15 23 42) !important;
+    border-color: rgba(255, 255, 255, 0.52) !important;
+  }
+
+  main section.mt-24 :where(
+    [class*="bg-white/20"],
+    [class*="border-white/40"],
+    [class*="border-white/50"],
+    [class*="text-blue-100"],
+    [class*="text-blue-200"],
+    [class*="text-blue-300"]
+  ) {
+    background: revert-layer !important;
+    border-color: revert-layer !important;
+    color: revert-layer !important;
+    box-shadow: revert-layer !important;
+    backdrop-filter: revert-layer !important;
+    text-shadow: revert-layer !important;
+  }
+}
