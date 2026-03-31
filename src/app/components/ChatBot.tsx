@@ -39,11 +39,7 @@ export default function ChatBot() {
       {/* 챗봇 창 */}
       {isOpen && (
         <>
-          {/* 배경 오버레이 */}
-          <div
-            className="fixed inset-0 bg-black bg-opacity-30 z-40"
-            onClick={() => setIsOpen(false)}
-          ></div>
+          
 
           {/* 챗봇 윈도우 */}
           <div className="fixed bottom-8 right-8 w-96 h-[500px] bg-white/95 backdrop-blur-md rounded-lg shadow-2xl flex flex-col z-50 border border-white/20">
