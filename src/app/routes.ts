@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router";
 import Root from "./Root";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 import MyAccount from "./pages/account/MyAccount";
 import DdokgaeAccount from "./pages/account/DdokgaeAccount";
 import LoanProducts from "./pages/loan/LoanProducts";
@@ -19,6 +20,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, Component: Home },
       { path: "login", Component: Login },
+      { path: "signup", Component: Signup },
       { path: "account/my", Component: MyAccount },
       { path: "account/ddokgae", Component: DdokgaeAccount },
       { path: "loan/products", Component: LoanProducts },

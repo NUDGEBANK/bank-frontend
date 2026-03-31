@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { LogIn } from "lucide-react";
+import { postJson } from "../lib/api";
 
 interface MenuItem {
   label: string;
@@ -57,6 +58,31 @@ const menuItems: MenuItem[] = [
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem("isLoggedIn") === "true");
+
+  useEffect(() => {
+    const syncAuthState = () => {
+      setIsLoggedIn(localStorage.getItem("isLoggedIn") === "true");
+    };
+    syncAuthState();
+    window.addEventListener("storage", syncAuthState);
+    window.addEventListener("auth-change", syncAuthState);
+    return () => {
+      window.removeEventListener("storage", syncAuthState);
+      window.removeEventListener("auth-change", syncAuthState);
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await postJson<{ ok: boolean }>("/api/auth/logout", {});
+    } catch {
+      // Ignore logout errors to ensure local state clears.
+    } finally {
+      localStorage.removeItem("isLoggedIn");
+      window.dispatchEvent(new Event("auth-change"));
+    }
+  };
 
   return (
     <>
@@ -95,13 +121,23 @@ export default function Header() {
 
             {/* 우측 영역 - 로그인 버튼 */}
             <div className="flex items-center justify-end gap-3">
-              <Link
-                to="/login"
-                className="flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm border border-white/40 text-white rounded-lg hover:bg-white/30 transition-all shadow-lg font-semibold"
-              >
-                <LogIn className="w-4 h-4" />
-                로그인
-              </Link>
+              {isLoggedIn ? (
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm border border-white/40 text-white rounded-lg hover:bg-white/30 transition-all shadow-lg font-semibold"
+                >
+                  로그아웃
+                </button>
+              ) : (
+                <Link
+                  to="/login"
+                  className="flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm border border-white/40 text-white rounded-lg hover:bg-white/30 transition-all shadow-lg font-semibold"
+                >
+                  <LogIn className="w-4 h-4" />
+                  로그인
+                </Link>
+              )}
             </div>
           </div>
         </div>
