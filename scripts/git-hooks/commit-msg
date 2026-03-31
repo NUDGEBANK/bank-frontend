@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# 현재 브랜치 이름을 가져오기
+BRANCH_NAME=$(git branch --show-current)
+BRANCH_NAME="${BRANCH_NAME##*/}"
+
+# Jira 이슈 키 추출 (KAN-42 같은 형식)
+JIRA_ISSUE_KEY=$(echo "$BRANCH_NAME" | egrep -o '[A-Z]+-[0-9]+')
+
+COMMIT_MSG_FILE=$1
+
+# 이미 이슈키가 맨 앞에 있는지 확인
+FIRST_LINE=$(head -n 1 "$COMMIT_MSG_FILE")
+
+if [[ -n "$JIRA_ISSUE_KEY" && "$FIRST_LINE" != "$JIRA_ISSUE_KEY "* ]]; then
+  sed -i.bak -e "1s/^/$JIRA_ISSUE_KEY /" "$COMMIT_MSG_FILE"
+fi
