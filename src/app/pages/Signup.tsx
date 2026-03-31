@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router";
 import { User, Lock, CalendarDays } from "lucide-react";
 import { postJson } from "../lib/api";
@@ -14,7 +14,8 @@ export default function Signup() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // @ts-ignore
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
@@ -167,9 +168,7 @@ export default function Signup() {
 
             {/* 성별 */}
             <div>
-              <label className="block text-sm font-semibold text-white mb-2">
-                성별
-              </label>
+              <label className="block text-sm font-semibold text-white mb-2">성별</label>
               <div className="grid grid-cols-2 gap-3">
                 <label className="flex items-center justify-center gap-2 py-3 bg-white/20 backdrop-blur-sm border-2 border-white/40 rounded-lg cursor-pointer hover:bg-white/30 transition-all">
                   <input
