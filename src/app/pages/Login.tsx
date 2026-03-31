@@ -1,18 +1,36 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { LogIn, User, Lock } from "lucide-react";
+import { User, Lock } from "lucide-react";
+import { postJson } from "../lib/api";
 
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // 실제 로그인 로직은 여기에 구현
-    console.log("Login attempt:", { username, password });
-    // 로그인 성공 시 홈으로 이동
-    navigate("/");
+    setError("");
+    setIsSubmitting(true);
+    try {
+      await postJson<{ ok: boolean; message?: string }>("/api/auth/login", {
+        userId: username,
+        password,
+      });
+      localStorage.setItem("isLoggedIn", "true");
+      window.dispatchEvent(new Event("auth-change"));
+      navigate("/");
+    } catch (err) {
+      const message =
+        err instanceof Error && err.message === "INVALID_CREDENTIALS"
+          ? "아이디 또는 비밀번호를 확인해주세요."
+          : "로그인에 실패했습니다.";
+      setError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -22,15 +40,17 @@ export default function Login() {
         <div className="bg-white/15 backdrop-blur-lg rounded-2xl shadow-2xl p-8 border-2 border-white/30">
           {/* 헤더 */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full mb-4 border-2 border-white/40">
-              <LogIn className="w-8 h-8 text-white" />
-            </div>
             <h1 className="text-3xl font-bold text-white mb-2">로그인</h1>
             <p className="text-blue-100">똑개뱅크에 오신 것을 환영합니다</p>
           </div>
 
           {/* 로그인 폼 */}
           <form onSubmit={handleSubmit} className="space-y-6">
+            {error && (
+              <p className="text-sm text-red-100 bg-red-500/20 border border-red-200/40 rounded-lg px-3 py-2">
+                {error}
+              </p>
+            )}
             {/* 아이디 입력 */}
             <div>
               <label htmlFor="username" className="block text-sm font-semibold text-white mb-2">
@@ -73,26 +93,13 @@ export default function Login() {
               </div>
             </div>
 
-            {/* 로그인 유지 & 비밀번호 찾기 */}
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 rounded border-2 border-white/40 bg-white/20 text-blue-500 focus:ring-2 focus:ring-white/50"
-                />
-                <span className="text-sm text-blue-100">로그인 유지</span>
-              </label>
-              <Link to="#" className="text-sm text-blue-300 hover:text-blue-200 hover:underline">
-                비밀번호 찾기
-              </Link>
-            </div>
-
             {/* 로그인 버튼 */}
             <button
               type="submit"
-              className="w-full py-3 bg-white/90 backdrop-blur-sm text-blue-600 rounded-lg font-bold hover:bg-white transition-all shadow-lg border border-white/40"
+              className="w-full py-3 bg-white/90 backdrop-blur-sm text-blue-600 rounded-lg font-bold hover:bg-white transition-all shadow-lg border border-white/40 disabled:opacity-60 disabled:cursor-not-allowed"
+              disabled={isSubmitting}
             >
-              로그인
+              {isSubmitting ? "로그인 중..." : "로그인"}
             </button>
           </form>
 
@@ -110,7 +117,7 @@ export default function Login() {
           <div className="text-center">
             <p className="text-blue-100 mb-4">아직 계정이 없으신가요?</p>
             <Link
-              to="#"
+              to="/Signup"
               className="inline-block w-full py-3 bg-white/20 backdrop-blur-sm border-2 border-white/40 text-white rounded-lg font-semibold hover:bg-white/30 transition-all"
             >
               회원가입

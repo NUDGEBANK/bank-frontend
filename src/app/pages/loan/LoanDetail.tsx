@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router";
+﻿import { useParams, Link } from "react-router";
 import { Percent, Users, Coins, Calendar, AlertCircle, FileText, Info } from "lucide-react";
 
 const loanDetails = {

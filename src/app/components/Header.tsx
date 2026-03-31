@@ -1,6 +1,7 @@
-import { useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { LogIn } from "lucide-react";
+import { postJson } from "../lib/api";
 
 interface MenuItem {
   label: string;
@@ -9,10 +10,10 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  { 
-    label: "은행소개", 
-    path: "#", 
-    submenu: [{ label: "은행 소개", path: "" },] 
+  {
+    label: "상품소개",
+    path: "#",
+    submenu: [{ label: "상품안내", path: "" }],
   },
   // {
   //   label: "통장",
@@ -22,7 +23,7 @@ const menuItems: MenuItem[] = [
   //   ],
   // },
   {
-    label: "예금·적금",
+    label: "예금/적금",
     submenu: [
       { label: "똑개 예금", path: "#" },
       { label: "똑개 적금", path: "#" },
@@ -32,7 +33,7 @@ const menuItems: MenuItem[] = [
     label: "대출",
     submenu: [
       { label: "대출상품", path: "/loan/products" },
-      { label: "대출 관리", path: "/loan/management" },
+      { label: "대출관리", path: "/loan/management" },
       { label: "신용점수조회", path: "/loan/credit-score" },
     ],
   },
@@ -48,15 +49,40 @@ const menuItems: MenuItem[] = [
     label: "증권",
     submenu: [{ label: "ANTMILLION", path: "#" }],
   },
-  { 
-    label: "고객센터", 
+  {
+    label: "고객센터",
     path: "#",
-    submenu: [{ label: "고객센터", path: "" },] 
+    submenu: [{ label: "고객센터", path: "" }],
   },
 ];
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem("isLoggedIn") === "true");
+
+  useEffect(() => {
+    const syncAuthState = () => {
+      setIsLoggedIn(localStorage.getItem("isLoggedIn") === "true");
+    };
+    syncAuthState();
+    window.addEventListener("storage", syncAuthState);
+    window.addEventListener("auth-change", syncAuthState);
+    return () => {
+      window.removeEventListener("storage", syncAuthState);
+      window.removeEventListener("auth-change", syncAuthState);
+    };
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await postJson<{ ok: boolean }>("/api/auth/logout", {});
+    } catch {
+      // Ignore logout errors to ensure local state clears.
+    } finally {
+      localStorage.removeItem("isLoggedIn");
+      window.dispatchEvent(new Event("auth-change"));
+    }
+  };
 
   return (
     <>
@@ -95,26 +121,36 @@ export default function Header() {
 
             {/* 우측 영역 - 로그인 버튼 */}
             <div className="flex items-center justify-end gap-3">
-              <Link
-                to="/login"
-                className="flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm border border-white/40 text-white rounded-lg hover:bg-white/30 transition-all shadow-lg font-semibold"
-              >
-                <LogIn className="w-4 h-4" />
-                로그인
-              </Link>
+              {isLoggedIn ? (
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm border border-white/40 text-white rounded-lg hover:bg-white/30 transition-all shadow-lg font-semibold"
+                >
+                  로그아웃
+                </button>
+              ) : (
+                <Link
+                  to="/login"
+                  className="flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm border border-white/40 text-white rounded-lg hover:bg-white/30 transition-all shadow-lg font-semibold"
+                >
+                  <LogIn className="w-4 h-4" />
+                  로그인
+                </Link>
+              )}
             </div>
           </div>
         </div>
       </header>
 
-      {/* 블러 오버레이 - 메뉴 열렸을 때 */}
+      {/* 블러 오버레이 - 메뉴 열려있을 때 */}
       {isMenuOpen && (
         <div 
           className="fixed inset-0 top-16 bg-black/20 backdrop-blur-sm z-30"
         />
       )}
 
-      {/* 메가 메뉴 드롭다운 - 모든 서브메뉴 한번에 표시 */}
+      {/* 메가 메뉴 드롭다운 - 모든 서브메뉴 표시 */}
       {isMenuOpen && (
         <div
           className="fixed left-0 right-0 top-16 bg-gray-800/50 backdrop-blur-xl border-b border-white/20 shadow-2xl z-40"
@@ -123,7 +159,7 @@ export default function Header() {
         >
           <div className="max-w-7xl mx-auto px-4 py-6">
             <div className="grid grid-cols-[180px_1fr_140px] items-start gap-4">
-              {/* 로고 공간 (헤더와 동일하게 유지) */}
+              {/* 로고 공간 (헤더와 동일하게 정렬) */}
               <div className="font-bold text-2xl text-transparent">똑개뱅크</div>
 
               {/* 서브메뉴 영역 (헤더 네비게이션과 정렬) */}
@@ -146,7 +182,7 @@ export default function Header() {
                 ))}
               </nav>
 
-              {/* 로그인 버튼 공간 (헤더와 동일하게 유지) */}
+              {/* 로그인 버튼 공간 (헤더와 동일하게 정렬) */}
               <div className="flex items-center justify-end gap-3 opacity-0">
                 <div className="px-4 py-2">로그인</div>
               </div>
@@ -157,3 +193,5 @@ export default function Header() {
     </>
   );
 }
+
+

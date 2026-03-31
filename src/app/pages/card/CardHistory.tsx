@@ -1,4 +1,4 @@
-import { ShoppingBag, Coffee, Utensils, Smartphone, Bus, TrendingUp } from "lucide-react";
+﻿import { ShoppingBag, Coffee, Utensils, Smartphone, Bus, TrendingUp } from "lucide-react";
 
 interface Transaction {
   id: number;

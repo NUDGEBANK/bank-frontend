@@ -1,4 +1,4 @@
-export default function Footer() {
+﻿export default function Footer() {
   return (
     <footer className="bg-gray-900/90 backdrop-blur-md border-t border-white/10 mt-auto">
       <div className="max-w-7xl mx-auto px-4 py-8">
