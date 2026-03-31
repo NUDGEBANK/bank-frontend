@@ -1,4 +1,4 @@
-﻿export default function MyAccount() {
+export default function MyAccount() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold mb-8 text-white drop-shadow-lg">내 통장</h1>

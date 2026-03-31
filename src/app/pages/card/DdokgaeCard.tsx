@@ -1,4 +1,4 @@
-﻿import { CreditCard, Zap, TrendingDown, Shield, CheckCircle } from "lucide-react";
+import { CreditCard, Zap, TrendingDown, Shield, CheckCircle } from "lucide-react";
 
 export default function DdokgaeCard() {
   const features = [

@@ -1,4 +1,4 @@
-﻿import { TrendingUp, Shield, Award, ChevronRight } from "lucide-react";
+import { TrendingUp, Shield, Award, ChevronRight } from "lucide-react";
 import { Link } from "react-router";
 
 export default function MyCreditScore() {

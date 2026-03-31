@@ -1,4 +1,4 @@
-﻿import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import { TrendingUp, AlertTriangle, Bell, BellOff } from "lucide-react";
 import { useState } from "react";
 

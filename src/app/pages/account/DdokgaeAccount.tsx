@@ -1,4 +1,4 @@
-﻿import { ArrowUpRight, ArrowDownLeft, Clock } from "lucide-react";
+import { ArrowUpRight, ArrowDownLeft, Clock } from "lucide-react";
 
 export default function DdokgaeAccount() {
   const transactions = [
