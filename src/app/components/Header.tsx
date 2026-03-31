@@ -49,10 +49,13 @@ const menuItems: MenuItem[] = [
     submenu: [{ label: "ANTMILLION", path: "#" }],
   },
   { 
-    label: "고객센터", 
+    label: "고객센터",
     path: "#",
-    submenu: [{ label: "고객센터", path: "" },] 
-  },
+    submenu: [
+    { label: "고객센터", path: "" },
+    { label: "마이페이지", path: "/account/mypage" },
+  ]
+},
 ];
 
 export default function Header() {
