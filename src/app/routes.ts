@@ -12,6 +12,8 @@ import MyCreditScore from "./pages/loan/MyCreditScore";
 import DdokgaeCard from "./pages/card/DdokgaeCard";
 import CardHistory from "./pages/card/CardHistory";
 import SpendingAnalysis from "./pages/card/SpendingAnalysis";
+import MyPage from "./pages/account/MyPage";
+
 
 export const router = createBrowserRouter([
   {
@@ -30,6 +32,7 @@ export const router = createBrowserRouter([
       { path: "card/ddokgae", Component: DdokgaeCard },
       { path: "card/history", Component: CardHistory },
       { path: "card/spending-analysis", Component: SpendingAnalysis },
+      { path: "account/mypage", Component: MyPage }
     ],
   },
 ]);
