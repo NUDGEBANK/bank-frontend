@@ -7,6 +7,7 @@ import {
   Upload,
   User,
 } from "lucide-react";
+import { API_BASE } from "../../lib/api";
 
 const quickMenus = [
   {
@@ -51,10 +52,6 @@ type CertificateSubmissionResponse = {
   submittedAt: string;
 };
 
-const API_BASE_URL = "http://localhost:9999";
-const DEFAULT_MEMBER_ID = "1";
-const DEFAULT_LOAN_ID = "1";
-const DEFAULT_CERTIFICATE_ID = "1";
 const NO_TEXT_DETECTED_MESSAGE =
   "자격증 내용을 확인할 수 없습니다. 자격증 전체가 잘 보이는 이미지 또는 PDF를 업로드해 주세요.";
 
@@ -65,6 +62,9 @@ export default function MyPage() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [ocrResult, setOcrResult] =
     useState<CertificateSubmissionResponse | null>(null);
+  const [memberId, setMemberId] = useState("");
+  const [loanId, setLoanId] = useState("");
+  const [certificateId, setCertificateId] = useState("");
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] ?? null;
@@ -92,23 +92,27 @@ export default function MyPage() {
       return;
     }
 
+    if (!memberId || !loanId || !certificateId) {
+      setUploadStatus("failed");
+      setUploadError("회원 ID, 대출 ID, 자격증 ID를 모두 입력해 주세요.");
+      return;
+    }
+
     const formData = new FormData();
-    formData.append("memberId", DEFAULT_MEMBER_ID);
-    formData.append("loanId", DEFAULT_LOAN_ID);
-    formData.append("certificateId", DEFAULT_CERTIFICATE_ID);
+    formData.append("memberId", memberId);
+    formData.append("loanId", loanId);
+    formData.append("certificateId", certificateId);
     formData.append("file", selectedFile);
 
     setUploadStatus("uploading");
     setUploadError(null);
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/certificates/submissions`,
-        {
-          method: "POST",
-          body: formData,
-        },
-      );
+      const response = await fetch(`${API_BASE}/api/certificates/submissions`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
 
       if (!response.ok) {
         const errorBody = (await response.json().catch(() => null)) as
@@ -278,6 +282,33 @@ export default function MyPage() {
                   자격증 이미지 또는 PDF를 업로드하면 OCR로 텍스트를 추출하고,
                   자격증명과 발급기관을 확인해 인증 결과를 안내합니다.
                 </p>
+              </div>
+
+              <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+                <input
+                  type="number"
+                  min="1"
+                  value={memberId}
+                  onChange={(event) => setMemberId(event.target.value)}
+                  placeholder="회원 ID"
+                  className="rounded-xl border border-[#D7DEEA] bg-white px-4 py-3 text-sm text-[#1F2937] shadow-sm focus:border-[#94A3B8] focus:outline-none"
+                />
+                <input
+                  type="number"
+                  min="1"
+                  value={loanId}
+                  onChange={(event) => setLoanId(event.target.value)}
+                  placeholder="대출 ID"
+                  className="rounded-xl border border-[#D7DEEA] bg-white px-4 py-3 text-sm text-[#1F2937] shadow-sm focus:border-[#94A3B8] focus:outline-none"
+                />
+                <input
+                  type="number"
+                  min="1"
+                  value={certificateId}
+                  onChange={(event) => setCertificateId(event.target.value)}
+                  placeholder="자격증 ID"
+                  className="rounded-xl border border-[#D7DEEA] bg-white px-4 py-3 text-sm text-[#1F2937] shadow-sm focus:border-[#94A3B8] focus:outline-none"
+                />
               </div>
 
               <div className="rounded-3xl border-2 border-dashed border-[#B7C9FF] bg-[#F8FAFF] p-8">
