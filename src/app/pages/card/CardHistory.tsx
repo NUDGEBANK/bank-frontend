@@ -1,219 +1,249 @@
-import { ShoppingBag, Coffee, Utensils, Smartphone, Bus, TrendingUp } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { CreditCard, Receipt, Wallet } from "lucide-react";
 
-interface Transaction {
-  id: number;
-  date: string;
-  merchant: string;
-  category: string;
+import { getJson } from "../../lib/api";
+
+type CardHistoryResponse = {
+  ok: boolean;
+  message: string;
+  accounts: CardHistoryAccount[];
+};
+
+type CardHistoryAccount = {
+  accountId: number;
+  accountName: string;
+  accountNumber: string;
+  balance: number;
+  cardId: number | null;
+  cardNumber: string | null;
+  cardStatus: string | null;
+  spentThisMonth: number;
+  transactions: CardHistoryTransaction[];
+};
+
+type CardHistoryTransaction = {
+  transactionId: number;
+  marketName: string;
+  categoryName: string;
   amount: number;
-  classification: "생필품" | "사치품";
-  repaymentAmount: number;
-  icon: any;
+  transactionDatetime: string;
+  menuName: string | null;
+  quantity: number | null;
+};
+
+const UI_TEXT = {
+  title: "\uCE74\uB4DC \uC774\uC6A9 \uB0B4\uC5ED",
+  subtitle: "\uCE74\uB4DC \uC794\uC561\uACFC \uCD5C\uADFC \uACB0\uC81C \uB0B4\uC5ED\uC744 \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
+  selectAccount: "\uC5F0\uACB0 \uACC4\uC88C \uC120\uD0DD",
+  noAccount: "\uD45C\uC2DC\uD560 \uACC4\uC88C\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4",
+  availableBalance: "\uC0AC\uC6A9 \uAC00\uB2A5\uD55C \uC794\uC561",
+  noBankAccount: "\uACC4\uC88C \uC5C6\uC74C",
+  monthlySpent: "\uC774\uBC88 \uB2EC \uC0AC\uC6A9\uC561",
+  monthlySpentHint: "\uCE74\uB4DC \uAC70\uB798 \uAE30\uC900 \uB204\uC801 \uAE08\uC561",
+  cardInfo: "\uCE74\uB4DC \uC815\uBCF4",
+  noCardInfo: "\uCE74\uB4DC \uC815\uBCF4 \uC5C6\uC74C",
+  noCardIssued: "\uBBF8\uBC1C\uAE09",
+  activeCard: "\uC815\uC0C1 \uC0AC\uC6A9 \uAC00\uB2A5",
+  noLinkedCard: "\uC5F0\uACB0\uB41C \uCE74\uB4DC \uC5C6\uC74C",
+  loading: "\uCE74\uB4DC \uC774\uC6A9 \uB0B4\uC5ED\uC744 \uBD88\uB7EC\uC624\uB294 \uC911\uC785\uB2C8\uB2E4.",
+  unauthorized: "\uB85C\uADF8\uC778 \uD6C4 \uCE74\uB4DC \uC774\uC6A9 \uB0B4\uC5ED\uC744 \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
+  requestFailed: "\uCE74\uB4DC \uC774\uC6A9 \uB0B4\uC5ED\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.",
+  emptyTitle: "\uC774\uC6A9 \uB0B4\uC5ED\uC774 \uC5C6\uC2B5\uB2C8\uB2E4",
+  emptyBody: "\uCE74\uB4DC \uACB0\uC81C\uAC00 \uBC1C\uC0DD\uD558\uBA74 \uCD5C\uADFC \uAC70\uB798 \uB0B4\uC5ED\uC774 \uC774\uACF3\uC5D0 \uD45C\uC2DC\uB429\uB2C8\uB2E4.",
+} as const;
+
+function formatAmount(amount: number) {
+  return `${amount.toLocaleString("ko-KR")}\uC6D0`;
+}
+
+function maskCardNumber(cardNumber: string | null) {
+  if (!cardNumber) {
+    return UI_TEXT.noCardInfo;
+  }
+
+  const parts = cardNumber.split("-");
+  if (parts.length !== 4) {
+    return cardNumber;
+  }
+
+  return `${parts[0]}-****-****-${parts[3]}`;
 }
 
 export default function CardHistory() {
-  const transactions: Transaction[] = [
-    {
-      id: 1,
-      date: "2026-03-24 14:30",
-      merchant: "스타벅스 강남점",
-      category: "카페/음료",
-      amount: 15000,
-      classification: "생필품",
-      repaymentAmount: 0,
-      icon: Coffee,
-    },
-    {
-      id: 2,
-      date: "2026-03-24 12:00",
-      merchant: "애플스토어",
-      category: "전자기기",
-      amount: 1500000,
-      classification: "사치품",
-      repaymentAmount: 300000,
-      icon: Smartphone,
-    },
-    {
-      id: 3,
-      date: "2026-03-23 18:20",
-      merchant: "올리브영",
-      category: "생활용품",
-      amount: 45000,
-      classification: "생필품",
-      repaymentAmount: 0,
-      icon: ShoppingBag,
-    },
-    {
-      id: 4,
-      date: "2026-03-23 13:15",
-      merchant: "백화점 식당가",
-      category: "외식",
-      amount: 120000,
-      classification: "사치품",
-      repaymentAmount: 24000,
-      icon: Utensils,
-    },
-    {
-      id: 5,
-      date: "2026-03-22 08:30",
-      merchant: "지하철",
-      category: "교통",
-      amount: 1250,
-      classification: "생필품",
-      repaymentAmount: 0,
-      icon: Bus,
-    },
-    {
-      id: 6,
-      date: "2026-03-21 19:45",
-      merchant: "명품관",
-      category: "패션/잡화",
-      amount: 850000,
-      classification: "사치품",
-      repaymentAmount: 425000,
-      icon: ShoppingBag,
-    },
-  ];
+  const [accounts, setAccounts] = useState<CardHistoryAccount[]>([]);
+  const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const totalSpent = transactions.reduce((sum, t) => sum + t.amount, 0);
-  const totalRepayment = transactions.reduce((sum, t) => sum + t.repaymentAmount, 0);
-  const essentialSpent = transactions
-    .filter((t) => t.classification === "생필품")
-    .reduce((sum, t) => sum + t.amount, 0);
-  const luxurySpent = transactions
-    .filter((t) => t.classification === "사치품")
-    .reduce((sum, t) => sum + t.amount, 0);
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadHistory() {
+      setIsLoading(true);
+      setErrorMessage("");
+
+      try {
+        const response = await getJson<CardHistoryResponse>("/api/cards/history");
+        if (!isMounted) {
+          return;
+        }
+
+        setAccounts(response.accounts);
+        setSelectedAccountId((current) => current ?? response.accounts[0]?.accountId ?? null);
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        const message = error instanceof Error ? error.message : "REQUEST_FAILED";
+        setErrorMessage(message === "UNAUTHORIZED" ? UI_TEXT.unauthorized : UI_TEXT.requestFailed);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadHistory();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const selectedAccount = useMemo(
+    () => accounts.find((account) => account.accountId === selectedAccountId) ?? accounts[0] ?? null,
+    [accounts, selectedAccountId],
+  );
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold mb-8 text-white drop-shadow-lg">카드 이용 내역</h1>
+    <div className="mx-auto max-w-6xl px-4 py-10 md:px-6">
+      <div className="overflow-hidden rounded-[32px] border border-slate-200/80 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
+        <div className="border-b border-slate-100 bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.14),_transparent_38%),linear-gradient(135deg,_#f8fbff_0%,_#ffffff_52%,_#f8fafc_100%)] px-6 py-6 md:px-8">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-blue-500">
+                Card History
+              </p>
+              <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">{UI_TEXT.title}</h1>
+              <p className="mt-2 text-sm text-slate-500">{UI_TEXT.subtitle}</p>
+            </div>
 
-      {/* 요약 카드 */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white/20 backdrop-blur-lg p-6 rounded-lg shadow-2xl border-2 border-white/40">
-          <p className="text-sm text-blue-200 mb-2">이번 달 총 사용</p>
-          <p className="text-2xl font-bold text-white">{totalSpent.toLocaleString()} 원</p>
-        </div>
-        <div className="bg-green-500/20 backdrop-blur-lg p-6 rounded-lg shadow-2xl border-2 border-green-300/50">
-          <p className="text-sm text-blue-200 mb-2">생필품 소비</p>
-          <p className="text-2xl font-bold text-green-300">{essentialSpent.toLocaleString()} 원</p>
-        </div>
-        <div className="bg-orange-500/20 backdrop-blur-lg p-6 rounded-lg shadow-2xl border-2 border-orange-300/50">
-          <p className="text-sm text-blue-200 mb-2">사치품 소비</p>
-          <p className="text-2xl font-bold text-orange-300">{luxurySpent.toLocaleString()} 원</p>
-        </div>
-        <div className="bg-blue-500/20 backdrop-blur-lg p-6 rounded-lg shadow-2xl border-2 border-blue-300/50">
-          <p className="text-sm text-blue-200 mb-2">자동 상환액</p>
-          <p className="text-2xl font-bold text-blue-300">{totalRepayment.toLocaleString()} 원</p>
-        </div>
-      </div>
+            <div className="w-full lg:max-w-sm">
+              <label
+                htmlFor="card-history-account-select"
+                className="mb-2 block text-sm font-medium text-slate-500"
+              >
+                {UI_TEXT.selectAccount}
+              </label>
+              <select
+                id="card-history-account-select"
+                value={selectedAccountId ?? ""}
+                onChange={(event) => setSelectedAccountId(Number(event.target.value))}
+                disabled={accounts.length === 0 || isLoading}
+                className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50"
+              >
+                {accounts.length === 0 ? (
+                  <option value="">{UI_TEXT.noAccount}</option>
+                ) : (
+                  accounts.map((account) => (
+                    <option key={account.accountId} value={account.accountId}>
+                      {account.accountName} {account.accountNumber}
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+          </div>
 
-      {/* 이용 내역 */}
-      <div className="bg-white/15 backdrop-blur-lg rounded-lg shadow-2xl border-2 border-white/30">
-        <div className="p-6 border-b border-white/20 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-white">똑개 체크카드 이용 내역</h2>
-          <div className="flex items-center gap-2 text-sm text-blue-100">
-            <span>AI 분류 기준:</span>
-            <span className="bg-green-500/30 backdrop-blur-sm text-green-300 px-2 py-1 rounded border border-green-400/50">생필품</span>
-            <span className="bg-orange-500/30 backdrop-blur-sm text-orange-300 px-2 py-1 rounded border border-orange-400/50">사치품</span>
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            <div className="rounded-3xl border border-sky-100 bg-[linear-gradient(135deg,_rgba(219,234,254,0.95)_0%,_rgba(239,246,255,0.98)_48%,_rgba(248,250,252,1)_100%)] px-5 py-5 text-slate-900 shadow-[0_20px_45px_rgba(148,163,184,0.18)]">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs tracking-[0.12em] text-sky-700/70">{UI_TEXT.availableBalance}</p>
+                  <p className="mt-3 text-3xl font-semibold">
+                    {selectedAccount ? formatAmount(selectedAccount.balance) : "-"}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-white/80 p-3 text-sky-600 shadow-sm">
+                  <Wallet className="h-5 w-5" />
+                </div>
+              </div>
+              <div className="mt-6 flex items-center justify-between text-sm text-slate-500">
+                <span>{selectedAccount?.accountName ?? UI_TEXT.noBankAccount}</span>
+                <span>{selectedAccount?.accountNumber ?? "-"}</span>
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-blue-100 bg-blue-50/70 px-5 py-5">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-slate-500">{UI_TEXT.monthlySpent}</p>
+                <CreditCard className="h-4 w-4 text-blue-500" />
+              </div>
+              <p className="mt-4 text-2xl font-bold text-slate-900">
+                {selectedAccount ? formatAmount(selectedAccount.spentThisMonth) : "-"}
+              </p>
+              <p className="mt-2 text-sm text-slate-500">{UI_TEXT.monthlySpentHint}</p>
+            </div>
+
+            <div className="rounded-3xl border border-emerald-100 bg-emerald-50/80 px-5 py-5">
+              <p className="text-sm font-medium text-slate-500">{UI_TEXT.cardInfo}</p>
+              <p className="mt-4 text-lg font-semibold text-slate-900">
+                {maskCardNumber(selectedAccount?.cardNumber ?? null)}
+              </p>
+              <p className="mt-1 text-sm text-slate-500">{selectedAccount?.cardStatus ?? UI_TEXT.noCardIssued}</p>
+              <p className="mt-4 text-sm font-medium text-emerald-700">
+                {selectedAccount?.cardId ? UI_TEXT.activeCard : UI_TEXT.noLinkedCard}
+              </p>
+            </div>
           </div>
         </div>
 
-        <div className="divide-y divide-white/10">
-          {transactions.map((transaction) => {
-            const Icon = transaction.icon;
-            return (
-              <div key={transaction.id} className="p-6 hover:bg-white/20 transition-colors">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-4">
-                    <div
-                      className={`w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm border ${
-                        transaction.classification === "생필품"
-                          ? "bg-green-500/30 border-green-400/50"
-                          : "bg-orange-500/30 border-orange-400/50"
-                      }`}
-                    >
-                      <Icon
-                        className={`w-6 h-6 ${
-                          transaction.classification === "생필품"
-                            ? "text-green-300"
-                            : "text-orange-300"
-                        }`}
-                      />
+        {isLoading ? (
+          <div className="px-6 py-16 text-center text-sm text-slate-500 md:px-8">{UI_TEXT.loading}</div>
+        ) : errorMessage ? (
+          <div className="px-6 py-16 text-center md:px-8">
+            <p className="text-sm font-medium text-rose-600">{errorMessage}</p>
+          </div>
+        ) : !selectedAccount || selectedAccount.transactions.length === 0 ? (
+          <div className="px-6 py-16 text-center md:px-8">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+              <Receipt className="h-6 w-6" />
+            </div>
+            <p className="mt-4 text-base font-semibold text-slate-900">{UI_TEXT.emptyTitle}</p>
+            <p className="mt-2 text-sm text-slate-500">{UI_TEXT.emptyBody}</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {selectedAccount.transactions.map((transaction) => (
+              <div
+                key={transaction.transactionId}
+                className="px-6 py-5 transition-colors hover:bg-slate-50 md:px-8"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex min-w-0 items-start gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-blue-500">
+                      <Receipt className="h-5 w-5" />
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-bold text-white">{transaction.merchant}</h3>
-                        <span
-                          className={`text-xs px-2 py-1 rounded backdrop-blur-sm ${
-                            transaction.classification === "생필품"
-                              ? "bg-green-500/30 text-green-300 border border-green-400/50"
-                              : "bg-orange-500/30 text-orange-300 border border-orange-400/50"
-                          }`}
-                        >
-                          {transaction.classification}
-                        </span>
-                      </div>
-                      <p className="text-sm text-blue-200 mb-2">{transaction.category}</p>
-                      <p className="text-xs text-blue-100">{transaction.date}</p>
+
+                    <div className="min-w-0">
+                      <p className="truncate text-base font-semibold text-slate-900">
+                        {transaction.marketName}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-400">{transaction.transactionDatetime}</p>
                     </div>
                   </div>
 
-                  <div className="text-right">
-                    <p className="text-xl font-bold text-white mb-1">
-                      {transaction.amount.toLocaleString()} 원
+                  <div className="shrink-0 text-right">
+                    <p className="text-lg font-bold text-slate-900 md:text-xl">
+                      {formatAmount(transaction.amount)}
                     </p>
-                    {transaction.repaymentAmount > 0 && (
-                      <div className="bg-blue-500/30 backdrop-blur-sm border-2 border-blue-400/50 px-3 py-1 rounded">
-                        <div className="flex items-center gap-1 text-blue-200">
-                          <TrendingUp className="w-3 h-3" />
-                          <span className="text-xs font-semibold">
-                            상환액 {transaction.repaymentAmount.toLocaleString()}원
-                          </span>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
-
-                {/* AI 분류 설명 */}
-                {transaction.classification === "사치품" && transaction.repaymentAmount > 0 && (
-                  <div className="mt-4 ml-16 bg-blue-500/20 backdrop-blur-sm border-l-4 border-blue-400 p-3 text-sm">
-                    <p className="text-blue-100">
-                      <strong>AI 분석:</strong> 해당 소비는 사치품으로 분류되어 결제 금액의{" "}
-                      {((transaction.repaymentAmount / transaction.amount) * 100).toFixed(0)}%
-                      가 대출 상환에 자동 적용되었습니다.
-                    </p>
-                  </div>
-                )}
               </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 정보 안내 */}
-      <div className="mt-8 bg-white/15 backdrop-blur-lg border-2 border-white/30 p-6 rounded-lg shadow-xl">
-        <h3 className="font-bold mb-3 text-white">AI 분류 안내</h3>
-        <ul className="space-y-2 text-sm text-blue-100">
-          <li className="flex items-start gap-2">
-            <span className="text-blue-300">•</span>
-            <span>
-              <strong>생필품:</strong> 식료품, 생활용품, 교통비, 의료비, 교육비 등 일상적인 필수
-              소비
-            </span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-blue-300">•</span>
-            <span>
-              <strong>사치품:</strong> 고가 전자기기, 명품, 유흥비, 고급 외식 등 선택적 소비
-            </span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-blue-300">•</span>
-            <span>AI가 자동으로 분류하며, 필요 시 고객센터를 통해 재분류 요청이 가능합니다</span>
-          </li>
-        </ul>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

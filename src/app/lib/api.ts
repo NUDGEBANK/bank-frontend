@@ -36,17 +36,26 @@ async function refreshTokens(): Promise<boolean> {
 }
 
 async function requestJson<T>(path: string, body?: JsonRecord, retry = true): Promise<T> {
+  return requestJsonWithMethod<T>("POST", path, body, retry);
+}
+
+async function requestJsonWithMethod<T>(
+  method: "GET" | "POST",
+  path: string,
+  body?: JsonRecord,
+  retry = true,
+): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
-    method: "POST",
+    method,
     headers: { "Content-Type": "application/json" },
     credentials: "include",
-    body: body ? JSON.stringify(body) : undefined,
+    body: method === "POST" && body ? JSON.stringify(body) : undefined,
   });
 
   if (res.status === 401 && retry && !path.startsWith("/api/auth/")) {
     const refreshed = await refreshTokens();
     if (refreshed) {
-      return requestJson<T>(path, body, false);
+      return requestJsonWithMethod<T>(method, path, body, false);
     }
   }
 
@@ -63,4 +72,8 @@ async function requestJson<T>(path: string, body?: JsonRecord, retry = true): Pr
 
 export async function postJson<T>(path: string, body: JsonRecord): Promise<T> {
   return requestJson<T>(path, body, true);
+}
+
+export async function getJson<T>(path: string): Promise<T> {
+  return requestJsonWithMethod<T>("GET", path, undefined, true);
 }
