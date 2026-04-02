@@ -21,7 +21,7 @@ type CardIssueResponse = {
   balance: number | null;
   cardId: number | null;
   cardNumber: string | null;
-  validThru: string | null;
+  expiredYm: string | null;
   cvc: string | null;
   status: string | null;
 };
@@ -330,7 +330,7 @@ export default function DdokgaeCard() {
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <p className="text-slate-800">유효기간</p>
-                          <p>{issueResult.validThru}</p>
+                          <p>{issueResult.expiredYm}</p>
                         </div>
                         <div>
                           <p className="text-slate-800">CVC</p>
