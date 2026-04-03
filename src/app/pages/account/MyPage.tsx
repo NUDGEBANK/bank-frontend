@@ -12,31 +12,93 @@ import { API_BASE } from "../../lib/api";
 const quickMenus = [
   {
     title: "내 정보 관리",
-    description: "회원 정보와 이용 현황을 확인하고 필요한 내용을 확인합니다.",
+    description: "회원 정보와 이용 현황을 한 번에 확인합니다.",
     icon: User,
   },
   {
     title: "대출 관리",
-    description: "진행 중인 대출 현황과 적용 금리를 조회합니다.",
+    description: "진행 중인 대출과 상환 일정을 확인합니다.",
     icon: FileText,
   },
   {
     title: "카드 이용내역",
-    description: "최근 결제 내역과 상세 사용 흐름을 확인합니다.",
+    description: "최근 결제 내역과 상세 사용 정보를 조회합니다.",
     icon: CreditCard,
   },
   {
     title: "인증 결과 조회",
-    description: "자격증 인증 상태와 우대 금리 적용 여부를 확인합니다.",
+    description: "자격증 인증 결과와 제출 상태를 확인합니다.",
     icon: BadgeCheck,
   },
 ];
 
 const ocrSteps = [
-  "자격증 파일 업로드",
+  "자격증 종류 선택",
+  "파일 업로드",
   "OCR 텍스트 추출",
-  "자격증명 및 발급기관 확인",
-  "우대 금리 적용 여부 안내",
+  "자격증명과 발급기관 검증",
+];
+
+const certificateGroups = [
+  {
+    label: "사무/기초",
+    options: [
+      { id: "1", label: "컴퓨터활용능력 1급" },
+      { id: "2", label: "컴퓨터활용능력 2급" },
+      { id: "3", label: "워드프로세서" },
+      { id: "4", label: "한국사능력검정시험" },
+    ],
+  },
+  {
+    label: "IT/데이터",
+    options: [
+      { id: "5", label: "정보처리기사" },
+      { id: "6", label: "정보처리산업기사" },
+      { id: "7", label: "ADsP" },
+      { id: "8", label: "SQLD" },
+      { id: "9", label: "빅데이터분석기사" },
+    ],
+  },
+  {
+    label: "회계/금융",
+    options: [
+      { id: "10", label: "전산회계 1급" },
+      { id: "11", label: "전산세무 2급" },
+      { id: "12", label: "투자자산운용사" },
+      { id: "13", label: "AFPK" },
+      { id: "14", label: "신용분석사" },
+    ],
+  },
+  {
+    label: "어학",
+    options: [
+      { id: "15", label: "TOEIC" },
+      { id: "16", label: "TOEIC Speaking" },
+      { id: "17", label: "OPIc" },
+      { id: "18", label: "JLPT" },
+      { id: "19", label: "HSK" },
+    ],
+  },
+  {
+    label: "전문 자격",
+    options: [
+      { id: "20", label: "공인중개사" },
+      { id: "21", label: "감정평가사" },
+      { id: "22", label: "세무사" },
+      { id: "23", label: "공인회계사" },
+      { id: "24", label: "변호사" },
+    ],
+  },
+  {
+    label: "기사",
+    options: [
+      { id: "25", label: "전기기사" },
+      { id: "26", label: "산업안전기사" },
+      { id: "27", label: "건축기사" },
+      { id: "28", label: "토목기사" },
+      { id: "29", label: "기계기사" },
+    ],
+  },
 ];
 
 type UploadStatus = "idle" | "selected" | "uploading" | "completed" | "failed";
@@ -49,11 +111,26 @@ type CertificateSubmissionResponse = {
   lines: string[];
   lineCount: number;
   verificationStatus: string;
+  failureReason: string | null;
   submittedAt: string;
 };
 
 const NO_TEXT_DETECTED_MESSAGE =
   "자격증 내용을 확인할 수 없습니다. 자격증 전체가 잘 보이는 이미지 또는 PDF를 업로드해 주세요.";
+
+const failureReasonMessages: Record<string, string> = {
+  CERTIFICATE_NAME_MISMATCH:
+    "선택한 자격증 종류와 업로드한 문서가 일치하지 않습니다.",
+  ISSUER_NAME_MISMATCH:
+    "발급기관 정보를 확인할 수 없습니다. 문서 원본을 다시 확인해 주세요.",
+  NAME_MISMATCH:
+    "회원 정보의 이름과 문서의 이름이 일치하지 않습니다.",
+  PASS_KEYWORD_NOT_FOUND:
+    "합격 또는 취득을 확인할 수 있는 문구를 찾지 못했습니다.",
+  INVALID_DOCUMENT_TYPE:
+    "자격증 증빙용 문서로 확인되지 않습니다.",
+  OCR_TEXT_NOT_DETECTED: NO_TEXT_DETECTED_MESSAGE,
+};
 
 export default function MyPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -94,7 +171,7 @@ export default function MyPage() {
 
     if (!memberId || !loanId || !certificateId) {
       setUploadStatus("failed");
-      setUploadError("회원 ID, 대출 ID, 자격증 ID를 모두 입력해 주세요.");
+      setUploadError("회원 ID, 대출 ID, 자격증 종류를 모두 입력해 주세요.");
       return;
     }
 
@@ -129,6 +206,19 @@ export default function MyPage() {
       const result =
         (await response.json()) as CertificateSubmissionResponse;
       setOcrResult(result);
+
+      if (
+        result.verificationStatus === "VERIFICATION_FAILED" &&
+        result.failureReason
+      ) {
+        setUploadStatus("failed");
+        setUploadError(
+          failureReasonMessages[result.failureReason] ??
+            "자격증 인증에 실패했습니다. 업로드한 문서를 다시 확인해 주세요.",
+        );
+        return;
+      }
+
       setUploadStatus("completed");
     } catch (error) {
       setUploadStatus("failed");
@@ -142,10 +232,10 @@ export default function MyPage() {
   };
 
   const statusText: Record<UploadStatus, string> = {
-    idle: "아직 업로드한 파일이 없습니다. 파일을 선택하면 인증 준비 상태로 변경됩니다.",
-    selected: `선택된 파일: ${selectedFile?.name ?? ""}`,
-    uploading: "OCR 인증 요청을 전송하고 있습니다.",
-    completed: "파일 업로드와 OCR 연동이 완료되었습니다. 인증 결과를 확인해 주세요.",
+    idle: "자격증 종류를 선택하고 파일을 업로드해 주세요.",
+    selected: `선택한 파일: ${selectedFile?.name ?? ""}`,
+    uploading: "OCR 요청을 전송하고 있습니다.",
+    completed: "OCR 연동이 완료되었습니다. 인증 결과를 확인해 주세요.",
     failed: uploadError ?? "업로드 중 오류가 발생했습니다.",
   };
 
@@ -158,12 +248,11 @@ export default function MyPage() {
               <User className="h-8 w-8 text-white" />
             </div>
             <h1 className="text-4xl font-bold text-[#1F2937] drop-shadow-lg">
-              고객님의 금융 정보를 한눈에 확인하세요
+              마이페이지
             </h1>
           </div>
           <p className="ml-16 text-xl text-[#475569] drop-shadow-lg">
-            계좌, 대출, 카드, 자격증 인증 현황까지 마이페이지에서 바로 확인할 수
-            있습니다.
+            자격증 인증과 대출 이용 현황을 한 화면에서 확인할 수 있습니다.
           </p>
         </div>
 
@@ -173,20 +262,20 @@ export default function MyPage() {
               <div className="flex-1">
                 <div className="mb-4 flex items-center gap-3">
                   <h2 className="text-2xl font-bold text-[#1F2937]">
-                    나만의 마이페이지
+                    내 금융 현황
                   </h2>
                   <span className="rounded-full bg-[#B7C9FF] px-4 py-1 text-sm font-semibold text-[#1F2937] shadow-md">
-                    정상 이용중
+                    자격증 인증 가능
                   </span>
                 </div>
 
                 <div className="mb-6">
                   <div className="mb-2 text-5xl font-bold text-[#4A67E8]">
-                    VIP CARE
+                    NUDGE CARE
                   </div>
                   <p className="text-base text-[#475569]">
-                    맞춤 금융 서비스와 자격증 인증 기반 우대 혜택을 한곳에서
-                    관리해보세요.
+                    자격증 인증 결과를 바탕으로 자기개발 대출 이용 여부를
+                    확인할 수 있습니다.
                   </p>
                 </div>
 
@@ -201,19 +290,19 @@ export default function MyPage() {
                   </div>
                   <div>
                     <p className="mb-1 text-sm text-[#64748B]">인증 상태</p>
-                    <p className="text-2xl font-bold text-[#1F2937]">심사 전</p>
+                    <p className="text-2xl font-bold text-[#1F2937]">심사 중</p>
                   </div>
                 </div>
 
                 <div className="mb-6 flex flex-wrap gap-2">
                   <span className="rounded-lg bg-white px-4 py-2 text-sm text-[#334155] shadow-sm">
-                    입금/출금 현황 확인
+                    계좌 조회
                   </span>
                   <span className="rounded-lg bg-white px-4 py-2 text-sm text-[#334155] shadow-sm">
-                    대출금리 조회
+                    대출 현황
                   </span>
                   <span className="rounded-lg bg-white px-4 py-2 text-sm text-[#334155] shadow-sm">
-                    자격증 인증 진행 가능
+                    자격증 인증
                   </span>
                 </div>
               </div>
@@ -240,12 +329,12 @@ export default function MyPage() {
                 대출 현황
               </h3>
               <div className="mb-4 text-3xl font-bold text-[#4A67E8]">
-                연 3.2% 적용중
+                심사 진행 중
               </div>
               <div className="mb-6 space-y-2 text-[#475569]">
-                <p>서민생활 안정 대출</p>
-                <p>대출 한도 1,200만원</p>
-                <p>다음 납부일 2026.04.25</p>
+                <p>자기개발 대출 신청 1건</p>
+                <p>예상 한도 1,200만원</p>
+                <p>다음 확인일 2026.04.25</p>
               </div>
               <button className="block w-full rounded-xl bg-white py-3 text-center font-bold text-[#1F2937] shadow-sm transition-all hover:bg-white/90">
                 상세 보기
@@ -260,8 +349,8 @@ export default function MyPage() {
                 서류 업로드 대기
               </div>
               <div className="mb-6 space-y-2 text-[#475569]">
-                <p>자격증 이미지를 제출하면 OCR 인증이 시작됩니다.</p>
-                <p>인증 완료 후 우대 금리 적용 여부를 확인할 수 있습니다.</p>
+                <p>자격증 파일을 올리면 OCR 인증이 시작됩니다.</p>
+                <p>인증 완료 후 결과를 마이페이지에서 확인할 수 있습니다.</p>
               </div>
               <button className="block w-full rounded-xl bg-white py-3 text-center font-bold text-[#1F2937] shadow-sm transition-all hover:bg-white/90">
                 인증하러 가기
@@ -276,11 +365,11 @@ export default function MyPage() {
               <div className="mb-6">
                 <p className="mb-2 text-sm text-[#64748B]">자격증 인증</p>
                 <h2 className="text-2xl font-bold text-[#1F2937]">
-                  이미지 업로드로 우대 금리 혜택을 확인하세요
+                  자격증 종류를 선택하고 파일을 업로드해 주세요
                 </h2>
                 <p className="mt-3 leading-7 text-[#64748B]">
-                  자격증 이미지 또는 PDF를 업로드하면 OCR로 텍스트를 추출하고,
-                  자격증명과 발급기관을 확인해 인증 결과를 안내합니다.
+                  자격증 종류를 먼저 선택한 뒤 이미지 또는 PDF를 업로드하면 OCR
+                  추출과 자격증 검증을 진행합니다.
                 </p>
               </div>
 
@@ -301,14 +390,51 @@ export default function MyPage() {
                   placeholder="대출 ID"
                   className="rounded-xl border border-[#D7DEEA] bg-white px-4 py-3 text-sm text-[#1F2937] shadow-sm focus:border-[#94A3B8] focus:outline-none"
                 />
-                <input
-                  type="number"
-                  min="1"
-                  value={certificateId}
-                  onChange={(event) => setCertificateId(event.target.value)}
-                  placeholder="자격증 ID"
-                  className="rounded-xl border border-[#D7DEEA] bg-white px-4 py-3 text-sm text-[#1F2937] shadow-sm focus:border-[#94A3B8] focus:outline-none"
-                />
+                <div className="rounded-xl border border-[#D7DEEA] bg-white px-4 py-2 shadow-sm">
+                  <p className="mb-1 text-xs font-medium text-[#64748B]">
+                    자격증 종류
+                  </p>
+                  <select
+                    value={certificateId}
+                    onChange={(event) => setCertificateId(event.target.value)}
+                    className="w-full bg-transparent py-1 text-sm text-[#1F2937] focus:outline-none"
+                  >
+                    <option value="">자격증 종류 선택</option>
+                    {certificateGroups.map((group) => (
+                      <optgroup key={group.label} label={group.label}>
+                        {group.options.map((certificate) => (
+                          <option key={certificate.id} value={certificate.id}>
+                            {certificate.label}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="mb-4 rounded-2xl border border-[#E2E8F0] bg-white/80 p-4 shadow-sm">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="font-medium text-[#334155]">
+                    지원 자격증 안내
+                  </p>
+                  <span className="rounded-full bg-[#E0E8FF] px-3 py-1 text-xs font-semibold text-[#3653d6]">
+                    총 29종
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2 text-xs text-[#475569]">
+                  {certificateGroups.map((group) => (
+                    <span
+                      key={group.label}
+                      className="rounded-full border border-[#D7DEEA] bg-[#F8FAFF] px-3 py-1"
+                    >
+                      {group.label}
+                    </span>
+                  ))}
+                </div>
+                <p className="mt-3 text-xs text-[#64748B]">
+                  드롭다운에서 자격증을 선택한 뒤 파일을 업로드해 주세요.
+                </p>
               </div>
 
               <div className="rounded-3xl border-2 border-dashed border-[#B7C9FF] bg-[#F8FAFF] p-8">
@@ -331,12 +457,12 @@ export default function MyPage() {
 
                 <div className="mb-6 rounded-2xl border border-[#E2E8F0] bg-white px-5 py-4 shadow-sm">
                   <p className="text-sm font-medium text-[#334155]">
-                    {selectedFile ? selectedFile.name : "선택된 파일이 없습니다."}
+                    {selectedFile ? selectedFile.name : "선택한 파일이 없습니다."}
                   </p>
                   <p className="mt-1 text-sm text-[#64748B]">
                     {selectedFile
                       ? `${Math.ceil(selectedFile.size / 1024)}KB`
-                      : "파일을 선택하면 여기에 파일명이 표시됩니다."}
+                      : "파일을 선택하면 이 영역에 파일명이 표시됩니다."}
                   </p>
                 </div>
 
@@ -398,15 +524,14 @@ export default function MyPage() {
                     <BadgeCheck className="h-5 w-5 text-[#16A34A]" />
                   </div>
                   <div>
-                    <p className="text-sm text-[#64748B]">예상 혜택</p>
+                    <p className="text-sm text-[#64748B]">인증 결과</p>
                     <h3 className="text-lg font-bold text-[#1F2937]">
-                      우대 금리 적용 검토
+                      자기개발 대출 검토
                     </h3>
                   </div>
                 </div>
                 <p className="text-sm text-[#64748B]">
-                  인증이 완료되면 자격증 기준으로 우대 금리 적용 가능 여부를
-                  확인합니다.
+                  인증 완료 후 자격증 기준과 제출 문서를 비교한 결과를 보여줍니다.
                 </p>
               </div>
 
