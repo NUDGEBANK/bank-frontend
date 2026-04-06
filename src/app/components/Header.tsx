@@ -28,8 +28,7 @@ const menuItems: MenuItem[] = [
     submenu: [
       { label: "대출상품", path: "/loan/products" },
       { label: "대출 관리", path: "/loan/management" },
-      { label: "신용평가", path: "/loan/credit-evaluation" },
-      { label: "내부 신용 평가 점수", path: "/loan/credit-score" },
+      { label: "신용 평가", path: "/loan/credit-score" },
     ],
   },
   {
