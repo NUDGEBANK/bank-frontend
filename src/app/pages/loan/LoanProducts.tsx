@@ -1,6 +1,7 @@
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
+import { getJson } from "../../lib/api";
 
 type LoanProduct = {
   id: string;
@@ -15,15 +16,15 @@ type LoanProduct = {
   isPrimary: boolean;
 };
 
-type StoredLoanApplication = {
-  applicationId: string;
-  productId: string;
+type LoanApplicationSummary = {
+  loanApplicationId: number;
+  productKey: string;
   productName: string;
-  status: string;
+  applicationStatus: string;
   appliedAt: string;
+  requiresCertificateSubmission: boolean;
+  certificateSubmitted: boolean;
 };
-
-const LOAN_APPLICATIONS_KEY = "loanApplications";
 
 const loanProducts: LoanProduct[] = [
   {
@@ -65,38 +66,31 @@ const loanProducts: LoanProduct[] = [
   },
 ];
 
-function readLoanApplications() {
-  if (typeof window === "undefined") {
-    return [];
-  }
-
-  const raw = window.localStorage.getItem(LOAN_APPLICATIONS_KEY);
-  if (!raw) {
-    return [];
-  }
-
-  try {
-    return JSON.parse(raw) as StoredLoanApplication[];
-  } catch {
-    return [];
-  }
-}
-
 export default function LoanProducts() {
   const navigate = useNavigate();
-  const [applications, setApplications] = useState<StoredLoanApplication[]>([]);
+  const [applications, setApplications] = useState<LoanApplicationSummary[]>([]);
 
   useEffect(() => {
-    const syncApplications = () => {
-      setApplications(readLoanApplications());
+    const syncApplications = async () => {
+      if (localStorage.getItem("isLoggedIn") !== "true") {
+        setApplications([]);
+        return;
+      }
+
+      try {
+        const nextApplications = await getJson<LoanApplicationSummary[]>("/api/loan-applications/me");
+        setApplications(nextApplications);
+      } catch {
+        setApplications([]);
+      }
     };
 
-    syncApplications();
-    window.addEventListener("storage", syncApplications);
+    void syncApplications();
+    window.addEventListener("auth-change", syncApplications);
     window.addEventListener("loan-application-change", syncApplications);
 
     return () => {
-      window.removeEventListener("storage", syncApplications);
+      window.removeEventListener("auth-change", syncApplications);
       window.removeEventListener("loan-application-change", syncApplications);
     };
   }, []);
@@ -111,7 +105,7 @@ export default function LoanProducts() {
   );
 
   const getApplication = (productId: string) =>
-    applications.find((application) => application.productId === productId) ?? null;
+    applications.find((application) => application.productKey === productId) ?? null;
 
   const handleApply = (product: LoanProduct) => {
     const existing = getApplication(product.id);
@@ -157,8 +151,8 @@ export default function LoanProducts() {
                     </span>
                   )}
                   {application && (
-                    <span className="rounded-full border border-emerald-200/40 bg-emerald-400/20 px-4 py-1 text-sm font-semibold text-emerald-50">
-                      신청 진행 중
+                    <span className="rounded-full border border-emerald-600/70 bg-emerald-600 px-4 py-1 text-sm font-semibold text-white shadow-sm">
+                      접수 완료
                     </span>
                   )}
                 </div>

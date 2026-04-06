@@ -1,14 +1,16 @@
 import { Calendar, Calculator, FileSearch, TrendingDown, Upload } from "lucide-react";
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
-import { API_BASE } from "../../lib/api";
+import { API_BASE, getJson } from "../../lib/api";
 
-type StoredLoanApplication = {
-  applicationId: string;
-  productId: string;
+type LoanApplicationSummary = {
+  loanApplicationId: number;
+  productKey: string;
   productName: string;
-  status: string;
+  applicationStatus: string;
   appliedAt: string;
+  requiresCertificateSubmission: boolean;
+  certificateSubmitted: boolean;
 };
 
 type UploadStatus = "idle" | "selected" | "uploading" | "completed" | "failed";
@@ -24,9 +26,6 @@ type CertificateSubmissionResponse = {
   failureReason: string | null;
   submittedAt: string;
 };
-
-const LOAN_APPLICATIONS_KEY = "loanApplications";
-const DEFAULT_MEMBER_ID = "1";
 
 const loanInfo = {
   totalPrincipal: 20000000,
@@ -75,27 +74,10 @@ function formatAmount(value: number) {
   return `${value.toLocaleString("ko-KR")}원`;
 }
 
-function readLoanApplications() {
-  if (typeof window === "undefined") {
-    return [];
-  }
-
-  const raw = window.localStorage.getItem(LOAN_APPLICATIONS_KEY);
-  if (!raw) {
-    return [];
-  }
-
-  try {
-    return JSON.parse(raw) as StoredLoanApplication[];
-  } catch {
-    return [];
-  }
-}
-
 export default function MyLoanManagement() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [simulationAmount, setSimulationAmount] = useState(1000000);
-  const [applications, setApplications] = useState<StoredLoanApplication[]>([]);
+  const [applications, setApplications] = useState<LoanApplicationSummary[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>("idle");
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -103,12 +85,24 @@ export default function MyLoanManagement() {
   const [certificateId, setCertificateId] = useState("");
 
   useEffect(() => {
-    const syncApplications = () => setApplications(readLoanApplications());
-    syncApplications();
-    window.addEventListener("storage", syncApplications);
+    const syncApplications = async () => {
+      if (localStorage.getItem("isLoggedIn") !== "true") {
+        setApplications([]);
+        return;
+      }
+
+      try {
+        const nextApplications = await getJson<LoanApplicationSummary[]>("/api/loan-applications/me");
+        setApplications(nextApplications);
+      } catch {
+        setApplications([]);
+      }
+    };
+    void syncApplications();
+    window.addEventListener("auth-change", syncApplications);
     window.addEventListener("loan-application-change", syncApplications);
     return () => {
-      window.removeEventListener("storage", syncApplications);
+      window.removeEventListener("auth-change", syncApplications);
       window.removeEventListener("loan-application-change", syncApplications);
     };
   }, []);
@@ -142,7 +136,7 @@ export default function MyLoanManagement() {
   );
 
   const selfDevelopmentApplication = useMemo(
-    () => applications.find((application) => application.productId === "youth-loan") ?? null,
+    () => applications.find((application) => application.productKey === "youth-loan") ?? null,
     [applications],
   );
 
@@ -174,8 +168,7 @@ export default function MyLoanManagement() {
     }
 
     const formData = new FormData();
-    formData.append("memberId", DEFAULT_MEMBER_ID);
-    formData.append("loanId", selfDevelopmentApplication.applicationId);
+    formData.append("loanId", String(selfDevelopmentApplication.loanApplicationId));
     formData.append("certificateId", certificateId);
     formData.append("file", selectedFile);
 
@@ -327,15 +320,15 @@ export default function MyLoanManagement() {
                 <div className="space-y-4">
                   {applications.map((application) => (
                     <div
-                      key={application.applicationId}
+                      key={application.loanApplicationId}
                       className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4"
                     >
                       <p className="text-sm text-slate-500">{application.productName}</p>
                       <p className="mt-2 text-lg font-semibold text-slate-900">
-                        {application.applicationId}
+                        {application.loanApplicationId}
                       </p>
                       <p className="mt-1 text-sm text-slate-600">
-                        상태 <span className="font-semibold text-sky-700">{application.status}</span>
+                        상태 <span className="font-semibold text-sky-700">{application.applicationStatus}</span>
                       </p>
                     </div>
                   ))}
@@ -345,7 +338,7 @@ export default function MyLoanManagement() {
                   <p className="text-sm text-slate-500">현재 신청한 대출 상품이 없습니다.</p>
                   <Link
                     to="/loan/products"
-                    className="mt-4 inline-block rounded-xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                    className="mt-4 inline-block rounded-xl bg-[#6d8ca6] px-4 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-[#5c7c97]"
                   >
                     대출 상품 보러가기
                   </Link>
@@ -441,13 +434,13 @@ export default function MyLoanManagement() {
                   <p className="mt-1">
                     신청 번호{" "}
                     <span className="font-semibold text-slate-900">
-                      {selfDevelopmentApplication.applicationId}
+                      {selfDevelopmentApplication.loanApplicationId}
                     </span>
                   </p>
                   <p className="mt-1">
                     상태{" "}
                     <span className="font-semibold text-sky-700">
-                      {selfDevelopmentApplication.status}
+                      {selfDevelopmentApplication.applicationStatus}
                     </span>
                   </p>
                 </div>
@@ -526,7 +519,7 @@ export default function MyLoanManagement() {
                         type="button"
                         onClick={handleUpload}
                         disabled={!selectedFile || uploadStatus === "uploading"}
-                        className="rounded-xl bg-slate-800 py-4 font-bold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-700 disabled:opacity-100 sm:flex-1"
+                        className="rounded-xl bg-[#8ea9bc] py-4 font-bold text-white shadow-md transition hover:bg-[#7d9aae] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-700 disabled:opacity-100 sm:flex-1"
                       >
                         {uploadStatus === "uploading" ? "업로드 중..." : "업로드 시작"}
                       </button>
@@ -546,9 +539,6 @@ export default function MyLoanManagement() {
                       </div>
                     </div>
                     <p className="text-sm text-slate-500">{statusText[uploadStatus]}</p>
-                    <p className="mt-3 text-xs text-slate-400">
-                      현재 프론트 단에서는 로그인 회원의 숫자 ID를 받지 못해 기본 테스트 계정으로 요청합니다.
-                    </p>
                   </div>
 
                   <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-5">

@@ -1,6 +1,7 @@
 import { CheckCircle2, FileText, ShieldCheck } from "lucide-react";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
+import { postJson } from "../../lib/api";
 
 type LoanApplyConfig = {
   name: string;
@@ -12,18 +13,15 @@ type LoanApplyConfig = {
   defaultPurpose: string;
 };
 
-type StoredLoanApplication = {
-  applicationId: string;
-  productId: string;
+type LoanApplicationSummary = {
+  loanApplicationId: number;
+  productKey: string;
   productName: string;
-  status: string;
+  applicationStatus: string;
   appliedAt: string;
-  requestedAmount: string;
-  loanTerm: string;
-  purpose: string;
+  requiresCertificateSubmission: boolean;
+  certificateSubmitted: boolean;
 };
-
-const LOAN_APPLICATIONS_KEY = "loanApplications";
 
 const productConfigs: Record<string, LoanApplyConfig> = {
   "consumption-loan": {
@@ -55,36 +53,17 @@ const productConfigs: Record<string, LoanApplyConfig> = {
   },
 };
 
-function readLoanApplications() {
-  if (typeof window === "undefined") {
-    return [];
-  }
-
-  const raw = window.localStorage.getItem(LOAN_APPLICATIONS_KEY);
-  if (!raw) {
-    return [];
-  }
-
-  try {
-    return JSON.parse(raw) as StoredLoanApplication[];
-  } catch {
-    return [];
-  }
-}
-
 export default function LoanApply() {
   const navigate = useNavigate();
   const { productId } = useParams<{ productId: string }>();
   const product = productId ? productConfigs[productId] : undefined;
-  const existingApplications = useMemo(readLoanApplications, []);
-  const existing = existingApplications.find((item) => item.productId === productId) ?? null;
-
   const [amount, setAmount] = useState(product?.defaultAmount ?? "");
   const [loanTerm, setLoanTerm] = useState(productId === "youth-loan" ? "24개월" : "12개월");
   const [purpose, setPurpose] = useState(product?.defaultPurpose ?? "");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!productId || !product) {
     return (
@@ -102,7 +81,7 @@ export default function LoanApply() {
     );
   }
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
 
@@ -111,25 +90,27 @@ export default function LoanApply() {
       return;
     }
 
-    const nextApplications = existing
-      ? existingApplications
-      : [
-          ...existingApplications,
-          {
-            applicationId: `APP-${Date.now()}`,
-            productId,
-            productName: product.name,
-            status: productId === "youth-loan" ? "DOCUMENT_REQUIRED" : "UNDER_REVIEW",
-            appliedAt: new Date().toISOString(),
-            requestedAmount: amount,
-            loanTerm,
-            purpose,
-          },
-        ];
+    if (!productId) {
+      return;
+    }
 
-    window.localStorage.setItem(LOAN_APPLICATIONS_KEY, JSON.stringify(nextApplications));
-    window.dispatchEvent(new Event("loan-application-change"));
-    navigate("/loan/management");
+    setIsSubmitting(true);
+    try {
+      await postJson<LoanApplicationSummary>("/api/loan-applications", {
+        productKey: productId,
+        loanAmount: Number(amount),
+        loanTerm,
+        monthlyIncome: 2500000,
+        salaryDate: 25,
+        purpose,
+      });
+      window.dispatchEvent(new Event("loan-application-change"));
+      navigate("/loan/management");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "대출 신청에 실패했습니다.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -228,9 +209,10 @@ export default function LoanApply() {
 
             <button
               type="submit"
+              disabled={isSubmitting}
               className="w-full rounded-2xl bg-[#6d8ca6] py-4 font-semibold text-white shadow-md transition hover:bg-[#5c7c97]"
             >
-              대출 신청 완료
+              {isSubmitting ? "신청 처리 중..." : "대출 신청 완료"}
             </button>
           </form>
         </section>

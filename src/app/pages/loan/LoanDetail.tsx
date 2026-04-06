@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
+import { getJson } from "../../lib/api";
 
 type LoanDetailItem = {
   name: string;
@@ -23,17 +24,17 @@ type LoanDetailItem = {
   terms: string[];
 };
 
-type StoredLoanApplication = {
-  applicationId: string;
-  productId: string;
+type LoanApplicationSummary = {
+  loanApplicationId: number;
+  productKey: string;
   productName: string;
-  status: string;
+  applicationStatus: string;
   appliedAt: string;
+  requiresCertificateSubmission: boolean;
+  certificateSubmitted: boolean;
 };
 
 type DetailTab = "guide" | "rate" | "terms" | "caution";
-
-const LOAN_APPLICATIONS_KEY = "loanApplications";
 
 const loanDetails: Record<string, LoanDetailItem> = {
   "consumption-loan": {
@@ -130,53 +131,51 @@ const tabs: { id: DetailTab; label: string }[] = [
   { id: "caution", label: "유의사항" },
 ];
 
-function readLoanApplications() {
-  if (typeof window === "undefined") {
-    return [];
-  }
-
-  const raw = window.localStorage.getItem(LOAN_APPLICATIONS_KEY);
-  if (!raw) {
-    return [];
-  }
-
-  try {
-    return JSON.parse(raw) as StoredLoanApplication[];
-  } catch {
-    return [];
-  }
-}
-
 export default function LoanDetail() {
   const navigate = useNavigate();
   const { productId } = useParams<{ productId: string }>();
   const product = productId ? loanDetails[productId] : undefined;
-  const [applications, setApplications] = useState<StoredLoanApplication[]>([]);
+  const [applications, setApplications] = useState<LoanApplicationSummary[]>([]);
   const [activeTab, setActiveTab] = useState<DetailTab>("guide");
 
   useEffect(() => {
-    const syncApplications = () => {
-      setApplications(readLoanApplications());
+    const syncApplications = async () => {
+      if (localStorage.getItem("isLoggedIn") !== "true") {
+        setApplications([]);
+        return;
+      }
+
+      try {
+        const nextApplications = await getJson<LoanApplicationSummary[]>("/api/loan-applications/me");
+        setApplications(nextApplications);
+      } catch {
+        setApplications([]);
+      }
     };
 
-    syncApplications();
-    window.addEventListener("storage", syncApplications);
+    void syncApplications();
+    window.addEventListener("auth-change", syncApplications);
     window.addEventListener("loan-application-change", syncApplications);
 
     return () => {
-      window.removeEventListener("storage", syncApplications);
+      window.removeEventListener("auth-change", syncApplications);
       window.removeEventListener("loan-application-change", syncApplications);
     };
   }, []);
 
   const application = useMemo(
-    () => applications.find((item) => item.productId === productId) ?? null,
+    () => applications.find((item) => item.productKey === productId) ?? null,
     [applications, productId],
   );
 
   const handlePrimaryAction = () => {
     if (!productId || !product) {
       navigate("/loan/products");
+      return;
+    }
+
+    if (application) {
+      navigate("/loan/management");
       return;
     }
 
@@ -263,7 +262,7 @@ export default function LoanDetail() {
           onClick={handlePrimaryAction}
           className="rounded-xl bg-[#6d8ca6] px-8 py-3 font-semibold text-white shadow-md transition-all hover:bg-[#5c7c97]"
         >
-          대출 신청하기
+          {application ? "내 대출 관리 보기" : "대출 신청하기"}
         </button>
       </div>
 
