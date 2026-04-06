@@ -72,9 +72,6 @@ const certificateGroups = [
   {
     label: "어학",
     options: [
-      { id: "15", label: "TOEIC" },
-      { id: "16", label: "TOEIC Speaking" },
-      { id: "17", label: "OPIc" },
       { id: "18", label: "JLPT" },
       { id: "19", label: "HSK" },
     ],
@@ -123,12 +120,10 @@ const failureReasonMessages: Record<string, string> = {
     "선택한 자격증 종류와 업로드한 문서가 일치하지 않습니다.",
   ISSUER_NAME_MISMATCH:
     "발급기관 정보를 확인할 수 없습니다. 문서 원본을 다시 확인해 주세요.",
-  NAME_MISMATCH:
-    "회원 정보의 이름과 문서의 이름이 일치하지 않습니다.",
+  NAME_MISMATCH: "회원 정보의 이름과 문서의 이름이 일치하지 않습니다.",
   PASS_KEYWORD_NOT_FOUND:
     "합격 또는 취득을 확인할 수 있는 문구를 찾지 못했습니다.",
-  INVALID_DOCUMENT_TYPE:
-    "자격증 증빙용 문서로 확인되지 않습니다.",
+  INVALID_DOCUMENT_TYPE: "자격증 인증용 문서로 확인되지 않았습니다.",
   OCR_TEXT_NOT_DETECTED: NO_TEXT_DETECTED_MESSAGE,
 };
 
@@ -233,9 +228,9 @@ export default function MyPage() {
 
   const statusText: Record<UploadStatus, string> = {
     idle: "자격증 종류를 선택하고 파일을 업로드해 주세요.",
-    selected: `선택한 파일: ${selectedFile?.name ?? ""}`,
+    selected: `선택된 파일: ${selectedFile?.name ?? ""}`,
     uploading: "OCR 요청을 전송하고 있습니다.",
-    completed: "OCR 연동이 완료되었습니다. 인증 결과를 확인해 주세요.",
+    completed: "OCR 업로드가 완료되었습니다. 인증 결과를 확인해 주세요.",
     failed: uploadError ?? "업로드 중 오류가 발생했습니다.",
   };
 
@@ -419,7 +414,7 @@ export default function MyPage() {
                     지원 자격증 안내
                   </p>
                   <span className="rounded-full bg-[#E0E8FF] px-3 py-1 text-xs font-semibold text-[#3653d6]">
-                    총 29종
+                    총 26종
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-2 text-xs text-[#475569]">
@@ -433,7 +428,8 @@ export default function MyPage() {
                   ))}
                 </div>
                 <p className="mt-3 text-xs text-[#64748B]">
-                  드롭다운에서 자격증을 선택한 뒤 파일을 업로드해 주세요.
+                  점수형 어학 시험은 제외되며, 합격 또는 급수형 시험만 선택할 수
+                  있습니다.
                 </p>
               </div>
 
@@ -457,7 +453,7 @@ export default function MyPage() {
 
                 <div className="mb-6 rounded-2xl border border-[#E2E8F0] bg-white px-5 py-4 shadow-sm">
                   <p className="text-sm font-medium text-[#334155]">
-                    {selectedFile ? selectedFile.name : "선택한 파일이 없습니다."}
+                    {selectedFile ? selectedFile.name : "선택된 파일이 없습니다."}
                   </p>
                   <p className="mt-1 text-sm text-[#64748B]">
                     {selectedFile
@@ -526,12 +522,13 @@ export default function MyPage() {
                   <div>
                     <p className="text-sm text-[#64748B]">인증 결과</p>
                     <h3 className="text-lg font-bold text-[#1F2937]">
-                      자기개발 대출 검토
+                      자기개발 대출 검증
                     </h3>
                   </div>
                 </div>
                 <p className="text-sm text-[#64748B]">
-                  인증 완료 후 자격증 기준과 제출 문서를 비교한 결과를 보여줍니다.
+                  인증 완료 후 자격증 기준과 제출 문서를 비교한 결과를
+                  보여줍니다.
                 </p>
               </div>
 
