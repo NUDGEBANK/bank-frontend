@@ -1,6 +1,7 @@
 export interface ChatRequest {
-  userId: string;
+  user_id: string;
   message: string;
+  user_info: Record<string, any>;
 }
 
 export interface ChatResponse {
@@ -10,42 +11,45 @@ export interface ChatResponse {
 export async function sendMessage(
   userId: string,
   message: string,
-): Promise<string> {
-  const response = await fetch("http://localhost:9999/api/chat", {
+  onChunk: (chunk: string) => void,
+): Promise<void> {
+  const response = await fetch("http://localhost:8000/chat", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      userId,
+      user_id: userId,
       message,
+      user_info: {},
     } as ChatRequest),
   });
 
-  // 🔥 Spring에서 JSON으로 주는 경우
-  const raw = await response.text();
-
   if (!response.ok) {
-    throw new Error(raw || "챗봇 API 호출에 실패했습니다.");
+    const errorText = await response.text();
+    throw new Error(errorText || "챗봇 API 호출에 실패했습니다.");
   }
 
-  if (!raw.trim()) {
-    return "";
+  if (!response.body) {
+    throw new Error("스트리밍 응답 본문이 없습니다.");
   }
 
-  try {
-    const data = JSON.parse(raw) as ChatResponse | string;
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder("utf-8");
 
-    if (typeof data === "string") {
-      return data;
+  while (true) {
+    const { done, value } = await reader.read();
+
+    if (done) break;
+
+    const chunk = decoder.decode(value, { stream: true });
+    if (chunk) {
+      onChunk(chunk);
     }
-
-    if (typeof data.answer === "string") {
-      return data.answer;
-    }
-  } catch {
-    return raw;
   }
 
-  return raw;
+  const lastChunk = decoder.decode();
+  if (lastChunk) {
+    onChunk(lastChunk);
+  }
 }
