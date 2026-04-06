@@ -7,6 +7,7 @@ import MyAccount from "./pages/account/MyAccount";
 import DdokgaeAccount from "./pages/account/DdokgaeAccount";
 import LoanProducts from "./pages/loan/LoanProducts";
 import LoanDetail from "./pages/loan/LoanDetail";
+import LoanApply from "./pages/loan/LoanApply";
 import MyLoanManagement from "./pages/loan/MyLoanManagement";
 import MyCreditScore from "./pages/loan/MyCreditScore";
 import DdokgaeCard from "./pages/card/DdokgaeCard";
@@ -27,6 +28,7 @@ export const router = createBrowserRouter([
       { path: "account/ddokgae", Component: DdokgaeAccount },
       { path: "loan/products", Component: LoanProducts },
       { path: "loan/products/:productId", Component: LoanDetail },
+      { path: "loan/products/:productId/apply", Component: LoanApply },
       { path: "loan/management", Component: MyLoanManagement },
       { path: "loan/credit-score", Component: MyCreditScore },
       { path: "card/ddokgae", Component: DdokgaeCard },

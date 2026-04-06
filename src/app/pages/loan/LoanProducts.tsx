@@ -1,183 +1,267 @@
-import { Link } from "react-router";
-import { CheckCircle2, ArrowLeft } from "lucide-react";
-import backgroundImg from "figma:asset/a1fdfd62e9258f5117d1a2174261b21bd02d7d66.png";
+import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router";
 
-const loanProducts = [
+type LoanProduct = {
+  id: string;
+  name: string;
+  badge?: string;
+  rate: string;
+  limit: string;
+  period: string;
+  target: string;
+  summary: string;
+  features: string[];
+  isPrimary: boolean;
+};
+
+type StoredLoanApplication = {
+  applicationId: string;
+  productId: string;
+  productName: string;
+  status: string;
+  appliedAt: string;
+};
+
+const LOAN_APPLICATIONS_KEY = "loanApplications";
+
+const loanProducts: LoanProduct[] = [
   {
     id: "consumption-loan",
-    name: "소비연동형 자동상환 대출",
-    badge: "피커금리",
-    rateMin: "3.2",
-    rateMax: "8.5",
-    limit: "3억원",
-    period: "1년 ~ 10년",
-    available: "5분 이내",
-    features: ["중도상환수수료 없음", "대출 심사약 24시간", "우대금 선정"],
-    isFeatured: true,
+    name: "소비분석 대출",
+    badge: "분석 기반",
+    rate: "연 4.2% ~ 8.9%",
+    limit: "최대 300만원",
+    period: "6개월 ~ 18개월",
+    target: "소비 흐름 관리가 필요한 고객",
+    summary:
+      "소비 패턴을 바탕으로 자금 운용 부담을 조절할 수 있도록 설계한 상품입니다.",
+    features: ["소비 흐름 점검", "간편 심사", "자동이체 연계"],
+    isPrimary: true,
   },
   {
     id: "youth-loan",
-    name: "맛살론15",
-    rateMin: "15.9",
-    rateMax: null,
-    limit: null,
-    features: ["최대 2천만원", "서민금융진흥원"],
-    isFeatured: false,
+    name: "자기계발 대출",
+    badge: "청년 특화",
+    rate: "연 3.8% ~ 6.2%",
+    limit: "최대 500만원",
+    period: "12개월 ~ 24개월",
+    target: "만 19세 ~ 29세 청년",
+    summary:
+      "자격증, 어학, 직무 교육 등 자기계발 비용을 준비할 수 있도록 지원하는 상품입니다.",
+    features: ["서류 제출형 심사", "중도상환수수료 없음", "OCR 연계"],
+    isPrimary: true,
   },
   {
     id: "situate-loan",
-    name: "시잇트2",
-    rateMin: "4.5",
-    rateMax: "14.9",
-    limit: null,
-    features: ["최대 3천만원", "서울보증보험"],
-    isFeatured: false,
+    name: "비상금 대출",
+    rate: "연 5.1% ~ 9.9%",
+    limit: "최대 200만원",
+    period: "1개월 ~ 12개월",
+    target: "소액 단기 자금 필요 고객",
+    summary: "짧은 기간이지만 빠르게 대응해야 하는 상황을 위한 소액 상품입니다.",
+    features: ["소액 한도", "빠른 실행", "모바일 신청"],
+    isPrimary: false,
   },
 ];
 
+function readLoanApplications() {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  const raw = window.localStorage.getItem(LOAN_APPLICATIONS_KEY);
+  if (!raw) {
+    return [];
+  }
+
+  try {
+    return JSON.parse(raw) as StoredLoanApplication[];
+  } catch {
+    return [];
+  }
+}
+
 export default function LoanProducts() {
-  const featuredProduct = loanProducts.find((p) => p.isFeatured);
-  const otherProducts = loanProducts.filter((p) => !p.isFeatured);
+  const navigate = useNavigate();
+  const [applications, setApplications] = useState<StoredLoanApplication[]>([]);
+
+  useEffect(() => {
+    const syncApplications = () => {
+      setApplications(readLoanApplications());
+    };
+
+    syncApplications();
+    window.addEventListener("storage", syncApplications);
+    window.addEventListener("loan-application-change", syncApplications);
+
+    return () => {
+      window.removeEventListener("storage", syncApplications);
+      window.removeEventListener("loan-application-change", syncApplications);
+    };
+  }, []);
+
+  const primaryProducts = useMemo(
+    () => loanProducts.filter((product) => product.isPrimary),
+    [],
+  );
+  const secondaryProducts = useMemo(
+    () => loanProducts.filter((product) => !product.isPrimary),
+    [],
+  );
+
+  const getApplication = (productId: string) =>
+    applications.find((application) => application.productId === productId) ?? null;
+
+  const handleApply = (product: LoanProduct) => {
+    const existing = getApplication(product.id);
+    if (existing) {
+      navigate("/loan/management");
+      return;
+    }
+
+    navigate(`/loan/products/${product.id}/apply`);
+  };
 
   return (
-    <div className="min-h-screen relative">
-      <div className="max-w-7xl mx-auto px-4 py-12 relative">
-        {/* 헤더 */}
+    <div className="min-h-screen">
+      <div className="mx-auto max-w-7xl px-4 py-12">
         <div className="mb-12">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="bg-white/20 backdrop-blur-md rounded-full p-3 shadow-lg border-2 border-white/30">
-              <CheckCircle2 className="w-8 h-8 text-white" />
+          <div className="mb-4 flex items-center gap-3">
+            <div className="rounded-full border-2 border-white/30 bg-white/20 p-3 shadow-lg backdrop-blur-md">
+              <CheckCircle2 className="h-8 w-8 text-white" />
             </div>
-            <h1 className="text-4xl font-bold text-white drop-shadow-lg">고객님께 딱 맞는 대출 상품을 찾았습니다</h1>
+            <h1 className="text-4xl font-bold text-white drop-shadow-lg">
+              대출상품을 비교하고 바로 신청해보세요
+            </h1>
           </div>
-          <p className="text-xl text-blue-100 ml-16 drop-shadow-lg">3개의 맞춤 상품을 추천드립니다</p>
+          <p className="ml-16 text-xl text-blue-100 drop-shadow-lg">
+            메인 상품 2개를 우선 비교하고, 신청 후에는 내 대출 관리에서 진행 상태를 확인할 수 있습니다.
+          </p>
         </div>
 
-        {/* 메인 컨텐츠 */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* 추천 상품 (큰 카드) */}
-          {featuredProduct && (
-            <div className="lg:col-span-2 bg-white/15 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border-2 border-white/30">
-              <div className="flex justify-between items-start mb-6">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-4">
-                    <h2 className="text-2xl font-bold text-white">
-                      {featuredProduct.name}
-                    </h2>
-                    {featuredProduct.badge && (
-                      <span className="bg-blue-500/30 backdrop-blur-sm text-white px-4 py-1 rounded-full text-sm font-semibold shadow-md border border-white/30">
-                        {featuredProduct.badge}
-                      </span>
-                    )}
-                  </div>
+        <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {primaryProducts.map((product) => {
+            const application = getApplication(product.id);
 
-                  <div className="mb-6">
-                    <div className="text-5xl font-bold text-blue-300 mb-2">
-                      연 {featuredProduct.rateMin}%
-                      {featuredProduct.rateMax && ` ~ ${featuredProduct.rateMax}%`}
-                    </div>
-                  </div>
+            return (
+              <section
+                key={product.id}
+                className="rounded-3xl border-2 border-white/30 bg-white/15 p-8 shadow-2xl backdrop-blur-lg"
+              >
+                <div className="mb-6 flex items-center gap-3">
+                  <h2 className="text-2xl font-bold text-white">{product.name}</h2>
+                  {product.badge && (
+                    <span className="rounded-full border border-white/30 bg-blue-500/30 px-4 py-1 text-sm font-semibold text-white shadow-md backdrop-blur-sm">
+                      {product.badge}
+                    </span>
+                  )}
+                  {application && (
+                    <span className="rounded-full border border-emerald-200/40 bg-emerald-400/20 px-4 py-1 text-sm font-semibold text-emerald-50">
+                      신청 진행 중
+                    </span>
+                  )}
+                </div>
 
-                  <div className="grid grid-cols-3 gap-6 mb-6">
-                    <div>
-                      <p className="text-sm text-blue-200 mb-1">최대 한도</p>
-                      <p className="font-bold text-white">{featuredProduct.limit}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-blue-200 mb-1">상환 방법</p>
-                      <p className="font-bold text-white">{featuredProduct.period}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-blue-200 mb-1">신청 가능+</p>
-                      <p className="font-bold text-white">{featuredProduct.available}</p>
-                    </div>
-                  </div>
+                <p className="mb-6 text-sm leading-6 text-blue-100">{product.summary}</p>
 
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    {featuredProduct.features.map((feature, index) => (
-                      <span
-                        key={index}
-                        className="bg-white/10 backdrop-blur-sm text-white px-4 py-2 rounded-lg text-sm border border-white/20"
-                      >
-                        {feature}
-                      </span>
-                    ))}
+                <div className="mb-6 text-4xl font-bold text-blue-300">{product.rate}</div>
+
+                <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+                  <div>
+                    <p className="mb-1 text-sm text-blue-200">대출 한도</p>
+                    <p className="font-bold text-white">{product.limit}</p>
+                  </div>
+                  <div>
+                    <p className="mb-1 text-sm text-blue-200">상환 기간</p>
+                    <p className="font-bold text-white">{product.period}</p>
+                  </div>
+                  <div>
+                    <p className="mb-1 text-sm text-blue-200">대상</p>
+                    <p className="font-bold text-white">{product.target}</p>
                   </div>
                 </div>
 
-                {/* 3D 그래픽 영역 */}
-                <div className="relative w-64 h-64 flex-shrink-0 ml-6">
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-32 bg-gradient-to-br from-blue-400 via-blue-500 to-blue-700 rounded-[40%_60%_70%_30%/60%_30%_70%_40%] shadow-2xl opacity-90 blur-sm"></div>
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-28 bg-gradient-to-br from-blue-300 via-blue-400 to-blue-600 rounded-[60%_40%_30%_70%/40%_70%_30%_60%] shadow-xl"></div>
-                </div>
-              </div>
-
-              <div className="flex gap-4">
-                <Link
-                  to={`/loan/products/${featuredProduct.id}`}
-                  className="flex-1 bg-white/10 backdrop-blur-sm text-white py-4 rounded-xl font-bold text-center hover:bg-white/20 transition-all shadow-sm border border-white/30"
-                >
-                  상세 보기
-                </Link>
-                <button className="flex-1 bg-blue-500/30 backdrop-blur-sm text-white py-4 rounded-xl font-bold hover:bg-blue-500/40 transition-all shadow-md border border-white/30">
-                  대출 신청하기
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* 다른 상품들 (작은 카드) */}
-          <div className="space-y-6">
-            {otherProducts.map((product) => (
-              <div key={product.id} className="bg-white/15 backdrop-blur-lg rounded-3xl p-6 shadow-2xl border-2 border-white/30">
-                <h3 className="text-xl font-bold text-white mb-4">{product.name}</h3>
-                <div className="text-3xl font-bold text-blue-300 mb-4">
-                  연 {product.rateMin}%
-                  {product.rateMax && ` ~ ${product.rateMax}%`}
-                </div>
-                <div className="space-y-2 mb-6">
-                  {product.features.map((feature, index) => (
-                    <p key={index} className="text-sm text-blue-200">
+                <div className="mb-6 flex flex-wrap gap-2">
+                  {product.features.map((feature) => (
+                    <span
+                      key={feature}
+                      className="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm text-white backdrop-blur-sm"
+                    >
                       {feature}
-                    </p>
+                    </span>
                   ))}
                 </div>
-                <Link
-                  to={`/loan/products/${product.id}`}
-                  className="block w-full bg-white/10 backdrop-blur-sm text-white py-3 rounded-xl font-bold text-center hover:bg-white/20 transition-all shadow-sm border border-white/30"
-                >
-                  상세 보기
-                </Link>
-              </div>
-            ))}
-          </div>
+
+                <div className="flex flex-col gap-4 sm:flex-row">
+                  <Link
+                    to={`/loan/products/${product.id}`}
+                    className="flex-1 rounded-xl border border-white/30 bg-white/10 py-4 text-center font-bold text-white shadow-sm backdrop-blur-sm transition-all hover:bg-white/20"
+                  >
+                    상세 보기
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => handleApply(product)}
+                    className="flex-1 rounded-xl border border-white/30 bg-blue-500/30 py-4 font-bold text-white shadow-md backdrop-blur-sm transition-all hover:bg-blue-500/40"
+                  >
+                    {application ? "내 대출 관리 보기" : "대출 신청하기"}
+                  </button>
+                </div>
+              </section>
+            );
+          })}
         </div>
 
-        {/* 하단 네비게이션 */}
+        <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {secondaryProducts.map((product) => (
+            <div
+              key={product.id}
+              className="rounded-3xl border-2 border-white/30 bg-white/15 p-6 shadow-2xl backdrop-blur-lg"
+            >
+              <h3 className="mb-4 text-xl font-bold text-white">{product.name}</h3>
+              <div className="mb-2 text-3xl font-bold text-blue-300">{product.rate}</div>
+              <p className="mb-4 text-sm text-blue-100">{product.limit}</p>
+              <div className="mb-6 space-y-2">
+                {product.features.map((feature) => (
+                  <p key={feature} className="text-sm text-blue-200">
+                    {feature}
+                  </p>
+                ))}
+              </div>
+              <Link
+                to={`/loan/products/${product.id}`}
+                className="block w-full rounded-xl border border-white/30 bg-white/10 py-3 text-center font-bold text-white shadow-sm backdrop-blur-sm transition-all hover:bg-white/20"
+              >
+                상세 보기
+              </Link>
+            </div>
+          ))}
+        </div>
+
         <div className="flex items-center justify-between">
-          <button className="flex items-center gap-2 text-white hover:text-blue-200 transition-colors bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg hover:bg-white/20 border border-white/30">
-            <ArrowLeft className="w-5 h-5" />
-            <span className="font-semibold">다시 상담하기</span>
+          <button
+            type="button"
+            className="flex items-center gap-2 rounded-lg border border-white/30 bg-white/10 px-4 py-2 text-white backdrop-blur-sm transition-colors hover:bg-white/20 hover:text-blue-200"
+          >
+            <ArrowLeft className="h-5 w-5" />
+            <span className="font-semibold">다시 둘러보기</span>
           </button>
 
           <div className="flex gap-6 text-sm text-blue-100">
-            <a href="#" className="hover:text-white transition-colors">
+            <a href="#" className="transition-colors hover:text-white">
               이용약관
             </a>
-            <a href="#" className="hover:text-white transition-colors">
+            <a href="#" className="transition-colors hover:text-white">
               개인정보처리방침
             </a>
-            <a href="#" className="hover:text-white transition-colors">
+            <a href="#" className="transition-colors hover:text-white">
               상품공시실
             </a>
-            <a href="#" className="hover:text-white transition-colors">
+            <a href="#" className="transition-colors hover:text-white">
               고객센터
             </a>
           </div>
-        </div>
-
-        <div className="mt-8 text-center text-blue-200 text-sm">
-          © 2025 똑개뱅크. All rights reserved.
         </div>
       </div>
     </div>
