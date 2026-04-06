@@ -1,8 +1,6 @@
 import { Calendar, Calculator, TrendingDown } from "lucide-react";
 import { useMemo, useState } from "react";
 
-const TODAY = new Date("2026-04-02T00:00:00");
-
 const loanInfo = {
   totalPrincipal: 20000000,
   remainingPrincipal: 15000000,
@@ -30,13 +28,14 @@ function formatAmount(value: number) {
 
 export default function MyLoanManagement() {
   const [simulationAmount, setSimulationAmount] = useState(1000000);
-
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const repaidPrincipal = loanInfo.totalPrincipal - loanInfo.remainingPrincipal;
   const repaymentProgress = (repaidPrincipal / loanInfo.totalPrincipal) * 100;
 
   const nextPaymentDate = new Date(`${loanInfo.nextPaymentDate}T00:00:00`);
   const daysUntilNextPayment = Math.max(
-    Math.ceil((nextPaymentDate.getTime() - TODAY.getTime()) / (1000 * 60 * 60 * 24)),
+    Math.ceil((nextPaymentDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)),
     0,
   );
 

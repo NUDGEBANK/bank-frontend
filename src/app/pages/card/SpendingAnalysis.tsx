@@ -64,6 +64,10 @@ export default function SpendingAnalysis() {
     total: item.essential + item.discretionary,
   }));
 
+  if (monthlyTotals.length < 2) {
+    return <div>데이터가 부족합니다.</div>;
+  }
+
   const currentMonth = monthlyTotals[monthlyTotals.length - 1];
   const previousMonth = monthlyTotals[monthlyTotals.length - 2];
   const currentMonthSpending = currentMonth.total;
@@ -81,8 +85,9 @@ export default function SpendingAnalysis() {
   const averageDiff = currentMonthSpending - sixMonthAverage;
   const averageDiffRate = sixMonthAverage === 0 ? 0 : (averageDiff / sixMonthAverage) * 100;
   const projectedMonthEndSpending = Math.round((currentMonthSpending / elapsedDays) * daysInMonth);
-
-  const fixedSpendingRatio = Math.round((currentMonth.essential / currentMonthSpending) * 100);
+  const fixedSpendingRatio = currentMonthSpending === 0
+      ? 0
+      : Math.round((currentMonth.essential / currentMonthSpending) * 100);
   const variableSpendingRatio = 100 - fixedSpendingRatio;
   const recommendedCutAmount = Math.round(topCategory.value * 0.18);
   const isAboveAverage = averageDiff > 0;
@@ -260,7 +265,7 @@ export default function SpendingAnalysis() {
                         <Cell key={entry.name} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: number) => formatAmount(value)} />
+                    <Tooltip formatter={(value) => formatAmount(Number(value))} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -375,6 +380,9 @@ export default function SpendingAnalysis() {
                     onChange={(event) => setAlertThreshold(Number(event.target.value))}
                     className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100 disabled:bg-slate-50 md:w-44"
                     disabled={!alertEnabled}
+                    min={1000000}
+                    max={5000000}
+                    step={100000}
                   />
                 </div>
               </div>
