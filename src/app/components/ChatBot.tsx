@@ -10,14 +10,20 @@ type Message = {
 export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const bufferRef = useRef<string>("");
+  const typingIntervalRef = useRef<number | null>(null);
+  const streamDoneRef = useRef<boolean>(false);
 
   const [messages, setMessages] = useState<Message[]>(() => {
     const saved = sessionStorage.getItem("chat_history");
     if (saved) return JSON.parse(saved);
+
     return [
       {
-        text: "안녕하세요! 똑개뱅크 AI 상담사입니다. 무엇을 도와드릴까요?",
+        text: "안녕하세요! 넛지뱅크 AI 상담사입니다. 무엇을 도와드릴까요?",
         sender: "bot",
       },
     ];
@@ -33,26 +39,94 @@ export default function ChatBot() {
     }
   }, [messages, isOpen]);
 
-  const handleSend = async () => {
-    if (!inputValue.trim()) return;
+  useEffect(() => {
+    if (!isOpen) return;
 
-    const userMessage = inputValue;
-    setMessages((prev) => [...prev, { text: userMessage, sender: "user" }]);
+    const id = requestAnimationFrame(() => {
+      inputRef.current?.focus();
+    });
+
+    return () => cancelAnimationFrame(id);
+  }, [isOpen]);
+
+  useEffect(() => {
+    return () => {
+      if (typingIntervalRef.current !== null) {
+        window.clearInterval(typingIntervalRef.current);
+      }
+    };
+  }, []);
+
+  const appendToLastBotMessage = (text: string) => {
+    setMessages((prev) => {
+      const updated = [...prev];
+      const lastIndex = updated.length - 1;
+
+      if (lastIndex >= 0 && updated[lastIndex].sender === "bot") {
+        updated[lastIndex] = {
+          ...updated[lastIndex],
+          text: updated[lastIndex].text + text,
+        };
+      }
+
+      return updated;
+    });
+  };
+
+  const startTypingEffect = () => {
+    if (typingIntervalRef.current !== null) return;
+
+    typingIntervalRef.current = window.setInterval(() => {
+      if (bufferRef.current.length > 0) {
+        const nextChar = bufferRef.current[0];
+        bufferRef.current = bufferRef.current.slice(1);
+        appendToLastBotMessage(nextChar);
+        return;
+      }
+
+      if (streamDoneRef.current) {
+        if (typingIntervalRef.current !== null) {
+          window.clearInterval(typingIntervalRef.current);
+          typingIntervalRef.current = null;
+        }
+        setIsStreaming(false);
+
+        requestAnimationFrame(() => {
+          inputRef.current?.focus();
+        });
+      }
+    }, 20);
+  };
+
+  const handleSend = async () => {
+    if (!inputValue.trim() || isStreaming) return;
+
+    const userMessage = inputValue.trim();
     setInputValue("");
+    setIsStreaming(true);
+
+    bufferRef.current = "";
+    streamDoneRef.current = false;
+
+    setMessages((prev) => [
+      ...prev,
+      { text: userMessage, sender: "user" },
+      { text: "", sender: "bot" },
+    ]);
+
+    startTypingEffect();
 
     try {
-      // Spring API 호출
-      const botAnswer = await sendMessage("user-123", userMessage); // userId는 실제 로그인 유저 ID로 대체
-      setMessages((prev) => [...prev, { text: botAnswer, sender: "bot" }]);
+      await sendMessage("user-123", userMessage, (chunk) => {
+        bufferRef.current += chunk;
+      });
+
+      streamDoneRef.current = true;
     } catch (error) {
       console.error("챗봇 API 호출 실패:", error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          text: "챗봇 서버와 연결할 수 없습니다. 잠시 후 다시 시도해주세요.",
-          sender: "bot",
-        },
-      ]);
+      bufferRef.current +=
+        "챗봇 서버와 연결할 수 없습니다. 잠시 후 다시 시도해주세요.";
+      streamDoneRef.current = true;
     }
   };
 
@@ -86,16 +160,21 @@ export default function ChatBot() {
             {messages.map((message, index) => (
               <div
                 key={index}
-                className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
+                className={`flex ${
+                  message.sender === "user" ? "justify-end" : "justify-start"
+                }`}
               >
                 <div
-                  className={`max-w-[80%] px-4 py-2 rounded-lg ${
+                  className={`max-w-[80%] px-4 py-2 rounded-lg whitespace-pre-wrap ${
                     message.sender === "user"
                       ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md"
                       : "bg-white/80 backdrop-blur-sm text-gray-800 border border-gray-200"
                   }`}
                 >
-                  {message.text}
+                  {message.text ||
+                    (message.sender === "bot" && isStreaming
+                      ? "답변 작성 중..."
+                      : "")}
                 </div>
               </div>
             ))}
@@ -103,18 +182,26 @@ export default function ChatBot() {
           </div>
 
           <div className="p-4 border-t border-white/20 bg-white/50 backdrop-blur-sm">
-            <div className="flex gap-2">
-              <input
-                type="text"
+            <div className="flex gap-2 items-end">
+              <textarea
+                ref={inputRef}
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && handleSend()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
                 placeholder="메시지를 입력하세요..."
-                className="flex-1 px-3 py-2 bg-white/90 backdrop-blur-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                disabled={isStreaming}
+                rows={1}
+                className="flex-1 resize-none px-3 py-2 bg-white/90 backdrop-blur-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:bg-gray-100"
               />
               <button
                 onClick={handleSend}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white p-2 rounded-lg transition-all shadow-md"
+                disabled={isStreaming}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white p-2 rounded-lg transition-all shadow-md disabled:opacity-50"
               >
                 <Send className="w-5 h-5" />
               </button>
