@@ -25,11 +25,15 @@ type MonthlyDatum = {
   discretionary: number;
 };
 
+const asOfDate = new Date("2026-04-24T00:00:00");
+const daysInMonth = 30;
+const elapsedDays = asOfDate.getDate();
+
 const categoryData: CategoryDatum[] = [
   { name: "생활비", value: 450000, color: "#2563eb" },
   { name: "쇼핑", value: 850000, color: "#4f46e5" },
   { name: "교통", value: 120000, color: "#0f766e" },
-  { name: "문화/여가", value: 320000, color: "#64748b" },
+  { name: "문화·여가", value: 320000, color: "#64748b" },
   { name: "식비", value: 280000, color: "#3b82f6" },
   { name: "기타", value: 510250, color: "#94a3b8" },
 ];
@@ -54,29 +58,35 @@ export default function SpendingAnalysis() {
   const totalSpending = categoryData.reduce((sum, item) => sum + item.value, 0);
   const sortedCategoryData = [...categoryData].sort((left, right) => right.value - left.value);
   const topCategory = sortedCategoryData[0];
-  const averageMonthly =
-    monthlyData.reduce((sum, item) => sum + item.essential + item.discretionary, 0) /
-    monthlyData.length;
-  const currentMonthSpending =
-    monthlyData[monthlyData.length - 1].essential +
-    monthlyData[monthlyData.length - 1].discretionary;
-  const previousMonthSpending =
-    monthlyData[monthlyData.length - 2].essential +
-    monthlyData[monthlyData.length - 2].discretionary;
-  const spendingDiff = currentMonthSpending - averageMonthly;
-  const monthOverMonthDiff = currentMonthSpending - previousMonthSpending;
-  const isOverspending = spendingDiff > 0;
-  const projectedMonthEndSpending = Math.round(currentMonthSpending * 1.12);
-  const recommendedCutAmount = Math.round(topCategory.value * 0.18);
-  const fixedSpendingRatio = Math.round(
-    (monthlyData[monthlyData.length - 1].essential / currentMonthSpending) * 100,
-  );
-  const variableSpendingRatio = 100 - fixedSpendingRatio;
+
+  const monthlyTotals = monthlyData.map((item) => ({
+    ...item,
+    total: item.essential + item.discretionary,
+  }));
+
+  const currentMonth = monthlyTotals[monthlyTotals.length - 1];
+  const previousMonth = monthlyTotals[monthlyTotals.length - 2];
+  const currentMonthSpending = currentMonth.total;
+  const previousMonthSpending = previousMonth.total;
   const recentThreeMonthAverage = Math.round(
-    monthlyData
-      .slice(-3)
-      .reduce((sum, item) => sum + item.essential + item.discretionary, 0) / 3,
+    monthlyTotals.slice(-3).reduce((sum, item) => sum + item.total, 0) / 3,
   );
+  const sixMonthAverage = Math.round(
+    monthlyTotals.reduce((sum, item) => sum + item.total, 0) / monthlyTotals.length,
+  );
+
+  const monthOverMonthDiff = currentMonthSpending - previousMonthSpending;
+  const monthOverMonthRate =
+    previousMonthSpending === 0 ? 0 : (monthOverMonthDiff / previousMonthSpending) * 100;
+  const averageDiff = currentMonthSpending - sixMonthAverage;
+  const averageDiffRate = sixMonthAverage === 0 ? 0 : (averageDiff / sixMonthAverage) * 100;
+  const projectedMonthEndSpending = Math.round((currentMonthSpending / elapsedDays) * daysInMonth);
+
+  const fixedSpendingRatio = Math.round((currentMonth.essential / currentMonthSpending) * 100);
+  const variableSpendingRatio = 100 - fixedSpendingRatio;
+  const recommendedCutAmount = Math.round(topCategory.value * 0.18);
+  const isAboveAverage = averageDiff > 0;
+  const isOverThreshold = totalSpending > alertThreshold;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 md:px-6">
@@ -85,23 +95,21 @@ export default function SpendingAnalysis() {
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-blue-500">
             Spending Analysis
           </p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
-            소비 분석
-          </h1>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">소비 분석</h1>
           <p className="mt-2 text-sm text-slate-500">
-            월별 소비 흐름과 카테고리 비중을 한눈에 확인할 수 있습니다.
+            월별 소비 흐름과 카테고리 비중을 바탕으로 현재 소비 상태를 해석합니다.
           </p>
 
           <div className="mt-6 grid gap-4 md:grid-cols-4">
             <div className="rounded-3xl border border-sky-100 bg-[linear-gradient(135deg,_rgba(219,234,254,0.95)_0%,_rgba(239,246,255,0.98)_48%,_rgba(248,250,252,1)_100%)] px-5 py-5 text-slate-900 shadow-[0_20px_45px_rgba(148,163,184,0.18)]">
-              <p className="text-xs tracking-[0.12em] text-sky-700/70">이번 달 총 소비</p>
+              <p className="text-xs tracking-[0.12em] text-sky-700/70">이번 달 총소비</p>
               <p className="mt-3 text-3xl font-semibold">{formatAmount(totalSpending)}</p>
             </div>
 
             <div className="rounded-3xl border border-blue-100 bg-blue-50/70 px-5 py-5">
-              <p className="text-sm font-medium text-slate-500">월 평균 소비</p>
+              <p className="text-sm font-medium text-slate-500">6개월 평균 소비</p>
               <p className="mt-4 text-2xl font-bold text-slate-900">
-                {formatAmount(Math.round(averageMonthly))}
+                {formatAmount(sixMonthAverage)}
               </p>
             </div>
 
@@ -109,15 +117,15 @@ export default function SpendingAnalysis() {
               <p className="text-sm font-medium text-slate-500">전월 대비</p>
               <div className="mt-4">
                 <p className="text-2xl font-bold text-slate-900">
-                  {isOverspending ? "+" : ""}
-                  {(((currentMonthSpending - averageMonthly) / averageMonthly) * 100).toFixed(1)}%
+                  {monthOverMonthRate > 0 ? "+" : ""}
+                  {monthOverMonthRate.toFixed(1)}%
                 </p>
               </div>
             </div>
 
             <div className="rounded-3xl border border-indigo-100 bg-indigo-50/80 px-5 py-5">
               <p className="text-sm font-medium text-slate-500">가장 큰 소비 항목</p>
-              <p className="mt-4 text-2xl font-bold text-slate-900">쇼핑</p>
+              <p className="mt-4 text-2xl font-bold text-slate-900">{topCategory.name}</p>
             </div>
           </div>
         </div>
@@ -128,7 +136,7 @@ export default function SpendingAnalysis() {
               <div className="mb-5">
                 <h2 className="text-xl font-bold text-slate-900">이번 달 소비 해석</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  단순 합계보다 변화 폭과 패턴을 먼저 보여줍니다.
+                  단순 합계가 아니라 전월과 평균 기준에서 현재 흐름을 해석합니다.
                 </p>
               </div>
 
@@ -136,13 +144,13 @@ export default function SpendingAnalysis() {
                 <article className="flex min-h-[168px] flex-col rounded-2xl border border-blue-100 bg-blue-50/80 p-5">
                   <p className="text-sm font-medium text-slate-500">전월 대비 변화</p>
                   <p className="mt-3 text-2xl font-bold text-slate-900">
-                    {monthOverMonthDiff > 0 ? "+" : ""}
+                    {monthOverMonthDiff > 0 ? "+" : "-"}
                     {formatAmount(Math.abs(monthOverMonthDiff))}
                   </p>
                   <p className="mt-auto pt-4 text-sm leading-6 text-slate-600">
                     지난달보다{" "}
                     <span className="font-semibold text-slate-800">
-                      {monthOverMonthDiff > 0 ? "지출이 늘었습니다" : "지출이 줄었습니다"}
+                      {monthOverMonthDiff > 0 ? "지출이 늘었습니다." : "지출이 줄었습니다."}
                     </span>
                   </p>
                 </article>
@@ -153,17 +161,21 @@ export default function SpendingAnalysis() {
                     {formatAmount(projectedMonthEndSpending)}
                   </p>
                   <p className="mt-auto pt-4 text-sm leading-6 text-slate-600">
-                    현재 추세가 유지되면 이 수준까지 갈 가능성이 큽니다.
+                    이번 달 {elapsedDays}일 기준 일평균 소비를 월말까지 단순 환산한 값입니다.
                   </p>
                 </article>
 
                 <article className="flex min-h-[168px] flex-col rounded-2xl border border-slate-200 bg-slate-50/90 p-5">
-                  <p className="text-sm font-medium text-slate-500">최근 3개월 평균</p>
+                  <p className="text-sm font-medium text-slate-500">평균 대비 변화</p>
                   <p className="mt-3 text-2xl font-bold text-slate-900">
-                    {formatAmount(recentThreeMonthAverage)}
+                    {averageDiffRate > 0 ? "+" : ""}
+                    {averageDiffRate.toFixed(1)}%
                   </p>
                   <p className="mt-auto pt-4 text-sm leading-6 text-slate-600">
-                    단기 흐름 기준으로 현재 소비 수준을 비교할 수 있습니다.
+                    최근 6개월 평균과 비교하면{" "}
+                    <span className="font-semibold text-slate-800">
+                      {isAboveAverage ? "소비가 높은 편입니다." : "소비가 안정적인 편입니다."}
+                    </span>
                   </p>
                 </article>
               </div>
@@ -173,7 +185,7 @@ export default function SpendingAnalysis() {
               <div className="mb-5">
                 <h2 className="text-xl font-bold text-slate-900">분석 인사이트</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  지금 소비 패턴에서 바로 읽히는 포인트입니다.
+                  실제 백엔드 연동 시 카테고리별 집계와 월별 분석 결과를 이 영역에 연결하는 구조입니다.
                 </p>
               </div>
 
@@ -198,14 +210,14 @@ export default function SpendingAnalysis() {
                     약 {formatAmount(recommendedCutAmount)}
                   </p>
                   <p className="mt-2 text-sm text-slate-600">
-                    {topCategory.name} 항목을 조금만 줄여도 이번 달 부담을 낮출 수 있습니다.
+                    {topCategory.name} 항목을 일부 줄이면 이번 달 부담을 완화할 수 있습니다.
                   </p>
                 </div>
               </div>
             </div>
           </section>
 
-          {isOverspending && (
+          {isAboveAverage && (
             <section className="rounded-3xl border border-amber-200 bg-amber-50/90 px-6 py-5">
               <div className="flex items-start gap-4">
                 <div className="rounded-2xl bg-amber-100 p-3 text-amber-600">
@@ -214,8 +226,8 @@ export default function SpendingAnalysis() {
                 <div>
                   <h2 className="text-lg font-semibold text-slate-900">소비 주의 신호</h2>
                   <p className="mt-1 text-sm leading-6 text-slate-600">
-                    이번 달 소비가 평균보다 {formatAmount(Math.round(spendingDiff))} 많습니다.
-                    특히 쇼핑과 선택 지출 비중이 커져서 다음 결제까지 한 번 점검하는 편이 좋습니다.
+                    이번 달 소비가 최근 평균보다 {formatAmount(Math.abs(Math.round(averageDiff)))} 많습니다.
+                    쇼핑과 선택 지출 비중이 커져 있어 다음 결제 전까지 추가 지출을 점검하는 편이 좋습니다.
                   </p>
                 </div>
               </div>
@@ -226,7 +238,7 @@ export default function SpendingAnalysis() {
             <div className="mb-6">
               <h2 className="text-xl font-bold text-slate-900">카테고리별 소비 통계</h2>
               <p className="mt-1 text-sm text-slate-500">
-                소비 항목별 금액과 비중을 보여줍니다.
+                소비 항목별 금액과 비중을 큰 순서대로 보여줍니다.
               </p>
             </div>
 
@@ -260,10 +272,7 @@ export default function SpendingAnalysis() {
                     className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-4"
                   >
                     <div className="flex items-center gap-3">
-                      <div
-                        className="h-3.5 w-3.5 rounded-full"
-                        style={{ backgroundColor: category.color }}
-                      />
+                      <div className="h-3.5 w-3.5 rounded-full" style={{ backgroundColor: category.color }} />
                       <span className="font-medium text-slate-800">{category.name}</span>
                     </div>
                     <div className="text-right">
@@ -282,7 +291,7 @@ export default function SpendingAnalysis() {
             <div className="mb-6">
               <h2 className="text-xl font-bold text-slate-900">월별 소비 흐름</h2>
               <p className="mt-1 text-sm text-slate-500">
-                생활비와 선택 지출을 분리해 추이를 비교합니다.
+                생활비와 선택 지출을 나눠서 월별 변화를 비교합니다.
               </p>
             </div>
 
@@ -293,18 +302,8 @@ export default function SpendingAnalysis() {
                   <YAxis tickLine={false} axisLine={false} />
                   <Tooltip formatter={(value: number) => formatAmount(value)} />
                   <Legend />
-                  <Bar
-                    dataKey="essential"
-                    name="생활비"
-                    radius={[10, 10, 0, 0]}
-                    fill="#2563eb"
-                  />
-                  <Bar
-                    dataKey="discretionary"
-                    name="선택 지출"
-                    radius={[10, 10, 0, 0]}
-                    fill="#93c5fd"
-                  />
+                  <Bar dataKey="essential" name="생활비" radius={[10, 10, 0, 0]} fill="#2563eb" />
+                  <Bar dataKey="discretionary" name="선택 지출" radius={[10, 10, 0, 0]} fill="#93c5fd" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -314,21 +313,21 @@ export default function SpendingAnalysis() {
             <article className="rounded-3xl border border-blue-100 bg-blue-50/80 p-6">
               <h3 className="text-lg font-semibold text-slate-900">안정적인 고정 지출</h3>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                생활비는 최근 몇 달 동안 큰 변동 없이 유지되고 있습니다. 기본 소비 구조는 안정적인 편입니다.
+                생활비는 최근 여러 달 동안 큰 변동 없이 유지되고 있습니다. 고정 지출 구조는 비교적 안정적인 편입니다.
               </p>
             </article>
 
             <article className="rounded-3xl border border-amber-100 bg-amber-50/80 p-6">
               <h3 className="text-lg font-semibold text-slate-900">선택 지출 증가</h3>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                쇼핑과 여가 지출이 이번 달에 빠르게 늘었습니다. 다음 주까지 추이를 한 번 더 보는 편이 좋습니다.
+                쇼핑과 문화·여가 지출이 이번 달에 집중되어 있습니다. 다음 주까지 추이를 한 번 더 보는 편이 좋습니다.
               </p>
             </article>
 
             <article className="rounded-3xl border border-slate-200 bg-slate-50/90 p-6">
               <h3 className="text-lg font-semibold text-slate-900">상환 여력 메모</h3>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                현재 패턴 기준으로는 생활비를 유지한 채 선택 지출만 줄여도 상환 여력을 일정 수준 확보할 수 있습니다.
+                현재 흐름 기준으로는 생활비를 유지한 채 선택 지출만 줄여도 월간 부담을 완화할 수 있는 구조입니다.
               </p>
             </article>
           </section>
@@ -338,7 +337,7 @@ export default function SpendingAnalysis() {
               <div>
                 <h2 className="text-xl font-bold text-slate-900">과소비 알림 설정</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  사이트 전반의 톤에 맞춰 차분하게 안내만 제공하도록 구성했습니다.
+                  백엔드 연동 시 월간 소비 누계를 기준으로 알림을 주는 구조를 가정합니다.
                 </p>
               </div>
 
@@ -358,9 +357,7 @@ export default function SpendingAnalysis() {
 
             <div className="mt-6 space-y-4">
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-600">
-                  월간 소비 한도 설정
-                </label>
+                <label className="mb-2 block text-sm font-medium text-slate-600">월간 소비 한도 설정</label>
                 <div className="flex flex-col gap-3 md:flex-row md:items-center">
                   <input
                     type="range"
@@ -385,14 +382,10 @@ export default function SpendingAnalysis() {
               <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4">
                 <p className="text-sm leading-6 text-slate-600">
                   {alertEnabled
-                    ? `현재 소비 금액은 ${formatAmount(totalSpending)}이며 설정한 한도는 ${formatAmount(
-                        alertThreshold,
-                      )}입니다. ${
-                        totalSpending > alertThreshold
-                          ? "이미 한도를 초과한 상태입니다."
-                          : "아직 설정 범위 안에 있습니다."
+                    ? `현재 집계 소비 금액은 ${formatAmount(totalSpending)}이고 설정한 한도는 ${formatAmount(alertThreshold)}입니다. ${
+                        isOverThreshold ? "이미 한도를 초과한 상태입니다." : "아직 설정 범위 안에 있습니다."
                       }`
-                    : "알림이 꺼져 있습니다. 다시 켜면 초과 시점에 맞춰 경고를 받을 수 있습니다."}
+                    : "알림이 꺼져 있습니다. 다시 켜면 한도 초과 시점에 맞춰 경고를 받을 수 있습니다."}
                 </p>
               </div>
             </div>
