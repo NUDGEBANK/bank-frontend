@@ -131,6 +131,25 @@ const tabs: { id: DetailTab; label: string }[] = [
   { id: "caution", label: "유의사항" },
 ];
 
+function getApplicationStatusLabel(application: LoanApplicationSummary) {
+  if (application.productKey === "youth-loan" && application.certificateSubmitted) {
+    return "서류 제출 완료";
+  }
+
+  switch (application.applicationStatus) {
+    case "DOCUMENT_REQUIRED":
+      return "서류 제출 필요";
+    case "UNDER_REVIEW":
+      return "심사 진행 중";
+    case "APPROVED":
+      return "이용 중";
+    case "REJECTED":
+      return "심사 반려";
+    default:
+      return "접수 완료";
+  }
+}
+
 export default function LoanDetail() {
   const navigate = useNavigate();
   const { productId } = useParams<{ productId: string }>();
@@ -252,10 +271,17 @@ export default function LoanDetail() {
 
       <div className="mb-8 rounded-3xl border border-[#d7e5f5] bg-[linear-gradient(135deg,_#edf4fb_0%,_#dfeefb_50%,_#f8fbff_100%)] p-8 text-center text-slate-900 shadow-xl">
         <h3 className="mb-2 text-2xl font-bold">상품 내용을 확인한 뒤 바로 신청할 수 있습니다</h3>
+        {application && (
+          <div className="mb-4 inline-flex rounded-full border border-emerald-600/70 bg-emerald-600 px-4 py-1 text-sm font-semibold text-white shadow-sm">
+            {getApplicationStatusLabel(application)}
+          </div>
+        )}
         <p className="mb-6 text-slate-600">
           {productId === "youth-loan"
             ? "자기계발 대출은 신청 후 내 대출 관리에서 OCR 서류를 제출하면 심사가 이어집니다."
-            : "소비분석 대출은 신청 후 심사 상태를 내 대출 관리에서 바로 확인할 수 있습니다."}
+            : productId === "consumption-loan"
+              ? "소비분석 대출은 신청 후 심사 상태를 내 대출 관리에서 바로 확인할 수 있습니다."
+              : "비상금 대출은 신청 후 심사 상태와 상환 일정을 내 대출 관리에서 확인할 수 있습니다."}
         </p>
         <button
           type="button"

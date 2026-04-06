@@ -26,6 +26,25 @@ type LoanApplicationSummary = {
   certificateSubmitted: boolean;
 };
 
+function getApplicationStatusLabel(application: LoanApplicationSummary) {
+  if (application.productKey === "youth-loan" && application.certificateSubmitted) {
+    return "서류 제출 완료";
+  }
+
+  switch (application.applicationStatus) {
+    case "DOCUMENT_REQUIRED":
+      return "서류 제출 필요";
+    case "UNDER_REVIEW":
+      return "심사 진행 중";
+    case "APPROVED":
+      return "이용 중";
+    case "REJECTED":
+      return "심사 반려";
+    default:
+      return "접수 완료";
+  }
+}
+
 const loanProducts: LoanProduct[] = [
   {
     id: "consumption-loan",
@@ -152,7 +171,7 @@ export default function LoanProducts() {
                   )}
                   {application && (
                     <span className="rounded-full border border-emerald-600/70 bg-emerald-600 px-4 py-1 text-sm font-semibold text-white shadow-sm">
-                      접수 완료
+                      {getApplicationStatusLabel(application)}
                     </span>
                   )}
                 </div>
@@ -208,12 +227,22 @@ export default function LoanProducts() {
         </div>
 
         <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {secondaryProducts.map((product) => (
+          {secondaryProducts.map((product) => {
+            const application = getApplication(product.id);
+
+            return (
             <div
               key={product.id}
               className="rounded-3xl border-2 border-white/30 bg-white/15 p-6 shadow-2xl backdrop-blur-lg"
             >
-              <h3 className="mb-4 text-xl font-bold text-white">{product.name}</h3>
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <h3 className="text-xl font-bold text-white">{product.name}</h3>
+                {application && (
+                  <span className="rounded-full border border-emerald-600/70 bg-emerald-600 px-3 py-1 text-xs font-semibold text-white shadow-sm">
+                    {getApplicationStatusLabel(application)}
+                  </span>
+                )}
+              </div>
               <div className="mb-2 text-3xl font-bold text-blue-300">{product.rate}</div>
               <p className="mb-4 text-sm text-blue-100">{product.limit}</p>
               <div className="mb-6 space-y-2">
@@ -229,8 +258,16 @@ export default function LoanProducts() {
               >
                 상세 보기
               </Link>
+              <button
+                type="button"
+                onClick={() => handleApply(product)}
+                className="mt-3 block w-full rounded-xl border border-white/30 bg-blue-500/30 py-3 text-center font-bold text-white shadow-sm backdrop-blur-sm transition-all hover:bg-blue-500/40"
+              >
+                {application ? "내 대출 관리 보기" : "대출 신청하기"}
+              </button>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         <div className="flex items-center justify-between">

@@ -11,6 +11,20 @@ type LoanApplyConfig = {
   rate: string;
   defaultAmount: string;
   defaultPurpose: string;
+  amountRange: { min: number; max: number };
+  termOptions: string[];
+};
+
+const amountRanges: Record<string, { min: number; max: number }> = {
+  "consumption-loan": { min: 500000, max: 3000000 },
+  "youth-loan": { min: 500000, max: 5000000 },
+  "situate-loan": { min: 300000, max: 2000000 },
+};
+
+const termOptionsByProduct: Record<string, string[]> = {
+  "consumption-loan": ["6개월", "12개월", "18개월"],
+  "youth-loan": ["12개월", "18개월", "24개월"],
+  "situate-loan": ["1개월", "3개월", "6개월", "12개월"],
 };
 
 type LoanApplicationSummary = {
@@ -58,8 +72,13 @@ export default function LoanApply() {
   const { productId } = useParams<{ productId: string }>();
   const product = productId ? productConfigs[productId] : undefined;
   const [amount, setAmount] = useState(product?.defaultAmount ?? "");
-  const [loanTerm, setLoanTerm] = useState(productId === "youth-loan" ? "24개월" : "12개월");
+  const termOptions = productId ? termOptionsByProduct[productId] ?? ["12개월"] : ["12개월"];
+  const amountRange =
+    productId ? amountRanges[productId] ?? { min: 0, max: Number.MAX_SAFE_INTEGER } : { min: 0, max: Number.MAX_SAFE_INTEGER };
+  const [loanTerm, setLoanTerm] = useState(termOptions[0] ?? "12개월");
   const [purpose, setPurpose] = useState(product?.defaultPurpose ?? "");
+  const [monthlyIncome, setMonthlyIncome] = useState("");
+  const [salaryDate, setSalaryDate] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [error, setError] = useState("");
@@ -94,14 +113,38 @@ export default function LoanApply() {
       return;
     }
 
+    const parsedAmount = Number(amount);
+    const parsedMonthlyIncome = Number(monthlyIncome);
+    const parsedSalaryDate = Number(salaryDate);
+
+    if (Number.isNaN(parsedAmount) || parsedAmount < amountRange.min || parsedAmount > amountRange.max) {
+      setError(`신청 금액은 ${amountRange.min.toLocaleString("ko-KR")}원~${amountRange.max.toLocaleString("ko-KR")}원 범위로 입력해 주세요.`);
+      return;
+    }
+
+    if (!termOptions.includes(loanTerm)) {
+      setError("상품 조건에 맞는 상환 기간을 선택해 주세요.");
+      return;
+    }
+
+    if (Number.isNaN(parsedMonthlyIncome) || parsedMonthlyIncome <= 0) {
+      setError("월 소득을 입력해 주세요.");
+      return;
+    }
+
+    if (Number.isNaN(parsedSalaryDate) || parsedSalaryDate < 1 || parsedSalaryDate > 31) {
+      setError("급여일은 1일부터 31일 사이로 입력해 주세요.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await postJson<LoanApplicationSummary>("/api/loan-applications", {
         productKey: productId,
-        loanAmount: Number(amount),
+        loanAmount: parsedAmount,
         loanTerm,
-        monthlyIncome: 2500000,
-        salaryDate: 25,
+        monthlyIncome: parsedMonthlyIncome,
+        salaryDate: parsedSalaryDate,
         purpose,
       });
       window.dispatchEvent(new Event("loan-application-change"));
@@ -165,10 +208,33 @@ export default function LoanApply() {
                 onChange={(event) => setLoanTerm(event.target.value)}
                 className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-700 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
               >
-                <option>12개월</option>
-                <option>18개월</option>
-                <option>24개월</option>
+                {termOptions.map((termOption) => (
+                  <option key={termOption} value={termOption}>
+                    {termOption}
+                  </option>
+                ))}
               </select>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-600">월 소득</label>
+                <input
+                  value={monthlyIncome}
+                  onChange={(event) => setMonthlyIncome(event.target.value)}
+                  className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-700 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+                  placeholder="월 소득을 입력해 주세요"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-600">급여일</label>
+                <input
+                  value={salaryDate}
+                  onChange={(event) => setSalaryDate(event.target.value)}
+                  className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-700 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+                  placeholder="매월 급여일을 입력해 주세요"
+                />
+              </div>
             </div>
 
             <div>
@@ -264,7 +330,7 @@ export default function LoanApply() {
               </div>
             </div>
             <p className="mt-4 text-sm leading-6 text-slate-700">
-              신청 정보는 브라우저 임시 저장 상태로 관리되고 있으며, 백엔드 연동 이후 실제 신청 데이터와 연결됩니다.
+              신청 정보는 백엔드에 바로 저장되며, 내 대출 관리에서 실제 신청 상태를 확인할 수 있습니다.
             </p>
           </div>
         </aside>

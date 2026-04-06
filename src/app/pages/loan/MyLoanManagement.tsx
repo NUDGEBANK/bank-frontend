@@ -70,6 +70,25 @@ const failureReasonMessages: Record<string, string> = {
   OCR_TEXT_NOT_DETECTED: NO_TEXT_DETECTED_MESSAGE,
 };
 
+function getApplicationStatusLabel(application: LoanApplicationSummary) {
+  if (application.productKey === "youth-loan" && application.certificateSubmitted) {
+    return "서류 제출 완료";
+  }
+
+  switch (application.applicationStatus) {
+    case "DOCUMENT_REQUIRED":
+      return "서류 제출 필요";
+    case "UNDER_REVIEW":
+      return "심사 진행 중";
+    case "APPROVED":
+      return "이용 중";
+    case "REJECTED":
+      return "심사 반려";
+    default:
+      return application.applicationStatus;
+  }
+}
+
 function formatAmount(value: number) {
   return `${value.toLocaleString("ko-KR")}원`;
 }
@@ -139,6 +158,8 @@ export default function MyLoanManagement() {
     () => applications.find((application) => application.productKey === "youth-loan") ?? null,
     [applications],
   );
+  const canSubmitCertificate =
+    !!selfDevelopmentApplication && !selfDevelopmentApplication.certificateSubmitted;
 
   const statusText: Record<UploadStatus, string> = {
     idle: "자기계발 대출 신청 후 자격증 파일을 제출할 수 있습니다.",
@@ -205,6 +226,7 @@ export default function MyLoanManagement() {
       }
 
       setUploadStatus("completed");
+      window.dispatchEvent(new Event("loan-application-change"));
     } catch (error) {
       setUploadStatus("failed");
       setUploadError(
@@ -324,11 +346,8 @@ export default function MyLoanManagement() {
                       className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4"
                     >
                       <p className="text-sm text-slate-500">{application.productName}</p>
-                      <p className="mt-2 text-lg font-semibold text-slate-900">
-                        {application.loanApplicationId}
-                      </p>
                       <p className="mt-1 text-sm text-slate-600">
-                        상태 <span className="font-semibold text-sky-700">{application.applicationStatus}</span>
+                        상태 <span className="font-semibold text-sky-700">{getApplicationStatusLabel(application)}</span>
                       </p>
                     </div>
                   ))}
@@ -432,15 +451,9 @@ export default function MyLoanManagement() {
                     </span>
                   </p>
                   <p className="mt-1">
-                    신청 번호{" "}
-                    <span className="font-semibold text-slate-900">
-                      {selfDevelopmentApplication.loanApplicationId}
-                    </span>
-                  </p>
-                  <p className="mt-1">
                     상태{" "}
                     <span className="font-semibold text-sky-700">
-                      {selfDevelopmentApplication.applicationStatus}
+                      {getApplicationStatusLabel(selfDevelopmentApplication)}
                     </span>
                   </p>
                 </div>
@@ -466,6 +479,15 @@ export default function MyLoanManagement() {
                       ))}
                     </div>
                   </div>
+
+                  {!canSubmitCertificate && (
+                    <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50/70 px-4 py-4">
+                      <p className="text-sm font-semibold text-emerald-700">서류 제출 완료</p>
+                      <p className="mt-2 text-sm text-slate-600">
+                        자기계발 대출 신청 건에 필요한 서류 제출이 완료되었습니다. 인증 결과와 진행 상태를 확인해 주세요.
+                      </p>
+                    </div>
+                  )}
 
                   <div className="mb-4 rounded-xl border border-slate-200 bg-white px-4 py-2 shadow-sm">
                     <p className="mb-1 text-xs font-medium text-slate-500">자격증 종류</p>
@@ -511,14 +533,15 @@ export default function MyLoanManagement() {
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="rounded-xl bg-sky-100 py-4 font-bold text-slate-900 transition hover:bg-sky-200 sm:flex-1"
+                        disabled={!canSubmitCertificate}
+                        className="rounded-xl bg-sky-100 py-4 font-bold text-slate-900 transition hover:bg-sky-200 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 sm:flex-1"
                       >
                         파일 선택
                       </button>
                       <button
                         type="button"
                         onClick={handleUpload}
-                        disabled={!selectedFile || uploadStatus === "uploading"}
+                        disabled={!canSubmitCertificate || !selectedFile || uploadStatus === "uploading"}
                         className="rounded-xl bg-[#8ea9bc] py-4 font-bold text-white shadow-md transition hover:bg-[#7d9aae] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-700 disabled:opacity-100 sm:flex-1"
                       >
                         {uploadStatus === "uploading" ? "업로드 중..." : "업로드 시작"}

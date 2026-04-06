@@ -1,4 +1,5 @@
 import { BadgeCheck, CreditCard, FileText, User } from "lucide-react";
+import { Link } from "react-router";
 
 const quickMenus = [
   {
@@ -92,12 +93,18 @@ export default function MyPage() {
             </div>
 
             <div className="flex gap-4">
-              <button className="flex-1 rounded-xl bg-white py-4 text-center font-bold text-slate-900 shadow-sm transition-all hover:bg-white/90">
+              <Link
+                to="/mypage"
+                className="flex-1 rounded-xl bg-white py-4 text-center font-bold text-slate-900 shadow-sm transition-all hover:bg-white/90"
+              >
                 내 정보 보기
-              </button>
-              <button className="flex-1 rounded-xl bg-blue-100 py-4 font-bold text-slate-900 shadow-md transition-all hover:bg-blue-200">
+              </Link>
+              <Link
+                to="/loan/management"
+                className="flex-1 rounded-xl bg-blue-100 py-4 text-center font-bold text-slate-900 shadow-md transition-all hover:bg-blue-200"
+              >
                 대출 관리로 이동
-              </button>
+              </Link>
             </div>
           </section>
 
@@ -110,9 +117,12 @@ export default function MyPage() {
                 <p>다음 납입일 2026.04.25</p>
                 <p>내 대출 관리에서 상세 확인 가능</p>
               </div>
-              <button className="block w-full rounded-xl bg-white py-3 text-center font-bold text-slate-900 shadow-sm transition-all hover:bg-white/90">
+              <Link
+                to="/loan/management"
+                className="block w-full rounded-xl bg-white py-3 text-center font-bold text-slate-900 shadow-sm transition-all hover:bg-white/90"
+              >
                 상세 보기
-              </button>
+              </Link>
             </section>
 
             <section className="rounded-3xl border-2 border-white/40 bg-white/60 p-6 shadow-2xl backdrop-blur-lg">
@@ -121,9 +131,12 @@ export default function MyPage() {
                 <p>제출 서류와 인증 결과는 대출 관리에서 확인할 수 있습니다.</p>
                 <p>상품 신청 상태에 따라 추가 안내가 표시됩니다.</p>
               </div>
-              <button className="block w-full rounded-xl bg-white py-3 text-center font-bold text-slate-900 shadow-sm transition-all hover:bg-white/90">
+              <Link
+                to="/loan/management"
+                className="block w-full rounded-xl bg-white py-3 text-center font-bold text-slate-900 shadow-sm transition-all hover:bg-white/90"
+              >
                 확인하러 가기
-              </button>
+              </Link>
             </section>
           </div>
         </div>
