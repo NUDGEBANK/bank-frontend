@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
 import { CheckCircle, CreditCard, Shield, TrendingDown, Zap } from "lucide-react";
 
@@ -10,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../components/ui/dialog";
-import { postJson } from "../../lib/api";
+import { getJson, postJson } from "../../lib/api";
 
 type CardIssueResponse = {
   ok: boolean;
@@ -26,15 +26,110 @@ type CardIssueResponse = {
   status: string | null;
 };
 
+type CardHistoryResponse = {
+  ok: boolean;
+  message: string;
+  accounts: CardPreviewAccount[];
+};
+
+type CardPreviewAccount = {
+  accountId: number;
+  accountName: string;
+  accountNumber: string;
+  balance: number;
+  cardId: number | null;
+  cardNumber: string | null;
+  expiredYm: string | null;
+  cardStatus: string | null;
+};
+
+type CardPreview = {
+  cardNumber: string;
+  expiredYm: string;
+  cardHolderName: string;
+};
+
+const DEFAULT_CARD_PREVIEW: CardPreview = {
+  cardNumber: "1234 5678 9012 3456",
+  expiredYm: "03/29",
+  cardHolderName: "HONG GIL DONG",
+};
+
+function formatPreviewCardNumber(cardNumber: string | null) {
+  if (!cardNumber) {
+    return DEFAULT_CARD_PREVIEW.cardNumber;
+  }
+
+  const normalized = cardNumber.replace(/-/g, " ").trim();
+  return normalized.length > 0 ? normalized : DEFAULT_CARD_PREVIEW.cardNumber;
+}
+
+function formatPreviewExpiredYm(expiredYm: string | null) {
+  if (!expiredYm) {
+    return DEFAULT_CARD_PREVIEW.expiredYm;
+  }
+
+  if (expiredYm.includes("/")) {
+    return expiredYm;
+  }
+
+  if (/^\d{4}$/.test(expiredYm)) {
+    return `${expiredYm.slice(0, 2)}/${expiredYm.slice(2)}`;
+  }
+
+  return expiredYm;
+}
+
 export default function DdokgaeCard() {
   const navigate = useNavigate();
   const [isApplyDialogOpen, setIsApplyDialogOpen] = useState(false);
-  const [cardHolderName, setCardHolderName] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [accountName, setAccountName] = useState("");
   const [cardPassword, setCardPassword] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [issueResult, setIssueResult] = useState<CardIssueResponse | null>(null);
+  const [cardPreview, setCardPreview] = useState<CardPreview>(DEFAULT_CARD_PREVIEW);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadCardPreview() {
+      if (localStorage.getItem("isLoggedIn") !== "true") {
+        setCardPreview(DEFAULT_CARD_PREVIEW);
+        return;
+      }
+
+      try {
+        const response = await getJson<CardHistoryResponse>("/api/cards/history");
+        if (!isMounted) {
+          return;
+        }
+
+        const ownedCards = response.accounts.filter((account) => account.cardId && account.cardNumber);
+        if (ownedCards.length === 0) {
+          setCardPreview(DEFAULT_CARD_PREVIEW);
+          return;
+        }
+
+        const randomCard = ownedCards[Math.floor(Math.random() * ownedCards.length)];
+        setCardPreview({
+          cardNumber: formatPreviewCardNumber(randomCard.cardNumber),
+          expiredYm: formatPreviewExpiredYm(randomCard.expiredYm),
+          cardHolderName: (randomCard.accountName || DEFAULT_CARD_PREVIEW.cardHolderName).toUpperCase(),
+        });
+      } catch {
+        if (isMounted) {
+          setCardPreview(DEFAULT_CARD_PREVIEW);
+        }
+      }
+    }
+
+    void loadCardPreview();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const features = [
     {
@@ -80,11 +175,15 @@ export default function DdokgaeCard() {
 
     try {
       const response = await postJson<CardIssueResponse>("/api/cards/apply", {
-        cardHolderName,
-        phoneNumber,
+        accountName,
         cardPassword,
       });
       setIssueResult(response);
+      setCardPreview({
+        cardNumber: formatPreviewCardNumber(response.cardNumber),
+        expiredYm: formatPreviewExpiredYm(response.expiredYm),
+        cardHolderName: (response.accountName || accountName || DEFAULT_CARD_PREVIEW.cardHolderName).toUpperCase(),
+      });
     } catch (error) {
       const message = error instanceof Error ? error.message : "REQUEST_FAILED";
 
@@ -101,7 +200,7 @@ export default function DdokgaeCard() {
       } else if (message === "INVALID_CARD_PASSWORD") {
         setSubmitError("카드 비밀번호는 숫자 4자리여야 합니다.");
       } else if (message === "MISSING_FIELDS") {
-        setSubmitError("카드 명의, 연락처, 카드 비밀번호를 모두 입력해주세요.");
+        setSubmitError("계좌명과 카드 비밀번호를 모두 입력해주세요.");
       } else {
         setSubmitError("카드 발급 신청 중 오류가 발생했습니다.");
       }
@@ -154,17 +253,17 @@ export default function DdokgaeCard() {
                   </div>
                   <div className="mb-6">
                     <p className="text-2xl font-mono tracking-wider">
-                      1234 5678 9012 3456
+                      {cardPreview.cardNumber}
                     </p>
                   </div>
                   <div className="flex justify-between">
                     <div>
                       <p className="text-xs text-blue-100 mb-1">VALID THRU</p>
-                      <p className="font-mono">03/29</p>
+                      <p className="font-mono">{cardPreview.expiredYm}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-blue-100 mb-1">CARD HOLDER</p>
-                      <p className="font-bold">HONG GIL DONG</p>
+                      <p className="font-bold">{cardPreview.cardHolderName}</p>
                     </div>
                   </div>
                 </div>
@@ -288,10 +387,10 @@ export default function DdokgaeCard() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-6xl border-white/50 bg-gradient-to-br from-blue-50/95 via-white/95 to-sky-100/95 p-0 text-slate-800 shadow-2xl">
+        <DialogContent className="sm:max-w-5xl border-white/50 bg-gradient-to-br from-blue-50/95 via-white/95 to-sky-100/95 p-0 text-slate-800 shadow-2xl">
           {issueResult ? (
             <div>
-              <div className="border-b border-blue-200/80 bg-gradient-to-r from-blue-200/70 via-sky-100/80 to-purple-100/70 px-10 py-7">
+              <div className="border-b border-blue-200/80 bg-gradient-to-r from-blue-200/70 via-sky-100/80 to-purple-100/70 px-8 py-6">
                 <DialogHeader className="text-left">
                   <DialogTitle className="text-2xl text-slate-800">가상카드 발급이 완료되었습니다</DialogTitle>
                   <DialogDescription className="text-sm text-slate-600">
@@ -300,7 +399,7 @@ export default function DdokgaeCard() {
                 </DialogHeader>
               </div>
 
-              <div className="space-y-6 px-10 py-8">
+              <div className="space-y-6 px-8 py-6">
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="rounded-xl border border-blue-200/80 bg-white/80 p-5 shadow-sm">
                     <p className="mb-3 text-sm font-semibold text-blue-700">생성된 계좌 정보</p>
@@ -346,7 +445,7 @@ export default function DdokgaeCard() {
                 </div>
               </div>
 
-              <DialogFooter className="border-t border-blue-200/80 bg-white/50 px-10 py-5">
+              <DialogFooter className="border-t border-blue-200/80 bg-white/50 px-8 py-5">
                 <button
                   className="rounded-lg bg-blue-500 px-5 py-2.5 font-semibold text-white transition-all hover:bg-blue-600"
                   onClick={closeDialog}
@@ -358,27 +457,27 @@ export default function DdokgaeCard() {
             </div>
           ) : (
             <form onSubmit={handleSubmit}>
-              <div className="border-b border-blue-200/80 bg-gradient-to-r from-blue-200/70 via-sky-100/80 to-purple-100/70 px-10 py-7">
+              <div className="border-b border-blue-200/80 bg-gradient-to-r from-blue-200/70 via-sky-100/80 to-purple-100/70 px-8 py-6">
                 <DialogHeader className="text-left">
                   <DialogTitle className="text-2xl text-slate-800">계좌 생성 및 카드 발급 신청</DialogTitle>
                   <DialogDescription className="text-sm text-slate-600">
-                    로그인된 회원 이름으로 계좌가 생성되고, 입력한 카드 정보로 가상카드가 발급됩니다.
+                    입력한 계좌명으로 계좌가 생성되고, 해당 계좌에 연결된 가상카드가 발급됩니다.
                   </DialogDescription>
                 </DialogHeader>
               </div>
 
-              <div className="space-y-6 px-10 py-8">
+              <div className="space-y-6 px-8 py-6">
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="rounded-xl border border-blue-200/80 bg-white/80 p-5 shadow-sm">
                     <p className="mb-3 text-sm font-semibold text-blue-700">계좌 생성 정보</p>
                     <div className="space-y-3 text-sm text-slate-600">
                       <div>
                         <p className="text-slate-800">계좌명</p>
-                        <p>로그인된 회원 이름으로 자동 생성됩니다.</p>
+                        <p>입력한 계좌명으로 계좌가 생성됩니다.</p>
                       </div>
                       <div>
                         <p className="text-slate-800">계좌번호</p>
-                        <p>중복되지 않는 14자리 번호가 자동 발급됩니다.</p>
+                        <p>14자리 번호가 자동 발급됩니다.</p>
                       </div>
                       <div>
                         <p className="text-slate-800">초기 정보</p>
@@ -388,26 +487,43 @@ export default function DdokgaeCard() {
                   </div>
 
                   <div className="rounded-xl border border-blue-200/80 bg-white/80 p-5 shadow-sm">
-                    <p className="mb-3 text-sm font-semibold text-blue-700">카드 발급 정보</p>
+                    <p className="mb-3 text-sm font-semibold text-blue-700">카드 생성 정보</p>
                     <div className="space-y-3 text-sm text-slate-600">
                       <div>
-                        <label className="mb-1 block text-slate-800" htmlFor="card-holder-name">카드 명의</label>
-                        <input
-                          id="card-holder-name"
-                          className="w-full rounded-lg border border-blue-200 bg-white px-3 py-2 text-slate-800 outline-none focus:border-blue-400"
-                          onChange={(event) => setCardHolderName(event.target.value)}
-                          value={cardHolderName}
-                        />
+                        <p className="text-slate-800">카드번호</p>
+                        <p>카드번호가 자동 생성됩니다.</p>
                       </div>
                       <div>
-                        <label className="mb-1 block text-slate-800" htmlFor="card-phone-number">연락처</label>
+                        <p className="text-slate-800">유효기간 / CVC</p>
+                        <p>발급 시 자동 생성되며 완료 화면에서 바로 확인할 수 있습니다.</p>
+                      </div>
+                      <div>
+                        <p className="text-slate-800">발급 상태</p>
+                        <p>발급 완료 직후 ACTIVE 상태로 사용할 수 있습니다.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="rounded-xl border border-blue-200/80 bg-white/80 p-5 shadow-sm">
+                    <p className="mb-3 text-sm font-semibold text-blue-700">계좌 정보 입력</p>
+                    <div className="space-y-3 text-sm text-slate-600">
+                      <div>
+                        <label className="mb-1 block text-slate-800" htmlFor="account-name">계좌명</label>
                         <input
-                          id="card-phone-number"
+                          id="account-name"
                           className="w-full rounded-lg border border-blue-200 bg-white px-3 py-2 text-slate-800 outline-none focus:border-blue-400"
-                          onChange={(event) => setPhoneNumber(event.target.value)}
-                          value={phoneNumber}
+                          onChange={(event) => setAccountName(event.target.value)}
+                          value={accountName}
                         />
                       </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-blue-200/80 bg-white/80 p-5 shadow-sm">
+                    <p className="mb-3 text-sm font-semibold text-blue-700">카드 정보 입력</p>
+                    <div className="space-y-3 text-sm text-slate-600">
                       <div>
                         <label className="mb-1 block text-slate-800" htmlFor="card-password">카드 비밀번호</label>
                         <input
@@ -424,15 +540,6 @@ export default function DdokgaeCard() {
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-blue-200/80 bg-white/80 p-5 shadow-sm">
-                  <p className="mb-3 text-sm font-semibold text-blue-700">신청 전 확인사항</p>
-                  <ul className="space-y-2 text-sm text-slate-600">
-                    <li>• 카드 신청 시 똑개 체크카드 연결 계좌가 함께 생성됩니다.</li>
-                    <li>• 카드번호, 유효기간, CVC는 시스템에서 자동 생성됩니다.</li>
-                    <li>• 발급 완료 후 즉시 ACTIVE 상태의 가상카드를 사용할 수 있습니다.</li>
-                  </ul>
-                </div>
-
                 {submitError && (
                   <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
                     {submitError}
@@ -440,7 +547,7 @@ export default function DdokgaeCard() {
                 )}
               </div>
 
-              <DialogFooter className="border-t border-blue-200/80 bg-white/50 px-10 py-5">
+              <DialogFooter className="border-t border-blue-200/80 bg-white/50 px-8 py-5">
                 <button
                   className="rounded-lg border border-blue-200 bg-white px-5 py-2.5 text-slate-700 transition-colors hover:bg-blue-50"
                   onClick={closeDialog}

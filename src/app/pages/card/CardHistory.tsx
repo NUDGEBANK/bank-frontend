@@ -16,6 +16,7 @@ type CardHistoryAccount = {
   balance: number;
   cardId: number | null;
   cardNumber: string | null;
+  expiredYm: string | null;
   cardStatus: string | null;
   spentThisMonth: number;
   transactions: CardHistoryTransaction[];
