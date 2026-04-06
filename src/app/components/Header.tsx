@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import { LogIn } from "lucide-react";
+
 import { postJson } from "../lib/api";
 
 interface MenuItem {
@@ -10,23 +11,16 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  { 
-    label: "은행소개", 
-    path: "#", 
-    submenu: [{ label: "은행 소개", path: "" },] 
+  {
+    label: "대출상품소개",
+    path: "#",
+    submenu: [{ label: "대출 상품 안내", path: "" }],
   },
-  // {
-  //   label: "통장",
-  //   submenu: [
-  //     { label: "내 통장", path: "/account/my" },
-  //     { label: "똑개 통장", path: "/account/ddokgae" },
-  //   ],
-  // },
   {
     label: "예금·적금",
     submenu: [
-      { label: "똑개 예금", path: "#" },
-      { label: "똑개 적금", path: "#" },
+      { label: "입출금 예금", path: "#" },
+      { label: "입출금 적금", path: "#" },
     ],
   },
   {
@@ -34,7 +28,7 @@ const menuItems: MenuItem[] = [
     submenu: [
       { label: "대출상품", path: "/loan/products" },
       { label: "대출 관리", path: "/loan/management" },
-      { label: "신용점수조회", path: "/loan/credit-score" },
+      { label: "신용 평가", path: "/loan/credit-score" },
     ],
   },
   {
@@ -49,27 +43,31 @@ const menuItems: MenuItem[] = [
     label: "증권",
     submenu: [{ label: "ANTMILLION", path: "#" }],
   },
-  { 
+  {
     label: "고객센터",
     path: "#",
     submenu: [
-    { label: "고객센터", path: "" },
-    { label: "마이페이지", path: "/account/mypage" },
-  ]
-},
+      { label: "고객센터", path: "" },
+      { label: "마이페이지", path: "/account/mypage" },
+    ],
+  },
 ];
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem("isLoggedIn") === "true");
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    () => localStorage.getItem("isLoggedIn") === "true",
+  );
 
   useEffect(() => {
     const syncAuthState = () => {
       setIsLoggedIn(localStorage.getItem("isLoggedIn") === "true");
     };
+
     syncAuthState();
     window.addEventListener("storage", syncAuthState);
     window.addEventListener("auth-change", syncAuthState);
+
     return () => {
       window.removeEventListener("storage", syncAuthState);
       window.removeEventListener("auth-change", syncAuthState);
@@ -80,7 +78,7 @@ export default function Header() {
     try {
       await postJson<{ ok: boolean }>("/api/auth/logout", {});
     } catch {
-      // Ignore logout errors to ensure local state clears.
+      // Ignore logout errors so local auth state is always cleared.
     } finally {
       localStorage.removeItem("isLoggedIn");
       window.dispatchEvent(new Event("auth-change"));
@@ -89,31 +87,31 @@ export default function Header() {
 
   return (
     <>
-      {/* <header className="bg-white/10 backdrop-blur-md border-b border-white/20 sticky top-0 z-50 shadow-lg"> */}
-      <header className="bg-gray-900/80 backdrop-blur-md border-b border-white/20 sticky top-0 z-50 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-[180px_1fr_140px] items-center h-16 gap-4">
-            {/* 로고 */}
-            <Link to="/" className="font-bold text-2xl text-white drop-shadow-lg">
+      <header className="sticky top-0 z-50 border-b border-white/20 bg-gray-900/80 shadow-lg backdrop-blur-md">
+        <div className="mx-auto max-w-7xl px-4">
+          <div className="grid h-16 grid-cols-[180px_1fr_140px] items-center gap-4">
+            <Link to="/" className="text-2xl font-bold text-white drop-shadow-lg">
               NUDGEBANK
             </Link>
 
-            {/* 네비게이션 메뉴 */}
-            <nav 
+            <nav
               className="flex items-center justify-center"
               onMouseEnter={() => setIsMenuOpen(true)}
               onMouseLeave={() => setIsMenuOpen(false)}
             >
-              {menuItems.map((item, index) => (
-                <div key={index} className="relative h-16 flex items-center w-[110px] justify-center">
+              {menuItems.map((item) => (
+                <div
+                  key={item.label}
+                  className="relative flex h-16 w-[110px] items-center justify-center"
+                >
                   {item.submenu && item.submenu.length > 0 ? (
-                    <button className="py-2 text-white/90 hover:text-white transition-colors font-semibold text-base">
+                    <button className="py-2 text-base font-semibold text-white/90 transition-colors hover:text-white">
                       {item.label}
                     </button>
                   ) : (
                     <Link
                       to={item.path || "#"}
-                      className="py-2 text-white/90 hover:text-white transition-colors font-semibold text-base"
+                      className="py-2 text-base font-semibold text-white/90 transition-colors hover:text-white"
                     >
                       {item.label}
                     </Link>
@@ -122,22 +120,21 @@ export default function Header() {
               ))}
             </nav>
 
-            {/* 우측 영역 - 로그인 버튼 */}
             <div className="flex items-center justify-end gap-3">
               {isLoggedIn ? (
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm border border-white/40 text-white rounded-lg hover:bg-white/30 transition-all shadow-lg font-semibold"
+                  className="flex items-center gap-2 rounded-lg border border-white/40 bg-white/20 px-4 py-2 font-semibold text-white shadow-lg transition-all hover:bg-white/30"
                 >
                   로그아웃
                 </button>
               ) : (
                 <Link
                   to="/login"
-                  className="flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm border border-white/40 text-white rounded-lg hover:bg-white/30 transition-all shadow-lg font-semibold"
+                  className="flex items-center gap-2 rounded-lg border border-white/40 bg-white/20 px-4 py-2 font-semibold text-white shadow-lg transition-all hover:bg-white/30"
                 >
-                  <LogIn className="w-4 h-4" />
+                  <LogIn className="h-4 w-4" />
                   로그인
                 </Link>
               )}
@@ -146,36 +143,29 @@ export default function Header() {
         </div>
       </header>
 
-      {/* 블러 오버레이 - 메뉴 열렸을 때 */}
-      {isMenuOpen && (
-        <div 
-          className="fixed inset-0 top-16 bg-black/20 backdrop-blur-sm z-30"
-        />
-      )}
+      {isMenuOpen && <div className="fixed inset-0 top-16 z-30 bg-black/20 backdrop-blur-sm" />}
 
-      {/* 메가 메뉴 드롭다운 - 모든 서브메뉴 한번에 표시 */}
       {isMenuOpen && (
         <div
-          className="fixed left-0 right-0 top-16 bg-gray-800/50 backdrop-blur-xl border-b border-white/20 shadow-2xl z-40"
+          className="fixed left-0 right-0 top-16 z-40 border-b border-white/20 bg-gray-800/50 shadow-2xl backdrop-blur-xl"
           onMouseEnter={() => setIsMenuOpen(true)}
           onMouseLeave={() => setIsMenuOpen(false)}
         >
-          <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="mx-auto max-w-7xl px-4 py-6">
             <div className="grid grid-cols-[180px_1fr_140px] items-start gap-4">
-              {/* 로고 공간 (헤더와 동일하게 유지) */}
-              <div className="font-bold text-2xl text-transparent">똑개뱅크</div>
+              <div className="text-2xl font-bold text-transparent">NUDGEBANK</div>
 
-              {/* 서브메뉴 영역 (헤더 네비게이션과 정렬) */}
               <nav className="flex items-start justify-center">
-                {menuItems.map((item, index) => (
-                  <div key={index} className="w-[110px] flex flex-col items-center text-center">
+                {menuItems.map((item) => (
+                  <div key={item.label} className="flex w-[110px] flex-col items-center text-center">
                     {item.submenu && item.submenu.length > 0 && (
-                      <div className="space-y-1.5 w-full">
-                        {item.submenu.map((subItem, subIndex) => (
+                      <div className="w-full space-y-1.5">
+                        {item.submenu.map((subItem) => (
                           <Link
-                            key={subIndex}
+                            key={subItem.label}
                             to={subItem.path}
-                            className="block w-full text-white/90 hover:text-white transition-colors text-base py-0.5 text-center">
+                            className="block w-full py-0.5 text-center text-base text-white/90 transition-colors hover:text-white"
+                          >
                             {subItem.label}
                           </Link>
                         ))}
@@ -185,7 +175,6 @@ export default function Header() {
                 ))}
               </nav>
 
-              {/* 로그인 버튼 공간 (헤더와 동일하게 유지) */}
               <div className="flex items-center justify-end gap-3 opacity-0">
                 <div className="px-4 py-2">로그인</div>
               </div>
