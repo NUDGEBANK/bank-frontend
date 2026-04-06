@@ -1,4 +1,4 @@
-import { ChevronRight, Shield, TrendingUp } from "lucide-react";
+import { ChevronRight, Shield } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 
@@ -32,10 +32,10 @@ type CreditScoreApiResponse = {
 };
 
 function getScoreGradeColor(score: number) {
-  if (score >= 900) return "text-emerald-600";
-  if (score >= 800) return "text-blue-600";
-  if (score >= 700) return "text-amber-600";
-  return "text-orange-600";
+  if (score >= 900) return "text-slate-900";
+  if (score >= 800) return "text-slate-900";
+  if (score >= 700) return "text-slate-900";
+  return "text-slate-900";
 }
 
 function formatAmount(value: number) {
@@ -79,15 +79,15 @@ export default function MyCreditScore() {
         <div className="rounded-[32px] border border-red-200 bg-white px-8 py-16 text-center shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
           <h1 className="text-2xl font-bold text-slate-900">내부 신용 평가 점수</h1>
           <p className="mt-4 text-sm text-slate-500">
-            점수 정보를 불러오지 못했습니다. 로그인 상태를 확인한 뒤 다시 시도해 주세요.
+            점수 정보를 불러오지 못했습니다. 로그인 상태를 확인하고 다시 시도해 주세요.
           </p>
           <p className="mt-2 text-sm font-medium text-red-600">{error ?? data?.message}</p>
           <div className="mt-6">
             <Link
               to="/loan/credit-evaluation"
-              className="inline-flex rounded-2xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700"
+              className="inline-flex rounded-2xl bg-blue-600 px-5 py-3 font-semibold transition hover:bg-blue-700"
             >
-              신용평가 페이지로 이동
+              <span style={{ color: "#fff" }}>신용평가 페이지로 이동</span>
             </Link>
           </div>
         </div>
@@ -109,7 +109,7 @@ export default function MyCreditScore() {
             내부 신용 평가 점수
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            본 점수는 당사 내부 기준으로 산정된 참고용 지표이며, NICE·KCB 등 외부
+            본 점수는 당사 내부 기준으로 산정한 참고용 지표이며 NICE·KCB 등 외부
             신용평점과 다를 수 있습니다.
           </p>
 
@@ -124,14 +124,13 @@ export default function MyCreditScore() {
               <p className="text-sm font-medium text-slate-500">평가 등급</p>
               <p className={`mt-4 text-2xl font-bold ${scoreColor}`}>{data.creditGrade}</p>
               <p className="mt-2 text-sm text-slate-500">
-                상환 이력과 소비 안정성을 함께 반영합니다.
+                최근 활동성과 소비 안정성을 함께 반영합니다.
               </p>
             </div>
 
             <div className="rounded-3xl border border-slate-200 bg-slate-50/90 px-5 py-5">
               <p className="text-sm font-medium text-slate-500">최근 변화</p>
               <div className="mt-4 flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-emerald-500" />
                 <p className="text-2xl font-bold text-slate-900">
                   {data.scoreChange === null
                     ? "신규"
@@ -139,7 +138,7 @@ export default function MyCreditScore() {
                 </p>
               </div>
               <p className="mt-2 text-sm text-slate-500">
-                최근 상환 흐름과 소비 변동을 반영한 결과입니다.
+                최근 평가 결과와 비교한 변동량입니다.
               </p>
             </div>
 
@@ -147,7 +146,7 @@ export default function MyCreditScore() {
               <p className="text-sm font-medium text-slate-500">최근 평가일</p>
               <p className="mt-4 text-2xl font-bold text-slate-900">{data.evaluatedAt}</p>
               <p className="mt-2 text-sm text-slate-500">
-                내부 심사 기준에 따라 주기적으로 갱신됩니다.
+                내부 심사 기준으로 주기적으로 갱신합니다.
               </p>
             </div>
           </div>
@@ -170,7 +169,9 @@ export default function MyCreditScore() {
 
               <div className="rounded-3xl border border-slate-100 bg-slate-50/80 p-5">
                 <div className="flex items-end gap-4">
-                  <p className="text-6xl font-bold tracking-tight text-slate-900">{data.creditScore}</p>
+                  <p className="text-6xl font-bold tracking-tight text-slate-900">
+                    {data.creditScore}
+                  </p>
                   <p className="pb-2 text-xl text-slate-400">/ 1000</p>
                 </div>
 
@@ -271,9 +272,9 @@ export default function MyCreditScore() {
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <Link
                 to="/loan/credit-evaluation"
-                className="flex-1 rounded-2xl bg-blue-600 px-5 py-4 text-center font-semibold text-white transition hover:bg-blue-700"
+                className="flex-1 rounded-2xl bg-blue-600 px-5 py-4 text-center font-semibold transition hover:bg-blue-700"
               >
-                신용평가 다시 하기
+                <span style={{ color: "#fff" }}>신용평가 다시 하기</span>
               </Link>
               <Link
                 to="/loan/products"

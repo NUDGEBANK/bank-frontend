@@ -11,14 +11,14 @@ type CreditScoreApiResponse = {
 
 const requiredChecks = [
   {
-    title: "기본 금융정보",
+    title: "기본 금융 정보",
     status: "확인 완료",
-    description: "회원 기본 정보와 연결된 계좌 상태를 점검합니다.",
+    description: "회원 기본 정보와 연결된 계좌 상태를 함께 확인합니다.",
   },
   {
-    title: "상환 이력",
+    title: "거래 이력",
     status: "확인 완료",
-    description: "기존 대출 상환 흐름과 연체 여부를 함께 반영합니다.",
+    description: "최근 카드 사용 흐름과 거래 지속성을 평가에 반영합니다.",
   },
   {
     title: "소비 데이터",
@@ -26,24 +26,24 @@ const requiredChecks = [
     description: "최근 소비 패턴과 월별 변동성을 참고합니다.",
   },
   {
-    title: "제출 서류",
-    status: "추가 제출 가능",
-    description: "필요 시 인증 서류를 더해 평가 정확도를 높일 수 있습니다.",
+    title: "평가 기준",
+    status: "확인 가능",
+    description: "내부 평가 점수 산정 기준과 반영 항목을 안내합니다.",
   },
 ];
 
 const evaluationSteps = [
   "평가 대상 정보 수집",
-  "상환 및 소비 데이터 분석",
-  "위험도와 상환 여력 산정",
+  "최근 3개월 거래 데이터 분석",
+  "소비 부담과 활동성 계산",
   "내부 신용 평가 점수 반영",
 ];
 
 const evaluationCriteria = [
-  "연체 여부와 상환 성실도",
-  "최근 소비 흐름과 지출 안정성",
-  "현재 대출 잔액과 월 상환 부담",
-  "인증 정보 및 제출 서류 상태",
+  "자산 규모와 최근 활동성을 함께 반영합니다.",
+  "자산 대비 소비 부담이 과도하지 않은지 확인합니다.",
+  "최근 3개월 소비 흐름의 안정성을 살펴봅니다.",
+  "최근 거래일과 거래 건수로 현재 활동성을 반영합니다.",
 ];
 
 export default function MyCreditEvaluation() {
@@ -75,34 +75,39 @@ export default function MyCreditEvaluation() {
             신용평가
           </h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-            내부 신용 평가 점수를 산정하기 전에 필요한 정보와 평가 절차를 확인하는
-            페이지입니다. NICE·KCB 등 외부 신용평점과는 별개의 내부 심사 참고용
-            평가입니다.
+            내부 신용 평가 점수를 산정하기 전에 필요한 정보와 평가 흐름을 확인하는
+            페이지입니다. NICE·KCB 등 외부 신용평점과는 별개의 내부 참고용 평가입니다.
           </p>
 
           <div className="mt-6 grid gap-4 md:grid-cols-4">
             <div className="rounded-3xl border border-sky-100 bg-[linear-gradient(135deg,_rgba(219,234,254,0.95)_0%,_rgba(239,246,255,0.98)_48%,_rgba(248,250,252,1)_100%)] px-5 py-5 text-slate-900 shadow-[0_20px_45px_rgba(148,163,184,0.18)]">
               <p className="text-xs tracking-[0.12em] text-sky-700/70">평가 준비 상태</p>
               <p className="mt-3 text-3xl font-semibold">완료</p>
-              <p className="mt-2 text-sm text-slate-500">필수 확인 항목을 모두 점검했습니다.</p>
+              <p className="mt-2 text-sm text-slate-500">필수 확인 항목이 모두 준비되어 있습니다.</p>
             </div>
 
             <div className="rounded-3xl border border-blue-100 bg-blue-50/70 px-5 py-5">
               <p className="text-sm font-medium text-slate-500">기준 데이터</p>
               <p className="mt-4 text-2xl font-bold text-slate-900">최근 거래 반영</p>
-              <p className="mt-2 text-sm text-slate-500">로그인한 회원의 최신 계좌·카드 흐름을 사용합니다.</p>
+              <p className="mt-2 text-sm text-slate-500">
+                로그인한 회원의 최신 계좌와 카드 데이터를 사용합니다.
+              </p>
             </div>
 
             <div className="rounded-3xl border border-slate-200 bg-slate-50/90 px-5 py-5">
               <p className="text-sm font-medium text-slate-500">현재 상태</p>
               <p className="mt-4 text-2xl font-bold text-slate-900">재평가 가능</p>
-              <p className="mt-2 text-sm text-slate-500">현재 로그인 회원 기준으로 다시 계산할 수 있습니다.</p>
+              <p className="mt-2 text-sm text-slate-500">
+                현재 회원 기준으로 다시 계산할 수 있습니다.
+              </p>
             </div>
 
             <div className="rounded-3xl border border-indigo-100 bg-indigo-50/80 px-5 py-5">
               <p className="text-sm font-medium text-slate-500">예상 소요 시간</p>
               <p className="mt-4 text-2xl font-bold text-slate-900">약 1분</p>
-              <p className="mt-2 text-sm text-slate-500">수집된 내부 데이터를 기준으로 계산합니다.</p>
+              <p className="mt-2 text-sm text-slate-500">
+                내부 데이터를 기준으로 점수를 다시 계산합니다.
+              </p>
             </div>
           </div>
         </div>
@@ -117,7 +122,7 @@ export default function MyCreditEvaluation() {
                 <div>
                   <h2 className="text-xl font-bold text-slate-900">평가 전 확인 정보</h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    점수 산정에 앞서 반영되는 항목을 먼저 확인합니다.
+                    점수 산정 전에 반영되는 항목을 확인합니다.
                   </p>
                 </div>
               </div>
@@ -150,7 +155,7 @@ export default function MyCreditEvaluation() {
                 <div>
                   <h2 className="text-xl font-bold text-slate-900">평가 절차</h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    내부 기준으로 어떤 순서로 평가가 진행되는지 보여줍니다.
+                    어떤 순서로 평가가 진행되는지 보여줍니다.
                   </p>
                 </div>
               </div>
@@ -167,7 +172,7 @@ export default function MyCreditEvaluation() {
                     <div>
                       <p className="font-semibold text-slate-900">{step}</p>
                       <p className="mt-1 text-sm text-slate-500">
-                        외부 CB 점수가 아닌 서비스 내부 데이터 기준으로 계산합니다.
+                        외부 CB 점수가 아닌 서비스 내부 기준으로 계산합니다.
                       </p>
                     </div>
                   </div>
@@ -185,7 +190,7 @@ export default function MyCreditEvaluation() {
                 <div>
                   <h2 className="text-xl font-bold text-slate-900">평가 기준 안내</h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    NICE 방식과 유사한 축을 참고하되, 내부 심사 용도로만 사용합니다.
+                    내부 활동성과 소비 흐름을 중심으로 반영합니다.
                   </p>
                 </div>
               </div>
@@ -212,7 +217,7 @@ export default function MyCreditEvaluation() {
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
               <h2 className="text-xl font-bold text-slate-900">평가 실행</h2>
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                최근 상환 이력, 소비 패턴, 계좌 잔액 흐름을 다시 반영해 내부 신용 평가
+                최근 거래, 소비 패턴, 자산 대비 소비 부담을 반영한 내부 신용 평가
                 점수를 계산합니다.
               </p>
 
@@ -220,7 +225,7 @@ export default function MyCreditEvaluation() {
                 <p className="text-sm text-slate-500">실행 방식</p>
                 <p className="mt-2 text-xl font-semibold text-slate-900">로그인 회원 기준 재평가</p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  버튼을 누르면 현재 로그인한 회원의 최신 계좌·카드 데이터를 기준으로
+                  버튼을 누르면 현재 로그인한 회원의 최신 계좌와 카드 데이터를 기준으로
                   점수를 다시 계산하고 저장합니다.
                 </p>
               </div>
@@ -236,10 +241,12 @@ export default function MyCreditEvaluation() {
                   type="button"
                   onClick={handleEvaluate}
                   disabled={isSubmitting}
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-4 text-center font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-400"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-4 text-center font-semibold transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-400"
                 >
-                  {isSubmitting ? "평가 중..." : "신용평가 시작하기"}
-                  <ArrowRight className="h-4 w-4" />
+                  <span className="inline-flex items-center gap-2" style={{ color: "#fff" }}>
+                    <span>{isSubmitting ? "평가 중..." : "신용평가 시작하기"}</span>
+                    <ArrowRight className="h-4 w-4" style={{ color: "#fff" }} />
+                  </span>
                 </button>
                 <Link
                   to="/loan/credit-score"
