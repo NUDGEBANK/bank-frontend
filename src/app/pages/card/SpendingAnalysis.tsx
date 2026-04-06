@@ -108,7 +108,7 @@ export default function SpendingAnalysis() {
             <div className="rounded-3xl border border-slate-200 bg-slate-50/90 px-5 py-5">
               <p className="text-sm font-medium text-slate-500">전월 대비</p>
               <div className="mt-4">
-                <p className={`text-2xl font-bold ${isOverspending ? "text-amber-600" : "text-blue-600"}`}>
+                <p className="text-2xl font-bold text-slate-900">
                   {isOverspending ? "+" : ""}
                   {(((currentMonthSpending - averageMonthly) / averageMonthly) * 100).toFixed(1)}%
                 </p>
