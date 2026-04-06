@@ -13,7 +13,7 @@ export async function sendMessage(
   message: string,
   onChunk: (chunk: string) => void,
 ): Promise<void> {
-  const response = await fetch("http://localhost:8000/chat", {
+  const response = await fetch("/api/chat", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
