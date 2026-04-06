@@ -133,7 +133,7 @@ export default function LoanApply() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-12">
+    <div className="mx-auto max-w-7xl px-4 py-12">
       <div className="mb-8">
         <Link
           to={`/loan/products/${productId}`}
@@ -143,7 +143,7 @@ export default function LoanApply() {
         </Link>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(320px,0.9fr)]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.85fr)]">
         <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-xl">
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-blue-500">
             Application
