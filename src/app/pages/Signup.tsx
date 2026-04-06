@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router";
-import { User, Lock, CalendarDays } from "lucide-react";
+import { User, Lock, CalendarDays, Phone } from "lucide-react";
 import { postJson } from "../lib/api";
 
 export default function Signup() {
@@ -10,6 +10,7 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [birth, setBirth] = useState("");
   const [gender, setGender] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
@@ -32,6 +33,7 @@ export default function Signup() {
         password,
         birth: birth || null,
         gender,
+        phoneNumber,
       });
       localStorage.setItem("isLoggedIn", "true");
       window.dispatchEvent(new Event("auth-change"));
@@ -141,6 +143,26 @@ export default function Signup() {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 bg-white/20 backdrop-blur-sm border-2 border-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/60 text-white placeholder-blue-200 transition-all"
                   placeholder="비밀번호를 다시 입력하세요"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="phoneNumber" className="block text-sm font-semibold text-white mb-2">
+                연락처
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Phone className="w-5 h-5 text-blue-200" />
+                </div>
+                <input
+                  type="tel"
+                  id="phoneNumber"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 bg-white/20 backdrop-blur-sm border-2 border-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/60 text-white placeholder-blue-200 transition-all"
+                  placeholder="연락처를 입력하세요"
                   required
                 />
               </div>
