@@ -31,13 +31,6 @@ type CreditScoreApiResponse = {
   recommendedLoans: RecommendedLoan[];
 };
 
-function getScoreGradeColor(score: number) {
-  if (score >= 900) return "text-slate-900";
-  if (score >= 800) return "text-slate-900";
-  if (score >= 700) return "text-slate-900";
-  return "text-slate-900";
-}
-
 function formatAmount(value: number) {
   return `${value.toLocaleString("ko-KR")}원`;
 }
@@ -95,8 +88,22 @@ export default function MyCreditScore() {
     );
   }
 
-  const scorePercentage = (data.creditScore / 1000) * 100;
-  const scoreColor = getScoreGradeColor(data.creditScore);
+  const scorePercentage = Math.min((data.creditScore / 950) * 100, 100);
+  const scoreReasons = [
+    "최근 3개월 거래량과 활성 월 수를 기준으로 최근 활동성을 반영합니다.",
+    "현재 계좌 잔액 대비 월평균 소비 부담을 계산해 과도한 사용 여부를 확인합니다.",
+    "월별 소비 편차와 최근 거래일을 함께 반영해 거래 안정성을 평가합니다.",
+  ];
+
+  const riskInsights = [
+    "현재 평가는 최근 카드 거래와 계좌 현재 잔액을 중심으로 산정한 내부 참고용 결과입니다.",
+    data.creditScore >= 800
+      ? "최근 거래 흐름이 비교적 안정적으로 유지되어 내부 등급에 긍정적으로 반영되었습니다."
+      : "최근 거래량 또는 소비 부담 지표가 보수적으로 반영되어 상위 구간 진입이 제한되었습니다.",
+    data.scoreChange !== null && data.scoreChange < 0
+      ? "직전 평가 대비 점수가 하락해 최근 거래 흐름 변화를 함께 확인하는 것이 좋습니다."
+      : "실제 대출 심사 시에는 상품 조건과 추가 심사 정보가 함께 반영될 수 있습니다.",
+  ];
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 md:px-6">
@@ -109,22 +116,23 @@ export default function MyCreditScore() {
             내부 신용 평가 점수
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            본 점수는 당사 내부 기준으로 산정한 참고용 지표이며 NICE·KCB 등 외부
-            신용평점과 다를 수 있습니다.
+            본 점수는 현재 계좌 잔액과 최근 카드 거래 데이터를 기준으로 산정한 내부 참고용
+            지표입니다. NICE·KCB 등 외부 신용평점과는 별개이며 대외 제출용으로 사용할 수
+            없습니다.
           </p>
 
           <div className="mt-6 grid gap-4 md:grid-cols-4">
             <div className="rounded-3xl border border-sky-100 bg-[linear-gradient(135deg,_rgba(219,234,254,0.95)_0%,_rgba(239,246,255,0.98)_48%,_rgba(248,250,252,1)_100%)] px-5 py-5 text-slate-900 shadow-[0_20px_45px_rgba(148,163,184,0.18)]">
               <p className="text-xs tracking-[0.12em] text-sky-700/70">내부 평가 점수</p>
               <p className="mt-3 text-3xl font-semibold">{data.creditScore}점</p>
-              <p className="mt-2 text-sm text-slate-500">최근 평가 결과 기준입니다.</p>
+              <p className="mt-2 text-sm text-slate-500">현재 백엔드 평가 결과 기준입니다.</p>
             </div>
 
             <div className="rounded-3xl border border-blue-100 bg-blue-50/70 px-5 py-5">
-              <p className="text-sm font-medium text-slate-500">평가 등급</p>
-              <p className={`mt-4 text-2xl font-bold ${scoreColor}`}>{data.creditGrade}</p>
+              <p className="text-sm font-medium text-slate-500">내부 평가 등급</p>
+              <p className="mt-4 text-2xl font-bold text-slate-900">{data.creditGrade}</p>
               <p className="mt-2 text-sm text-slate-500">
-                최근 활동성과 소비 안정성을 함께 반영합니다.
+                상환 여력과 거래 안정성을 종합해 산정한 내부 등급입니다.
               </p>
             </div>
 
@@ -138,7 +146,7 @@ export default function MyCreditScore() {
                 </p>
               </div>
               <p className="mt-2 text-sm text-slate-500">
-                최근 평가 결과와 비교한 변동량입니다.
+                직전 평가 기록과 비교한 점수 변동입니다.
               </p>
             </div>
 
@@ -146,7 +154,7 @@ export default function MyCreditScore() {
               <p className="text-sm font-medium text-slate-500">최근 평가일</p>
               <p className="mt-4 text-2xl font-bold text-slate-900">{data.evaluatedAt}</p>
               <p className="mt-2 text-sm text-slate-500">
-                내부 심사 기준으로 주기적으로 갱신합니다.
+                신용평가를 다시 실행하면 최신 기준으로 갱신됩니다.
               </p>
             </div>
           </div>
@@ -162,7 +170,8 @@ export default function MyCreditScore() {
                 <div>
                   <h2 className="text-xl font-bold text-slate-900">평가 결과 요약</h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    회원별 계좌, 카드, 소비 흐름을 바탕으로 계산한 내부 결과입니다.
+                    자금 여력, 최근 활동성, 소비 부담, 거래 안정성을 기준으로 계산한
+                    결과입니다.
                   </p>
                 </div>
               </div>
@@ -172,13 +181,13 @@ export default function MyCreditScore() {
                   <p className="text-6xl font-bold tracking-tight text-slate-900">
                     {data.creditScore}
                   </p>
-                  <p className="pb-2 text-xl text-slate-400">/ 1000</p>
+                  <p className="pb-2 text-xl text-slate-400">/ 950</p>
                 </div>
 
                 <div className="mt-6">
                   <div className="mb-2 flex items-center justify-between text-sm text-slate-500">
-                    <span>내부 평가 구간</span>
-                    <span className={`font-semibold ${scoreColor}`}>{data.creditGrade}</span>
+                    <span>현재 내부 평가 구간</span>
+                    <span className="font-semibold text-slate-900">{data.creditGrade}</span>
                   </div>
                   <div className="h-3 overflow-hidden rounded-full bg-slate-200">
                     <div
@@ -194,9 +203,10 @@ export default function MyCreditScore() {
 
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
               <div className="mb-5">
-                <h2 className="text-xl font-bold text-slate-900">대출 참고 한도</h2>
+                <h2 className="text-xl font-bold text-slate-900">대출 심사 참고 정보</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  현재 내부 평가 결과를 바탕으로 계산한 참고용 예상 한도입니다.
+                  현재 점수에 비례한 단순 참고 수치입니다. 실제 심사 한도와는 다를 수
+                  있으며, 정식 한도 산정 로직을 대체하지 않습니다.
                 </p>
               </div>
 
@@ -206,8 +216,8 @@ export default function MyCreditScore() {
                   {formatAmount(data.estimatedLoanLimit)}
                 </p>
                 <p className="mt-2 text-sm leading-6 text-slate-600">
-                  실제 한도는 상품 조건, 부채 상태, 추가 심사 정보에 따라 달라질 수
-                  있습니다.
+                  현재 내부 평가 점수에 비례해 계산한 참고 수치입니다. 상품 조건과 추가
+                  심사 결과에 따라 실제 한도는 달라질 수 있습니다.
                 </p>
               </div>
 
@@ -228,12 +238,54 @@ export default function MyCreditScore() {
             </div>
           </section>
 
+          <section className="grid gap-5 lg:grid-cols-2">
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
+              <div className="mb-5">
+                <h2 className="text-xl font-bold text-slate-900">점수 산출 사유</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  현재 내부 점수에 직접 반영되는 핵심 판단 요소입니다.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {scoreReasons.map((reason) => (
+                  <div
+                    key={reason}
+                    className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4 text-sm leading-6 text-slate-700"
+                  >
+                    {reason}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
+              <div className="mb-5">
+                <h2 className="text-xl font-bold text-slate-900">리스크 해석</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  현재 데이터 기준으로 내부 평가 결과를 해석한 문장입니다.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {riskInsights.map((insight) => (
+                  <div
+                    key={insight}
+                    className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4 text-sm leading-6 text-slate-700"
+                  >
+                    {insight}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
           <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
             <div className="mb-5">
               <h2 className="text-xl font-bold text-slate-900">추천 대출 상품</h2>
               <p className="mt-1 text-sm text-slate-500">
-                현재 내부 평가 결과와 계정 데이터를 기준으로 참고용 추천 상품을
-                보여줍니다.
+                현재 내부 평가 결과를 기준으로 보여주는 예시 추천입니다. 실제 추천 로직은
+                추후 상환 이력과 상품 조건까지 반영해 더 정교해질 수 있습니다.
               </p>
             </div>
 
