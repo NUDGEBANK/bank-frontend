@@ -96,121 +96,119 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-white/20 bg-gray-900/80 shadow-lg backdrop-blur-md">
-        <div className="mx-auto max-w-7xl px-4">
-          <div className="grid h-16 grid-cols-[180px_1fr_280px] items-center gap-4">
-            <Link to="/" className="text-2xl font-bold text-white drop-shadow-lg">
-              NUDGEBANK
-            </Link>
+      <div className="sticky top-0 z-50" onMouseLeave={() => setActiveMenuLabel(null)}>
+        <header className="border-b border-white/20 bg-gray-900/80 shadow-lg backdrop-blur-md">
+          <div className="mx-auto max-w-7xl px-4">
+            <div className="grid h-16 grid-cols-[180px_1fr_280px] items-center gap-4">
+              <Link to="/" className="text-2xl font-bold text-white drop-shadow-lg">
+                NUDGEBANK
+              </Link>
 
-            <nav
-              className="flex items-center justify-center"
-              onMouseLeave={() => setActiveMenuLabel(null)}
-            >
-              <div
-                className="mx-auto flex items-center justify-center gap-14"
-                style={{ width: `${MENU_TRACK_WIDTH}px` }}
-              >
-                {menuItems.map((item) => (
-                  <div
-                    key={item.label}
-                    className="relative flex h-16 items-center justify-center"
-                    onMouseEnter={() => setActiveMenuLabel(item.label)}
-                  >
-                    {item.submenu && item.submenu.length > 0 ? (
-                      <button className="py-2 text-base font-semibold tracking-tight text-white/90 transition-colors hover:text-white">
-                        {item.label}
-                      </button>
-                    ) : (
-                      <Link
-                        to={item.path || "#"}
-                        className="py-2 text-base font-semibold tracking-tight text-white/90 transition-colors hover:text-white"
-                      >
-                        {item.label}
-                      </Link>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </nav>
-
-            <div className="flex items-center justify-end gap-3">
-              {isLoggedIn ? (
-                <>
-                  <Link
-                    to="/account/mypage"
-                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/40 bg-white/20 px-4 py-2 font-semibold leading-none text-white shadow-lg transition-all hover:bg-white/30"
-                  >
-                    마이페이지
-                  </Link>
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/40 bg-white/20 px-4 py-2 font-semibold leading-none text-white shadow-lg transition-all hover:bg-white/30"
-                  >
-                    로그아웃
-                  </button>
-                </>
-              ) : (
-                <Link
-                  to="/login"
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/40 bg-white/20 px-4 py-2 font-semibold leading-none text-white shadow-lg transition-all hover:bg-white/30"
+              <nav className="flex items-center justify-center">
+                <div
+                  className="mx-auto flex items-center justify-center gap-14"
+                  style={{ width: `${MENU_TRACK_WIDTH}px` }}
                 >
-                  <LogIn className="h-4 w-4" />
-                  로그인
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {activeMenuLabel && <div className="fixed inset-0 top-16 z-30 bg-black/20 backdrop-blur-sm" />}
-
-      {activeMenuLabel && (
-        <div
-          className="fixed left-0 right-0 top-16 z-40 border-b border-white/20 bg-gray-800/50 shadow-2xl backdrop-blur-xl"
-          onMouseLeave={() => setActiveMenuLabel(null)}
-        >
-          <div className="mx-auto max-w-7xl px-4 py-6">
-            <div className="grid grid-cols-[180px_1fr_280px] items-start gap-4">
-              <div className="pt-1">
-                {activeMenu && (
-                  <div className="space-y-2">
-                    <p className="text-base font-semibold tracking-tight text-white">{activeMenu.label}</p>
-                    <p className="text-sm leading-5 text-white/70">{activeMenu.description}</p>
-                  </div>
-                )}
-              </div>
-
-              <nav className="flex items-start justify-center">
-                <div className="mx-auto w-full" style={{ maxWidth: `${MENU_TRACK_WIDTH}px` }}>
-                  <div className="flex min-h-[32px] items-start">
-                    <div className="shrink-0" style={{ width: `${DROPDOWN_INFO_WIDTH}px` }} />
-                    {activeMenu && (
-                      <div className="flex items-center gap-10">
-                        {activeMenu.submenu?.map((subItem) => (
-                          <Link
-                            key={subItem.label}
-                            to={subItem.path}
-                            className="whitespace-nowrap py-1 text-base font-medium text-white/90 transition-colors hover:text-white"
-                          >
-                            {subItem.label}
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  {menuItems.map((item) => (
+                    <div
+                      key={item.label}
+                      className="relative flex h-16 items-center justify-center"
+                      onMouseEnter={() => setActiveMenuLabel(item.label)}
+                    >
+                      {item.submenu && item.submenu.length > 0 ? (
+                        <button className="py-2 text-base font-semibold tracking-tight text-white/90 transition-colors hover:text-white">
+                          {item.label}
+                        </button>
+                      ) : (
+                        <Link
+                          to={item.path || "#"}
+                          className="py-2 text-base font-semibold tracking-tight text-white/90 transition-colors hover:text-white"
+                        >
+                          {item.label}
+                        </Link>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </nav>
 
-              <div className="opacity-0">
-                <div className="px-4 py-2">로그인</div>
+              <div className="flex items-center justify-end gap-3">
+                {isLoggedIn ? (
+                  <>
+                    <Link
+                      to="/account/mypage"
+                      className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/40 bg-white/20 px-4 py-2 font-semibold leading-none text-white shadow-lg transition-all hover:bg-white/30"
+                    >
+                      마이페이지
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/40 bg-white/20 px-4 py-2 font-semibold leading-none text-white shadow-lg transition-all hover:bg-white/30"
+                    >
+                      로그아웃
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    to="/login"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/40 bg-white/20 px-4 py-2 font-semibold leading-none text-white shadow-lg transition-all hover:bg-white/30"
+                  >
+                    <LogIn className="h-4 w-4" />
+                    로그인
+                  </Link>
+                )}
               </div>
             </div>
           </div>
-        </div>
-      )}
+        </header>
+
+        {activeMenuLabel && (
+          <div className="pointer-events-none fixed inset-0 top-16 z-30 bg-black/20 backdrop-blur-sm" />
+        )}
+
+        {activeMenuLabel && (
+          <div className="absolute left-0 right-0 top-full z-40 border-b border-white/20 bg-gray-800/50 shadow-2xl backdrop-blur-xl">
+            <div className="mx-auto max-w-7xl px-4 py-6">
+              <div className="grid min-h-[116px] grid-cols-[180px_1fr_280px] items-start gap-4">
+                <div className="pt-1">
+                  {activeMenu && (
+                    <div className="space-y-2">
+                      <p className="text-base font-semibold tracking-tight text-white">{activeMenu.label}</p>
+                      <p className="text-sm leading-5 text-white/70">{activeMenu.description}</p>
+                    </div>
+                  )}
+                </div>
+
+                <nav className="flex items-start justify-center pt-1">
+                  <div className="mx-auto w-full" style={{ maxWidth: `${MENU_TRACK_WIDTH}px` }}>
+                    <div className="flex min-h-[32px] items-start">
+                      <div className="shrink-0" style={{ width: `${DROPDOWN_INFO_WIDTH}px` }} />
+                      {activeMenu && (
+                        <div className="flex items-center gap-10">
+                          {activeMenu.submenu?.map((subItem) => (
+                            <Link
+                              key={subItem.label}
+                              to={subItem.path}
+                              className="whitespace-nowrap py-1 text-base font-medium text-white/90 transition-colors hover:text-white"
+                            >
+                              {subItem.label}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </nav>
+
+                <div className="opacity-0">
+                  <div className="px-4 py-2">로그인</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </>
   );
 }
