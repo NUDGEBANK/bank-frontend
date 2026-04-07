@@ -106,8 +106,8 @@ export default function Header() {
 
               <nav className="flex items-center justify-center">
                 <div
-                  className="mx-auto flex items-center justify-center gap-14"
-                  style={{ width: `${MENU_TRACK_WIDTH}px` }}
+                    className="mx-auto w-full flex items-center justify-center gap-14"
+                    style={{ maxWidth: `${MENU_TRACK_WIDTH}px` }}
                 >
                   {menuItems.map((item) => (
                     <div
@@ -116,7 +116,15 @@ export default function Header() {
                       onMouseEnter={() => setActiveMenuLabel(item.label)}
                     >
                       {item.submenu && item.submenu.length > 0 ? (
-                        <button className="py-2 text-base font-semibold tracking-tight text-white/90 transition-colors hover:text-white">
+                        <button
+                            type="button"
+                            aria-haspopup="menu"
+                            aria-expanded={activeMenuLabel === item.label}
+                            onFocus={() => setActiveMenuLabel(item.label)}
+                            onClick={() =>
+                                setActiveMenuLabel((current) => (current === item.label ? null : item.label))
+                            }
+                            className="py-2 text-base font-semibold tracking-tight text-white/90 transition-colors hover:text-white">
                           {item.label}
                         </button>
                       ) : (
@@ -201,7 +209,7 @@ export default function Header() {
                   </div>
                 </nav>
 
-                <div className="opacity-0">
+                <div aria-hidden="true" className="invisible">
                   <div className="px-4 py-2">로그인</div>
                 </div>
               </div>

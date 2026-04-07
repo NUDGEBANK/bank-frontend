@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
-import { CheckCircle, CreditCard, Shield, TrendingDown, Zap } from "lucide-react";
+import { CheckCircle, Shield, TrendingDown, Zap } from "lucide-react";
 
 import {
   Dialog,
@@ -243,27 +243,61 @@ export default function DdokgaeCard() {
               </div>
 
               <div className="relative">
-                <div className="bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-md rounded-2xl p-8 border-2 border-white/40">
-                  <div className="flex justify-between items-start mb-8">
-                    <CreditCard className="w-12 h-12" />
-                    <div className="text-right">
-                      <p className="text-sm text-blue-100">똑개뱅크</p>
-                      <p className="font-bold">CHECK CARD</p>
-                    </div>
-                  </div>
-                  <div className="mb-6">
-                    <p className="text-2xl font-mono tracking-wider">
-                      {cardPreview.cardNumber}
-                    </p>
-                  </div>
-                  <div className="flex justify-between">
-                    <div>
-                      <p className="text-xs text-blue-100 mb-1">VALID THRU</p>
-                      <p className="font-mono">{cardPreview.expiredYm}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-xs text-blue-100 mb-1">CARD HOLDER</p>
-                      <p className="font-bold">{cardPreview.cardHolderName}</p>
+                <div className="mx-auto flex max-w-md justify-center">
+                  <div className="relative aspect-[1.58/1] w-full overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,#8ea2ff_0%,#4f66ff_28%,#223dff_64%,#1b28c9_100%)] shadow-[0_24px_80px_rgba(9,11,18,0.45)] ring-1 ring-white/10">
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_22%,rgba(255,255,255,0.24),transparent_22%),radial-gradient(circle_at_84%_18%,rgba(255,255,255,0.12),transparent_14%),radial-gradient(circle_at_50%_100%,rgba(111,129,255,0.20),transparent_32%),linear-gradient(180deg,rgba(255,255,255,0.08),transparent_24%)]" />
+                    <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-white/14 to-transparent" />
+                    <div className="absolute -left-10 bottom-0 h-32 w-40 rounded-full bg-white/10 blur-3xl" />
+                    <div className="absolute right-0 top-12 h-28 w-28 rounded-full bg-sky-200/10 blur-2xl" />
+                    <div className="relative flex h-full flex-col px-10 py-8">
+                      <div className="flex items-start justify-between">
+                        <div className="relative h-14 w-22 rounded-2xl bg-gradient-to-br from-white/28 to-white/10 backdrop-blur-sm ring-1 ring-white/15">
+                          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/10 to-transparent" />
+                        </div>
+                        <div className="text-right">
+                          <div className="mb-2 ml-auto flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-white/30 to-white/14 ring-1 ring-white/10">
+                            <div className="flex items-center gap-0.5">
+                              <span className="h-3.5 w-1 rounded-full bg-white/70" />
+                              <span className="h-3.5 w-1 rounded-full bg-white/70" />
+                              <span className="h-3.5 w-1 rounded-full bg-white/70" />
+                            </div>
+                          </div>
+                          <p className="text-[11px] uppercase tracking-[0.22em] text-white/55">
+                            NUDGEBANK
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-9">
+                        <p className="text-[10px] uppercase tracking-[0.26em] text-white/50">
+                          Digital Private Card
+                        </p>
+                      </div>
+
+                      <div className="mt-auto space-y-3 pb-6">
+                        <div className="font-mono text-[1.22rem] tracking-[0.1em] text-white drop-shadow-[0_2px_10px_rgba(12,16,40,0.22)]">
+                          {cardPreview.cardNumber}
+                        </div>
+
+                        <div className="flex items-end justify-between text-white/80">
+                          <div>
+                            <p className="text-[9px] uppercase tracking-[0.22em] text-white/45">
+                              Valid Thru
+                            </p>
+                            <p className="mt-1 font-mono text-[1.08rem] tracking-[0.06em] text-white/90">
+                              {cardPreview.expiredYm}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[9px] uppercase tracking-[0.22em] text-white/45">
+                              Card Holder
+                            </p>
+                            <p className="mt-1 text-[1rem] font-semibold tracking-tight text-white/95 drop-shadow-[0_2px_8px_rgba(12,16,40,0.16)]">
+                              {cardPreview.cardHolderName}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -1,4 +1,13 @@
-import { CheckCircle2, ChevronRight, FileText, Shield, ShieldCheck, Wallet } from "lucide-react";
+import {
+  CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  FileText,
+  Shield,
+  ShieldCheck,
+  Wallet,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 
@@ -91,6 +100,14 @@ export default function MyCreditScore() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [histories, setHistories] = useState<CreditHistoryItem[]>([]);
+  const [isOverviewOpen, setIsOverviewOpen] = useState(false);
+  const [isResultSummaryOpen, setIsResultSummaryOpen] = useState(false);
+  const [isReferenceInfoOpen, setIsReferenceInfoOpen] = useState(false);
+  const [isCriteriaOpen, setIsCriteriaOpen] = useState(false);
+  const [isReasonOpen, setIsReasonOpen] = useState(false);
+  const [isRiskOpen, setIsRiskOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isRecommendationOpen, setIsRecommendationOpen] = useState(false);
 
   useEffect(() => {
     const evaluateAndLoad = async () => {
@@ -134,6 +151,12 @@ export default function MyCreditScore() {
         "페이지 진입 시 현재 로그인한 회원의 최신 계좌와 거래 데이터를 기준으로 자동 평가를 진행합니다.",
         "첫 평가 이후에는 점수, 내부 등급, 참고 한도와 이전 평가 이력을 이 페이지에서 바로 확인할 수 있습니다.",
       ];
+
+  const sectionHeaderClass =
+    "flex w-full items-start justify-between gap-4 text-left";
+  const sectionTitleWrapClass = "flex items-center gap-3";
+  const sectionToggleClass =
+    "flex items-center justify-center p-0 text-slate-400 transition hover:text-slate-600";
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 md:px-6">
@@ -204,19 +227,28 @@ export default function MyCreditScore() {
 
         <div className="space-y-8 px-6 py-8 md:px-8 lg:px-10">
           <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-            <div className="mb-6 flex items-center gap-3">
-              <div className="rounded-2xl bg-blue-50 p-3 text-blue-600">
-                <ShieldCheck className="h-5 w-5" />
+            <button
+              className={sectionHeaderClass}
+              onClick={() => setIsOverviewOpen((prev) => !prev)}
+              type="button"
+            >
+              <div className={sectionTitleWrapClass}>
+                <div className="rounded-2xl bg-blue-50 p-3 text-blue-600">
+                  <ShieldCheck className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">평가 개요</h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    현재 점수 계산에 반영되는 핵심 항목과 계산 흐름을 함께 보여줍니다.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">평가 개요</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  현재 점수 계산에 반영되는 핵심 항목과 계산 흐름을 함께 보여줍니다.
-                </p>
-              </div>
-            </div>
+              <span className={sectionToggleClass}>
+                {isOverviewOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+              </span>
+            </button>
 
-            <div className="space-y-6">
+            {isOverviewOpen && <div className="mt-6 space-y-6">
               <div>
                 <div className="mb-4">
                   <h3 className="text-lg font-bold text-slate-900">평가 반영 항목</h3>
@@ -272,23 +304,32 @@ export default function MyCreditScore() {
                   ))}
                 </div>
               </div>
-            </div>
+            </div>}
           </section>
 
           <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-            <div className="mb-5 flex items-center gap-3">
-              <div className="rounded-2xl bg-blue-50 p-3 text-blue-600">
-                <Shield className="h-5 w-5" />
+            <button
+              className={sectionHeaderClass}
+              onClick={() => setIsResultSummaryOpen((prev) => !prev)}
+              type="button"
+            >
+              <div className={sectionTitleWrapClass}>
+                <div className="rounded-2xl bg-blue-50 p-3 text-blue-600">
+                  <Shield className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">평가 결과 요약</h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    자금 상태, 최근 활동성, 소비 부담, 거래 안정성을 기준으로 계산한 결과입니다.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">평가 결과 요약</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  자금 상태, 최근 활동성, 소비 부담, 거래 안정성을 기준으로 계산한 결과입니다.
-                </p>
-              </div>
-            </div>
+              <span className={sectionToggleClass}>
+                {isResultSummaryOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+              </span>
+            </button>
 
-            <div className="rounded-3xl border border-slate-100 bg-slate-50/80 p-5">
+            {isResultSummaryOpen && <div className="mt-5 rounded-3xl border border-slate-100 bg-slate-50/80 p-5">
               <div className="flex items-end gap-4">
                 <p className="text-6xl font-bold tracking-tight text-slate-900">
                   {isLoading ? "..." : data?.creditScore ?? "-"}
@@ -315,19 +356,29 @@ export default function MyCreditScore() {
                 {data?.evaluationResult ??
                   "저장된 내부 평가 결과가 없으면 신용평가를 실행한 뒤 이 영역에서 요약 결과를 확인할 수 있습니다."}
               </p>
-            </div>
+            </div>}
           </section>
 
           <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-            <div className="mb-5">
-              <h2 className="text-xl font-bold text-slate-900">대출 심사 참고 정보</h2>
-              <p className="mt-1 text-sm text-slate-500">
-                현재 점수에 비례한 단순 참고 수치입니다. 실제 심사 한도와는 다를 수 있으며,
-                정식 한도 산정 로직을 대체하지 않습니다.
-              </p>
-            </div>
+            <button
+              className={sectionHeaderClass}
+              onClick={() => setIsReferenceInfoOpen((prev) => !prev)}
+              type="button"
+            >
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">대출 심사 참고 정보</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  현재 점수에 비례한 단순 참고 수치입니다. 실제 심사 한도와는 다를 수 있으며,
+                  정식 한도 산정 로직을 대체하지 않습니다.
+                </p>
+              </div>
+              <span className={sectionToggleClass}>
+                {isReferenceInfoOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+              </span>
+            </button>
 
-            <div className="rounded-2xl border border-blue-100 bg-blue-50/80 px-5 py-5">
+            {isReferenceInfoOpen && <>
+            <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50/80 px-5 py-5">
               <p className="text-sm text-slate-500">예상 가능 한도</p>
               <p className="mt-2 text-3xl font-bold text-slate-900">
                 {data ? formatAmount(data.estimatedLoanLimit) : "평가 후 확인"}
@@ -358,22 +409,33 @@ export default function MyCreditScore() {
                 </div>
               )}
             </div>
+            </>}
           </section>
 
           <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-            <div className="mb-5 flex items-center gap-3">
-              <div className="rounded-2xl bg-amber-50 p-3 text-amber-600">
-                <Wallet className="h-5 w-5" />
+            <button
+              className={sectionHeaderClass}
+              onClick={() => setIsCriteriaOpen((prev) => !prev)}
+              type="button"
+            >
+              <div className={sectionTitleWrapClass}>
+                <div className="rounded-2xl bg-amber-50 p-3 text-amber-600">
+                  <Wallet className="h-5 w-5" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">평가 기준 안내</h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    현재 백엔드 산식에 맞춘 설명이며, 향후 데이터가 늘어나면 조정될 수 있습니다.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">평가 기준 안내</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  현재 백엔드 산식에 맞춘 설명이며, 향후 데이터가 늘어나면 조정될 수 있습니다.
-                </p>
-              </div>
-            </div>
+              <span className={sectionToggleClass}>
+                {isCriteriaOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+              </span>
+            </button>
 
-            <div className="grid gap-3 md:grid-cols-2">
+            {isCriteriaOpen && <>
+            <div className="mt-5 grid gap-3 md:grid-cols-2">
               {evaluationCriteria.map((criterion) => (
                 <div
                   key={criterion}
@@ -396,18 +458,28 @@ export default function MyCreditScore() {
                 {error}
               </div>
             )}
+            </>}
           </section>
 
           <section className="grid gap-5 lg:grid-cols-2">
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-              <div className="mb-5">
-                <h2 className="text-xl font-bold text-slate-900">점수 산출 사유</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  현재 내부 점수에 직접 반영되는 핵심 판단 요소입니다.
-                </p>
-              </div>
+              <button
+                className={sectionHeaderClass}
+                onClick={() => setIsReasonOpen((prev) => !prev)}
+                type="button"
+              >
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">점수 산출 사유</h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    현재 내부 점수에 직접 반영되는 핵심 판단 요소입니다.
+                  </p>
+                </div>
+                <span className={sectionToggleClass}>
+                  {isReasonOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                </span>
+              </button>
 
-              <div className="space-y-3">
+              {isReasonOpen && <div className="mt-5 space-y-3">
                 {scoreReasons.map((reason) => (
                   <div
                     key={reason}
@@ -416,18 +488,27 @@ export default function MyCreditScore() {
                     {reason}
                   </div>
                 ))}
-              </div>
+              </div>}
             </div>
 
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-              <div className="mb-5">
-                <h2 className="text-xl font-bold text-slate-900">리스크 해석</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  현재 데이터 기준으로 내부 평가 결과를 해석한 문장입니다.
-                </p>
-              </div>
+              <button
+                className={sectionHeaderClass}
+                onClick={() => setIsRiskOpen((prev) => !prev)}
+                type="button"
+              >
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">리스크 해석</h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    현재 데이터 기준으로 내부 평가 결과를 해석한 문장입니다.
+                  </p>
+                </div>
+                <span className={sectionToggleClass}>
+                  {isRiskOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                </span>
+              </button>
 
-              <div className="space-y-3">
+              {isRiskOpen && <div className="mt-5 space-y-3">
                 {riskInsights.map((insight) => (
                   <div
                     key={insight}
@@ -436,19 +517,28 @@ export default function MyCreditScore() {
                     {insight}
                   </div>
                 ))}
-              </div>
+              </div>}
             </div>
           </section>
 
           <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-            <div className="mb-6">
-              <h2 className="text-xl font-bold text-slate-900">이전 신용 평가 점수 내역</h2>
-              <p className="mt-1 text-sm text-slate-500">
-                최근 자동 평가 기록을 기준으로 점수 변화 흐름을 확인할 수 있습니다.
-              </p>
-            </div>
+            <button
+              className={sectionHeaderClass}
+              onClick={() => setIsHistoryOpen((prev) => !prev)}
+              type="button"
+            >
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">이전 신용 평가 점수 내역</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  최근 자동 평가 기록을 기준으로 점수 변화 흐름을 확인할 수 있습니다.
+                </p>
+              </div>
+              <span className={sectionToggleClass}>
+                {isHistoryOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+              </span>
+            </button>
 
-            <div className="mb-8 space-y-3">
+            {isHistoryOpen && <div className="mt-6 mb-2 space-y-3">
               {histories.length > 0 ? (
                 histories.slice(0, 3).map((history, index) => (
                   <div
@@ -479,20 +569,30 @@ export default function MyCreditScore() {
                   영역에 표시됩니다.
                 </div>
               )}
-            </div>
+            </div>}
 
           </section>
 
           <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-            <div className="mb-5">
-              <h2 className="text-xl font-bold text-slate-900">추천 대출 상품</h2>
-              <p className="mt-1 text-sm text-slate-500">
-                현재 내부 평가 결과를 기준으로 보여주는 예시 추천입니다. 실제 추천 로직은
-                추후 거래 이력과 상품 조건까지 반영해 더 정교해질 수 있습니다.
-              </p>
-            </div>
+            <button
+              className={sectionHeaderClass}
+              onClick={() => setIsRecommendationOpen((prev) => !prev)}
+              type="button"
+            >
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">추천 대출 상품</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  현재 내부 평가 결과를 기준으로 보여주는 예시 추천입니다. 실제 추천 로직은
+                  추후 거래 이력과 상품 조건까지 반영해 더 정교해질 수 있습니다.
+                </p>
+              </div>
+              <span className={sectionToggleClass}>
+                {isRecommendationOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+              </span>
+            </button>
 
-            <div className="space-y-4">
+            {isRecommendationOpen && <>
+            <div className="mt-5 space-y-4">
               {(data?.recommendedLoans ?? []).map((loan) => (
                 <div
                   key={loan.id}
@@ -534,6 +634,7 @@ export default function MyCreditScore() {
               이 페이지에서 평가 기준 확인, 신용평가 실행, 점수 조회를 한 번에 진행할 수
               있습니다.
             </div>
+            </>}
           </section>
         </div>
       </div>
