@@ -4,6 +4,9 @@ import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import homeBanner1 from "../../assets/home/1.jpg";
+import homeBanner2 from "../../assets/home/2.jpg";
+import homeBanner3 from "../../assets/home/3.jpg";
 
 // 커스텀 화살표 컴포넌트
 function PrevArrow(props: any) {
@@ -61,14 +64,14 @@ export default function Home() {
                     <p className="text-lg text-[#3B4858] drop-shadow-md">첫 입금 시 현금 3만원 지급</p>
                     <Link
                       to="/account/ddokgae"
-                      className="inline-block bg-[#478FFF] text-white px-8 py-4 rounded-lg font-semibold hover:bg-[#2f74d6] transition-all shadow-lg border-2 border-[#478FFF] text-lg"
+                      className="inline-flex items-center justify-center bg-[#478FFF] px-8 py-4 rounded-lg font-semibold hover:bg-[#2f74d6] transition-all shadow-lg border-2 border-[#478FFF] text-lg leading-none"
                     >
-                      통장 개설하기
+                      <span style={{ color: "#fff", lineHeight: 1 }}>통장 개설하기</span>
                     </Link>
                   </div>
                   <div className="relative h-80 rounded-xl overflow-hidden shadow-2xl">
                     <ImageWithFallback
-                      src="https://images.unsplash.com/photo-1642055509518-adafcad1d22e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxiYW5rJTIwYWNjb3VudCUyMG1vYmlsZSUyMGFwcHxlbnwxfHx8fDE3NzQzMTQ1NTV8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
+                      src={homeBanner1}
                       alt="똑개 통장"
                       className="w-full h-full object-cover"
                     />
@@ -87,14 +90,14 @@ export default function Home() {
                     <p className="text-lg text-[#3B4858] drop-shadow-md">연 3.2% ~ 8.5% 특별 금리</p>
                     <Link
                       to="/loan/products"
-                      className="inline-block bg-[#478FFF] text-white px-8 py-4 rounded-lg font-semibold hover:bg-[#2f74d6] transition-all shadow-lg border-2 border-[#478FFF] text-lg"
+                      className="inline-flex items-center justify-center bg-[#478FFF] px-8 py-4 rounded-lg font-semibold hover:bg-[#2f74d6] transition-all shadow-lg border-2 border-[#478FFF] text-lg leading-none"
                     >
-                      대출 상담하기
+                      <span style={{ color: "#fff", lineHeight: 1 }}>대출 상담하기</span>
                     </Link>
                   </div>
                   <div className="relative h-80 rounded-xl overflow-hidden shadow-2xl">
                     <ImageWithFallback
-                      src="https://images.unsplash.com/photo-1762151717091-4e0633e0c431?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsb2FuJTIwZmluYW5jaWFsJTIwcGxhbm5pbmd8ZW58MXx8fHwxNzc0MzM2NDQ3fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
+                      src={homeBanner2}
                       alt="맞춤형 대출"
                       className="w-full h-full object-cover"
                     />
@@ -113,14 +116,14 @@ export default function Home() {
                     <p className="text-lg text-[#3B4858] drop-shadow-md">전월 실적 없이 5% 캐시백</p>
                     <Link
                       to="/card/ddokgae"
-                      className="inline-block bg-[#478FFF] text-white px-8 py-4 rounded-lg font-semibold hover:bg-[#2f74d6] transition-all shadow-lg border-2 border-[#478FFF] text-lg"
+                      className="inline-flex items-center justify-center bg-[#478FFF] px-8 py-4 rounded-lg font-semibold hover:bg-[#2f74d6] transition-all shadow-lg border-2 border-[#478FFF] text-lg leading-none"
                     >
-                      카드 신청하기
+                      <span style={{ color: "#fff", lineHeight: 1 }}>카드 신청하기</span>
                     </Link>
                   </div>
                   <div className="relative h-80 rounded-xl overflow-hidden shadow-2xl">
                     <ImageWithFallback
-                      src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjcmVkaXQlMjBjYXJkJTIwcGF5bWVudHxlbnwxfHx8fDE3NzQyODQwMzN8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
+                      src={homeBanner3}
                       alt="똑개 카드"
                       className="w-full h-full object-cover"
                     />
