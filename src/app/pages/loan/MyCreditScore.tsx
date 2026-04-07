@@ -161,9 +161,9 @@ export default function MyCreditScore() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 md:px-6">
       <div className="overflow-hidden rounded-[32px] border border-slate-200/80 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
-        <div className="border-b border-slate-100 bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.14),_transparent_38%),linear-gradient(135deg,_#f8fbff_0%,_#ffffff_52%,_#f8fafc_100%)] px-6 py-6 md:px-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-blue-500">
-            Internal Credit Score
+        <div className="border-b border-slate-100 bg-[linear-gradient(180deg,_#ffffff_0%,_#f8fafc_100%)] px-6 py-6 md:px-8">
+          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-blue-600">
+            Credit Score
           </p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
             내부 신용 평가 점수
@@ -175,8 +175,8 @@ export default function MyCreditScore() {
           </p>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
-            <div className="rounded-3xl border border-sky-100 bg-[linear-gradient(135deg,_rgba(219,234,254,0.95)_0%,_rgba(239,246,255,0.98)_48%,_rgba(248,250,252,1)_100%)] px-5 py-5 text-slate-900 shadow-[0_20px_45px_rgba(148,163,184,0.18)]">
-              <p className="text-xs tracking-[0.12em] text-sky-700/70">내부 평가 점수</p>
+            <div className="rounded-3xl border border-slate-200 bg-white px-5 py-5 text-slate-900 shadow-[0_12px_28px_rgba(15,23,42,0.05)]">
+              <p className="text-xs tracking-[0.12em] text-slate-500">내부 평가 점수</p>
               <p className="mt-3 break-keep text-2xl font-semibold sm:text-3xl">
                 {isLoading ? "계산 중" : data ? `${data.creditScore}점` : "미평가"}
               </p>
@@ -185,7 +185,7 @@ export default function MyCreditScore() {
               </p>
             </div>
 
-            <div className="rounded-3xl border border-blue-100 bg-blue-50/70 px-5 py-5">
+            <div className="rounded-3xl border border-slate-200 bg-white px-5 py-5 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
               <p className="text-sm font-medium text-slate-500">내부 평가 등급</p>
               <p className="mt-4 break-keep text-xl font-bold text-slate-900 sm:text-2xl">
                 {isLoading ? "불러오는 중" : data?.creditGrade ?? "평가 대기"}
@@ -195,7 +195,7 @@ export default function MyCreditScore() {
               </p>
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-slate-50/90 px-5 py-5">
+            <div className="rounded-3xl border border-slate-200 bg-white px-5 py-5 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
               <p className="text-sm font-medium text-slate-500">최근 변화</p>
               <div className="mt-4 flex items-center gap-2">
                 <p className="break-keep text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
@@ -213,7 +213,7 @@ export default function MyCreditScore() {
               </p>
             </div>
 
-            <div className="rounded-3xl border border-indigo-100 bg-indigo-50/80 px-5 py-5">
+            <div className="rounded-3xl border border-slate-200 bg-white px-5 py-5 shadow-[0_12px_28px_rgba(15,23,42,0.04)]">
               <p className="text-sm font-medium text-slate-500">최근 평가일</p>
               <p className="mt-4 text-lg font-bold leading-snug text-slate-900 sm:text-xl xl:text-2xl">
                 {isLoading ? "계산 중" : data?.evaluatedAt ?? "평가 기록 없음"}

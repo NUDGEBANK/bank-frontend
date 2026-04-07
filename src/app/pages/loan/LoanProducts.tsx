@@ -137,18 +137,18 @@ export default function LoanProducts() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-slate-50">
       <div className="mx-auto max-w-7xl px-4 py-12">
         <div className="mb-12">
           <div className="mb-4 flex items-center gap-3">
-            <div className="rounded-full border-2 border-white/30 bg-white/20 p-3 shadow-lg backdrop-blur-md">
-              <CheckCircle2 className="h-8 w-8 text-white" />
+            <div className="rounded-full border border-blue-100 bg-blue-50 p-3 shadow-sm">
+              <CheckCircle2 className="h-8 w-8 text-blue-600" />
             </div>
-            <h1 className="text-4xl font-bold text-white drop-shadow-lg">
+            <h1 className="text-4xl font-bold text-slate-900">
               대출상품을 비교하고 바로 신청해보세요
             </h1>
           </div>
-          <p className="ml-16 text-xl text-blue-100 drop-shadow-lg">
+          <p className="ml-16 text-xl text-slate-500">
             메인 상품 2개를 우선 비교하고, 신청 후에는 내 대출 관리에서 진행 상태를 확인할 수 있습니다.
           </p>
         </div>
@@ -160,12 +160,12 @@ export default function LoanProducts() {
             return (
               <section
                 key={product.id}
-                className="flex h-full flex-col rounded-3xl border-2 border-white/30 bg-white/15 p-8 shadow-2xl backdrop-blur-lg"
+                className="flex h-full flex-col rounded-[32px] border border-slate-200 bg-white p-8 shadow-[0_20px_50px_rgba(15,23,42,0.06)]"
               >
                 <div className="mb-6 flex items-center gap-3">
-                  <h2 className="text-2xl font-bold text-white">{product.name}</h2>
+                  <h2 className="text-2xl font-bold text-slate-900">{product.name}</h2>
                   {product.badge && (
-                    <span className="rounded-full border border-white/30 bg-blue-500/30 px-4 py-1 text-sm font-semibold text-white shadow-md backdrop-blur-sm">
+                    <span className="rounded-full border border-blue-100 bg-blue-50 px-4 py-1 text-sm font-semibold text-blue-700">
                       {product.badge}
                     </span>
                   )}
@@ -176,22 +176,22 @@ export default function LoanProducts() {
                   )}
                 </div>
 
-                <p className="mb-6 min-h-[48px] text-sm leading-6 text-blue-100">{product.summary}</p>
+                <p className="mb-6 min-h-[48px] text-sm leading-6 text-slate-500">{product.summary}</p>
 
-                <div className="mb-6 text-4xl font-bold text-blue-300">{product.rate}</div>
+                <div className="mb-6 text-4xl font-bold text-slate-900">{product.rate}</div>
 
                 <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3 md:items-start">
                   <div className="min-h-[72px]">
-                    <p className="mb-1 text-sm text-blue-200">대출 한도</p>
-                    <p className="font-bold text-white">{product.limit}</p>
+                    <p className="mb-1 text-sm text-slate-400">대출 한도</p>
+                    <p className="font-bold text-slate-900">{product.limit}</p>
                   </div>
                   <div className="min-h-[72px]">
-                    <p className="mb-1 text-sm text-blue-200">상환 기간</p>
-                    <p className="font-bold text-white">{product.period}</p>
+                    <p className="mb-1 text-sm text-slate-400">상환 기간</p>
+                    <p className="font-bold text-slate-900">{product.period}</p>
                   </div>
                   <div className="min-h-[72px]">
-                    <p className="mb-1 text-sm text-blue-200">대상</p>
-                    <p className="font-bold text-white">{product.target}</p>
+                    <p className="mb-1 text-sm text-slate-400">대상</p>
+                    <p className="font-bold text-slate-900">{product.target}</p>
                   </div>
                 </div>
 
@@ -199,7 +199,7 @@ export default function LoanProducts() {
                   {product.features.map((feature) => (
                     <span
                       key={feature}
-                      className="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm text-white backdrop-blur-sm"
+                      className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-600"
                     >
                       {feature}
                     </span>
@@ -209,14 +209,14 @@ export default function LoanProducts() {
                 <div className="mt-auto flex flex-col gap-4 sm:flex-row">
                   <Link
                     to={`/loan/products/${product.id}`}
-                    className="flex-1 rounded-xl border border-white/30 bg-white/10 py-4 text-center font-bold text-white shadow-sm backdrop-blur-sm transition-all hover:bg-white/20"
+                    className="flex-1 rounded-2xl border border-slate-200 bg-white py-4 text-center font-bold text-slate-700 transition-all hover:bg-slate-50"
                   >
                     상세 보기
                   </Link>
                   <button
                     type="button"
                     onClick={() => handleApply(product)}
-                    className="flex-1 rounded-xl border border-white/30 bg-blue-500/30 py-4 font-bold text-white shadow-md backdrop-blur-sm transition-all hover:bg-blue-500/40"
+                    className="flex-1 rounded-2xl bg-slate-900 py-4 font-bold text-white transition-all hover:bg-slate-800"
                   >
                     {application ? "내 대출 관리 보기" : "대출 신청하기"}
                   </button>
@@ -233,35 +233,35 @@ export default function LoanProducts() {
             return (
             <div
               key={product.id}
-              className="rounded-3xl border-2 border-white/30 bg-white/15 p-6 shadow-2xl backdrop-blur-lg"
+              className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_16px_38px_rgba(15,23,42,0.05)]"
             >
               <div className="mb-4 flex items-center justify-between gap-3">
-                <h3 className="text-xl font-bold text-white">{product.name}</h3>
+                <h3 className="text-xl font-bold text-slate-900">{product.name}</h3>
                 {application && (
                   <span className="rounded-full border border-emerald-600/70 bg-emerald-600 px-3 py-1 text-xs font-semibold text-white shadow-sm">
                     {getApplicationStatusLabel(application)}
                   </span>
                 )}
               </div>
-              <div className="mb-2 text-3xl font-bold text-blue-300">{product.rate}</div>
-              <p className="mb-4 text-sm text-blue-100">{product.limit}</p>
+              <div className="mb-2 text-3xl font-bold text-slate-900">{product.rate}</div>
+              <p className="mb-4 text-sm text-slate-500">{product.limit}</p>
               <div className="mb-6 space-y-2">
                 {product.features.map((feature) => (
-                  <p key={feature} className="text-sm text-blue-200">
+                  <p key={feature} className="text-sm text-slate-500">
                     {feature}
                   </p>
                 ))}
               </div>
               <Link
                 to={`/loan/products/${product.id}`}
-                className="block w-full rounded-xl border border-white/30 bg-white/10 py-3 text-center font-bold text-white shadow-sm backdrop-blur-sm transition-all hover:bg-white/20"
+                className="block w-full rounded-2xl border border-slate-200 bg-white py-3 text-center font-bold text-slate-700 transition-all hover:bg-slate-50"
               >
                 상세 보기
               </Link>
               <button
                 type="button"
                 onClick={() => handleApply(product)}
-                className="mt-3 block w-full rounded-xl border border-white/30 bg-blue-500/30 py-3 text-center font-bold text-white shadow-sm backdrop-blur-sm transition-all hover:bg-blue-500/40"
+                className="mt-3 block w-full rounded-2xl bg-slate-900 py-3 text-center font-bold text-white transition-all hover:bg-slate-800"
               >
                 {application ? "내 대출 관리 보기" : "대출 신청하기"}
               </button>
@@ -273,23 +273,23 @@ export default function LoanProducts() {
         <div className="flex items-center justify-between">
           <button
             type="button"
-            className="flex items-center gap-2 rounded-lg border border-white/30 bg-white/10 px-4 py-2 text-white backdrop-blur-sm transition-colors hover:bg-white/20 hover:text-blue-200"
+            className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-slate-700 transition-colors hover:bg-slate-50"
           >
             <ArrowLeft className="h-5 w-5" />
             <span className="font-semibold">다시 둘러보기</span>
           </button>
 
-          <div className="flex gap-6 text-sm text-blue-100">
-            <a href="#" className="transition-colors hover:text-white">
+          <div className="flex gap-6 text-sm text-slate-500">
+            <a href="#" className="transition-colors hover:text-slate-900">
               이용약관
             </a>
-            <a href="#" className="transition-colors hover:text-white">
+            <a href="#" className="transition-colors hover:text-slate-900">
               개인정보처리방침
             </a>
-            <a href="#" className="transition-colors hover:text-white">
+            <a href="#" className="transition-colors hover:text-slate-900">
               상품공시실
             </a>
-            <a href="#" className="transition-colors hover:text-white">
+            <a href="#" className="transition-colors hover:text-slate-900">
               고객센터
             </a>
           </div>

@@ -218,25 +218,26 @@ export default function DdokgaeCard() {
   return (
     <>
       <div className="max-w-7xl mx-auto px-4 py-12">
-        <h1 className="text-3xl font-bold mb-8 text-white drop-shadow-lg">똑개 체크카드</h1>
+        <h1 className="mb-8 text-3xl font-bold text-slate-900">똑개 체크카드</h1>
 
-        <div className="bg-gradient-to-br from-blue-500/30 via-purple-500/30 to-pink-500/30 backdrop-blur-lg rounded-2xl p-12 mb-12 text-white shadow-2xl border-2 border-white/30">
+        <div className="mb-12 rounded-[32px] border border-slate-200 bg-white p-12 shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
           <div className="max-w-4xl mx-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
               <div>
-                <h2 className="text-4xl font-bold mb-4 drop-shadow-lg">똑개 체크카드</h2>
-                <p className="text-xl text-blue-100 mb-6">
+                <p className="mb-3 text-sm font-semibold uppercase tracking-[0.28em] text-blue-600">Check Card</p>
+                <h2 className="mb-4 text-4xl font-bold text-slate-900">똑개 체크카드</h2>
+                <p className="mb-6 text-xl text-slate-500">
                   AI가 분석하는 스마트한 소비 관리
                 </p>
                 <div className="flex gap-3">
                   <button
-                    className="bg-white/90 text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-white transition-all shadow-lg"
+                    className="rounded-2xl bg-slate-900 px-8 py-3 font-semibold text-white transition-all hover:bg-slate-800"
                     onClick={openApplyFlow}
                     type="button"
                   >
                     신청하기
                   </button>
-                  <button className="bg-white/20 backdrop-blur-sm text-white px-8 py-3 rounded-lg font-semibold hover:bg-white/30 transition-colors border border-white/40">
+                  <button className="rounded-2xl border border-slate-200 bg-white px-8 py-3 font-semibold text-slate-700 transition-colors hover:bg-slate-50">
                     혜택 보기
                   </button>
                 </div>
@@ -306,9 +307,9 @@ export default function DdokgaeCard() {
           </div>
         </div>
 
-        <div className="bg-white/15 backdrop-blur-lg rounded-lg shadow-2xl p-8 mb-8 border-2 border-white/30">
-          <h2 className="text-2xl font-bold mb-6 text-white">똑개 체크카드란?</h2>
-          <p className="text-blue-100 text-lg leading-relaxed mb-6">
+        <div className="mb-8 rounded-[28px] border border-slate-200 bg-white p-8 shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
+          <h2 className="mb-6 text-2xl font-bold text-slate-900">똑개 체크카드란?</h2>
+          <p className="mb-6 text-lg leading-relaxed text-slate-500">
             똑개 체크카드는 AI 기술을 활용하여 모든 소비를 생필품과 사치품으로 자동 분류하고,
             사치품 소비 시에는 연동된 대출을 자동으로 상환하여 합리적인 소비 습관을 만들어주는
             혁신적인 체크카드입니다.
@@ -318,75 +319,75 @@ export default function DdokgaeCard() {
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
-                <div key={index} className="border-2 border-white/40 rounded-lg p-6 bg-white/20 backdrop-blur-sm">
-                  <div className="bg-blue-500/30 backdrop-blur-sm w-12 h-12 rounded-full flex items-center justify-center mb-4 border border-white/30">
-                    <Icon className="w-6 h-6 text-white" />
+                <div key={index} className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100">
+                    <Icon className="h-6 w-6 text-blue-600" />
                   </div>
-                  <h3 className="text-lg font-bold mb-2 text-white">{feature.title}</h3>
-                  <p className="text-blue-100">{feature.description}</p>
+                  <h3 className="mb-2 text-lg font-bold text-slate-900">{feature.title}</h3>
+                  <p className="text-slate-500">{feature.description}</p>
                 </div>
               );
             })}
           </div>
         </div>
 
-        <div className="bg-white/15 backdrop-blur-lg rounded-lg shadow-2xl p-8 mb-8 border-2 border-white/30">
-          <h2 className="text-2xl font-bold mb-6 text-white">주요 혜택</h2>
+        <div className="mb-8 rounded-[28px] border border-slate-200 bg-white p-8 shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
+          <h2 className="mb-6 text-2xl font-bold text-slate-900">주요 혜택</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {benefits.map((benefit, index) => (
-              <div key={index} className="flex items-center gap-3 p-4 bg-white/20 backdrop-blur-sm rounded-lg border-2 border-blue-300/50">
-                <CheckCircle className="w-6 h-6 text-blue-300 flex-shrink-0" />
-                <span className="text-white">{benefit}</span>
+              <div key={index} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <CheckCircle className="h-6 w-6 flex-shrink-0 text-blue-600" />
+                <span className="text-slate-700">{benefit}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="bg-white/15 backdrop-blur-lg rounded-lg shadow-2xl p-8 mb-8 border-2 border-white/30">
-          <h2 className="text-2xl font-bold mb-6 text-white">이용 방법</h2>
+        <div className="mb-8 rounded-[28px] border border-slate-200 bg-white p-8 shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
+          <h2 className="mb-6 text-2xl font-bold text-slate-900">이용 방법</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="border-2 border-green-300/50 bg-green-500/20 backdrop-blur-sm rounded-lg p-6">
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="bg-green-500/80 backdrop-blur-sm text-white w-10 h-10 rounded-full flex items-center justify-center font-bold border border-white/30">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500 font-bold text-white">
                   생
                 </div>
-                <h3 className="text-xl font-bold text-white">생필품 소비</h3>
+                <h3 className="text-xl font-bold text-slate-900">생필품 소비</h3>
               </div>
-              <ul className="space-y-2 text-blue-100">
+              <ul className="space-y-2 text-slate-600">
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-300 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-600" />
                   <span>식료품, 의류, 교통비 등</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-300 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-600" />
                   <span>일반 체크카드처럼 통장에서 즉시 결제</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-300 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-600" />
                   <span>자동 상환 대상 아님</span>
                 </li>
               </ul>
             </div>
 
-            <div className="border-2 border-orange-300/50 bg-orange-500/20 backdrop-blur-sm rounded-lg p-6">
+            <div className="rounded-2xl border border-orange-200 bg-orange-50 p-6">
               <div className="flex items-center gap-3 mb-4">
-                <div className="bg-orange-500/80 backdrop-blur-sm text-white w-10 h-10 rounded-full flex items-center justify-center font-bold border border-white/30">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500 font-bold text-white">
                   사
                 </div>
-                <h3 className="text-xl font-bold text-white">사치품 소비</h3>
+                <h3 className="text-xl font-bold text-slate-900">사치품 소비</h3>
               </div>
-              <ul className="space-y-2 text-blue-100">
+              <ul className="space-y-2 text-slate-600">
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-orange-300 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-orange-600" />
                   <span>명품, 고가 전자기기, 유흥비 등</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-orange-300 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-orange-600" />
                   <span>결제 금액의 일부가 대출 자동 상환</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-orange-300 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-orange-600" />
                   <span>신용점수 관리에 도움</span>
                 </li>
               </ul>
@@ -394,19 +395,19 @@ export default function DdokgaeCard() {
           </div>
         </div>
 
-        <div className="bg-gradient-to-r from-blue-500/30 to-purple-500/30 backdrop-blur-lg rounded-xl p-12 text-center text-white shadow-2xl border-2 border-white/30">
-          <h3 className="text-3xl font-bold mb-4 drop-shadow-lg">지금 바로 신청하세요</h3>
-          <p className="text-xl text-blue-100 mb-8">
+        <div className="rounded-[32px] border border-slate-200 bg-slate-900 p-12 text-center shadow-[0_24px_70px_rgba(15,23,42,0.18)]">
+          <h3 className="mb-4 text-3xl font-bold text-white">지금 바로 신청하세요</h3>
+          <p className="mb-8 text-xl text-slate-300">
             똑똑한 소비 관리의 시작, 똑개 체크카드
           </p>
           <button
-            className="bg-white/90 text-blue-600 px-12 py-4 rounded-lg text-lg font-bold hover:bg-white transition-all shadow-lg"
+            className="rounded-2xl bg-white px-12 py-4 text-lg font-bold text-slate-900 transition-all hover:bg-slate-100"
             onClick={openApplyFlow}
             type="button"
           >
             지금 신청하기
           </button>
-          <p className="text-sm text-blue-100 mt-4">
+          <p className="mt-4 text-sm text-slate-400">
             ※ 신청 후 즉시 가상카드가 발급됩니다.
           </p>
         </div>

@@ -219,12 +219,12 @@ export default function LoanDetail() {
       <div className="mb-8">
         <Link
           to="/loan/products"
-          className="mb-4 inline-block font-semibold text-blue-300 transition-colors hover:text-white"
+          className="mb-4 inline-block font-semibold text-slate-500 transition-colors hover:text-blue-600"
         >
           ← 대출 상품 목록
         </Link>
-        <h1 className="mb-4 text-4xl font-bold text-white drop-shadow-lg">{product.name}</h1>
-        <p className="text-xl text-blue-100 drop-shadow-md">{product.description}</p>
+        <h1 className="mb-4 text-4xl font-bold text-slate-900">{product.name}</h1>
+        <p className="text-xl text-slate-500">{product.description}</p>
       </div>
 
       <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-4">

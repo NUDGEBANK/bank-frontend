@@ -161,7 +161,7 @@ export default function LoanApply() {
       <div className="mb-8">
         <Link
           to={`/loan/products/${productId}`}
-          className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-4 py-2 font-semibold text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-white/20"
+          className="inline-flex items-center rounded-full border border-slate-200 bg-white px-4 py-2 font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50"
         >
           ← 상품 상세로 돌아가기
         </Link>

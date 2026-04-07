@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router";
-import { User, Lock } from "lucide-react";
+import { Lock, User } from "lucide-react";
+
 import { postJson } from "../lib/api";
 
 export default function Login() {
@@ -10,7 +11,6 @@ export default function Login() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  // @ts-ignore
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
@@ -35,102 +35,94 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center px-4 py-12">
+    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        {/* 로그인 카드 */}
-        <div className="bg-white/15 backdrop-blur-lg rounded-2xl shadow-2xl p-8 border-2 border-white/30">
-          {/* 헤더 */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">로그인</h1>
-            <p className="text-blue-100">똑개뱅크에 오신 것을 환영합니다</p>
+        <div className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-[0_24px_70px_rgba(15,23,42,0.08)]">
+          <div className="mb-8 text-center">
+            <h1 className="mb-2 text-3xl font-bold text-slate-900">로그인</h1>
+            <p className="text-slate-500">똑개뱅크에 오신 것을 환영합니다</p>
           </div>
 
-          {/* 로그인 폼 */}
           <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
-              <p className="text-sm text-red-900 bg-red-100/90 border border-red-300 rounded-lg px-3 py-2 font-medium">
+              <p className="rounded-2xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
                 {error}
               </p>
             )}
-            {/* 아이디 입력 */}
+
             <div>
-              <label htmlFor="username" className="block text-sm font-semibold text-white mb-2">
+              <label htmlFor="username" className="mb-2 block text-sm font-semibold text-slate-700">
                 아이디
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="w-5 h-5 text-blue-200" />
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                  <User className="h-5 w-5 text-slate-400" />
                 </div>
                 <input
                   type="text"
                   id="username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-white/20 backdrop-blur-sm border-2 border-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/60 text-white placeholder-blue-200 transition-all"
+                  className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
                   placeholder="아이디를 입력하세요"
                   required
                 />
               </div>
             </div>
 
-            {/* 비밀번호 입력 */}
             <div>
-              <label htmlFor="password" className="block text-sm font-semibold text-white mb-2">
+              <label htmlFor="password" className="mb-2 block text-sm font-semibold text-slate-700">
                 비밀번호
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="w-5 h-5 text-blue-200" />
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                  <Lock className="h-5 w-5 text-slate-400" />
                 </div>
                 <input
                   type="password"
                   id="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-white/20 backdrop-blur-sm border-2 border-white/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50 focus:border-white/60 text-white placeholder-blue-200 transition-all"
+                  className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
                   placeholder="비밀번호를 입력하세요"
                   required
                 />
               </div>
             </div>
 
-            {/* 로그인 버튼 */}
             <button
               type="submit"
-              className="w-full py-3 bg-white/90 backdrop-blur-sm text-blue-600 rounded-lg font-bold hover:bg-white transition-all shadow-lg border border-white/40 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full rounded-2xl bg-slate-900 py-3 font-bold text-white transition-all hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={isSubmitting}
             >
               {isSubmitting ? "로그인 중..." : "로그인"}
             </button>
           </form>
 
-          {/* 구분선 */}
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/30"></div>
+              <div className="w-full border-t border-slate-200" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-transparent text-blue-100">또는</span>
+              <span className="bg-white px-2 text-slate-400">또는</span>
             </div>
           </div>
 
-          {/* 회원가입 링크 */}
           <div className="text-center">
-            <p className="text-blue-100 mb-4">아직 계정이 없으신가요?</p>
+            <p className="mb-4 text-slate-500">아직 계정이 없으신가요?</p>
             <Link
               to="/Signup"
-              className="inline-block w-full py-3 bg-white/20 backdrop-blur-sm border-2 border-white/40 text-white rounded-lg font-semibold hover:bg-white/30 transition-all"
+              className="inline-block w-full rounded-2xl border border-slate-200 py-3 font-semibold text-slate-700 transition-all hover:bg-slate-50"
             >
               회원가입
             </Link>
           </div>
         </div>
 
-        {/* 추가 안내 */}
         <div className="mt-6 text-center">
-          <p className="text-sm text-blue-100">
+          <p className="text-sm text-slate-500">
             로그인에 문제가 있으신가요?{" "}
-            <Link to="#" className="text-blue-300 hover:text-blue-200 hover:underline font-semibold">
+            <Link to="#" className="font-semibold text-slate-900 hover:text-blue-600 hover:underline">
               고객센터
             </Link>
           </p>
