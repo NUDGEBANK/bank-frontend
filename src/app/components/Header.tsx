@@ -19,7 +19,7 @@ const menuItems: MenuItem[] = [
     label: "은행 소개",
     path: "#",
     description: "NUDGEBANK의 서비스 방향과 핵심 금융 기능을 소개합니다.",
-    submenu: [{ label: "은행 소개", path: "" }],
+    submenu: [{ label: "은행 소개", path: "/" }],
   },
   {
     label: "예금·적금",
@@ -94,6 +94,17 @@ export default function Header() {
 
   const activeMenu = menuItems.find((item) => item.label === activeMenuLabel) ?? null;
 
+  const getPrimaryPath = (item: MenuItem) => {
+    const firstSubmenuPath = item.submenu?.[0]?.path;
+    if (firstSubmenuPath && firstSubmenuPath !== "#") {
+      return firstSubmenuPath;
+    }
+    if (item.path && item.path !== "#") {
+      return item.path;
+    }
+    return null;
+  };
+
   return (
     <>
       <div className="sticky top-0 z-50" onMouseLeave={() => setActiveMenuLabel(null)}>
@@ -115,16 +126,25 @@ export default function Header() {
                       className="relative flex h-16 items-center justify-center"
                       onMouseEnter={() => setActiveMenuLabel(item.label)}
                     >
-                      {item.submenu && item.submenu.length > 0 ? (
+                      {getPrimaryPath(item) ? (
+                        <Link
+                          to={getPrimaryPath(item) || "#"}
+                          onFocus={() => setActiveMenuLabel(item.label)}
+                          className="py-2 text-base font-semibold tracking-tight text-white/90 transition-colors hover:text-white"
+                        >
+                          {item.label}
+                        </Link>
+                      ) : item.submenu && item.submenu.length > 0 ? (
                         <button
-                            type="button"
-                            aria-haspopup="menu"
-                            aria-expanded={activeMenuLabel === item.label}
-                            onFocus={() => setActiveMenuLabel(item.label)}
-                            onClick={() =>
-                                setActiveMenuLabel((current) => (current === item.label ? null : item.label))
-                            }
-                            className="py-2 text-base font-semibold tracking-tight text-white/90 transition-colors hover:text-white">
+                          type="button"
+                          aria-haspopup="menu"
+                          aria-expanded={activeMenuLabel === item.label}
+                          onFocus={() => setActiveMenuLabel(item.label)}
+                          onClick={() =>
+                            setActiveMenuLabel((current) => (current === item.label ? null : item.label))
+                          }
+                          className="py-2 text-base font-semibold tracking-tight text-white/90 transition-colors hover:text-white"
+                        >
                           {item.label}
                         </button>
                       ) : (
