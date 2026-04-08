@@ -114,12 +114,12 @@ export default function Header() {
       >
         <header className="border-b border-white/20 bg-gray-900/80 shadow-lg backdrop-blur-md">
           <div className="mx-auto max-w-7xl px-4">
-            <div className="grid h-16 grid-cols-[1fr_auto] items-center gap-4 sm:grid-cols-[150px_1fr_220px] lg:grid-cols-[180px_1fr_280px]">
+            <div className="grid h-16 grid-cols-[1fr_auto] items-center gap-4 min-[1180px]:grid-cols-[150px_1fr_220px] min-[1280px]:grid-cols-[180px_1fr_280px]">
               <Link to="/" className="text-2xl font-bold text-white drop-shadow-lg">
                 NUDGEBANK
               </Link>
 
-              <nav className="hidden items-center justify-center sm:flex">
+              <nav className="hidden items-center justify-center min-[1180px]:flex">
                 <div
                     className="mx-auto flex w-full items-center justify-center gap-6 md:gap-10 lg:gap-14"
                     style={{ maxWidth: `${MENU_TRACK_WIDTH}px` }}
@@ -134,7 +134,7 @@ export default function Header() {
                         <Link
                           to={getPrimaryPath(item) || "#"}
                           onFocus={() => setActiveMenuLabel(item.label)}
-                          className="py-2 text-sm font-semibold tracking-tight text-white/90 transition-colors hover:text-white md:text-base"
+                          className="whitespace-nowrap py-2 text-sm font-semibold tracking-tight text-white/90 transition-colors hover:text-white md:text-base"
                         >
                           {item.label}
                         </Link>
@@ -147,14 +147,14 @@ export default function Header() {
                           onClick={() =>
                             setActiveMenuLabel((current) => (current === item.label ? null : item.label))
                           }
-                          className="py-2 text-sm font-semibold tracking-tight text-white/90 transition-colors hover:text-white md:text-base"
+                          className="whitespace-nowrap py-2 text-sm font-semibold tracking-tight text-white/90 transition-colors hover:text-white md:text-base"
                         >
                           {item.label}
                         </button>
                       ) : (
                         <Link
                           to={item.path || "#"}
-                          className="py-2 text-sm font-semibold tracking-tight text-white/90 transition-colors hover:text-white md:text-base"
+                          className="whitespace-nowrap py-2 text-sm font-semibold tracking-tight text-white/90 transition-colors hover:text-white md:text-base"
                         >
                           {item.label}
                         </Link>
@@ -164,7 +164,7 @@ export default function Header() {
                 </div>
               </nav>
 
-              <div className="hidden items-center justify-end gap-2 lg:gap-3 sm:flex">
+              <div className="hidden items-center justify-end gap-2 lg:gap-3 min-[1180px]:flex">
                 {isLoggedIn ? (
                   <>
                     <Link
@@ -192,7 +192,7 @@ export default function Header() {
                 )}
               </div>
 
-              <div className="flex items-center justify-end gap-2 sm:hidden">
+              <div className="flex items-center justify-end gap-2 min-[1180px]:hidden">
                 {isLoggedIn ? (
                   <Link
                     to="/account/mypage"
@@ -227,7 +227,7 @@ export default function Header() {
         )}
 
         {activeMenuLabel && (
-          <div className="absolute left-0 right-0 top-full z-40 hidden border-b border-white/20 bg-gray-800/50 shadow-2xl backdrop-blur-xl sm:block">
+          <div className="absolute left-0 right-0 top-full z-40 hidden border-b border-white/20 bg-gray-800/50 shadow-2xl backdrop-blur-xl min-[1180px]:block">
             <div className="mx-auto max-w-7xl px-4 py-6">
               <div className="grid min-h-[116px] grid-cols-[180px_1fr_280px] items-start gap-4">
                 <div className="pt-1">
@@ -269,7 +269,7 @@ export default function Header() {
         )}
 
         {isMobileMenuOpen && (
-          <div className="border-b border-white/20 bg-gray-900/95 shadow-2xl backdrop-blur-md sm:hidden">
+          <div className="border-b border-white/20 bg-gray-900/95 shadow-2xl backdrop-blur-md min-[1180px]:hidden">
             <div className="mx-auto max-w-7xl px-4 py-4">
               <div className="space-y-5">
                 {menuItems.map((item) => (
