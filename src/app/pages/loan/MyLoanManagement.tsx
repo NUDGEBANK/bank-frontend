@@ -11,6 +11,9 @@ type LoanApplicationSummary = {
   appliedAt: string;
   requiresCertificateSubmission: boolean;
   certificateSubmitted: boolean;
+  preferentialRateVerificationAvailable: boolean;
+  preferentialRateVerificationSubmitted: boolean;
+  preferentialRateVerificationStatus: string | null;
 };
 
 type UploadStatus = "idle" | "selected" | "uploading" | "completed" | "failed";
@@ -113,6 +116,42 @@ function normalizeSimulationAmount(value: number, max: number) {
   }
 
   return Math.min(Math.max(value, 0), max);
+}
+
+function getPreferentialRateStatusLabel(application: LoanApplicationSummary) {
+  if (!application.preferentialRateVerificationAvailable) {
+    return "인증 대상 아님";
+  }
+
+  if (!application.preferentialRateVerificationSubmitted) {
+    return "인증 필요";
+  }
+
+  switch (application.preferentialRateVerificationStatus) {
+    case "VERIFIED":
+      return "인증 완료";
+    case "VERIFICATION_FAILED":
+      return "인증 실패";
+    case "PENDING":
+      return "인증 대기";
+    default:
+      return application.preferentialRateVerificationStatus ?? "제출 완료";
+  }
+}
+
+function getReviewStatusLabel(application: LoanApplicationSummary) {
+  switch (application.applicationStatus) {
+    case "DOCUMENT_REQUIRED":
+      return "서류 제출 필요";
+    case "UNDER_REVIEW":
+      return "심사 진행 중";
+    case "APPROVED":
+      return "이용 중";
+    case "REJECTED":
+      return "심사 반려";
+    default:
+      return application.applicationStatus;
+  }
 }
 
 export default function MyLoanManagement() {
@@ -284,8 +323,7 @@ export default function MyLoanManagement() {
     () => applications.find((application) => application.productKey === "youth-loan") ?? null,
     [applications],
   );
-  const canSubmitCertificate =
-    !!selfDevelopmentApplication && !selfDevelopmentApplication.certificateSubmitted;
+  const canSubmitCertificate = !!selfDevelopmentApplication;
 
   const statusText: Record<UploadStatus, string> = {
     idle: "자기계발 대출 신청 후 자격증 파일을 제출할 수 있습니다.",
@@ -315,7 +353,7 @@ export default function MyLoanManagement() {
     }
 
     const formData = new FormData();
-    formData.append("loanId", String(selfDevelopmentApplication.loanApplicationId));
+    formData.append("loanApplicationId", String(selfDevelopmentApplication.loanApplicationId));
     formData.append("certificateId", certificateId);
     formData.append("file", selectedFile);
 
@@ -506,7 +544,7 @@ export default function MyLoanManagement() {
                     >
                       <p className="text-sm text-slate-500">{application.productName}</p>
                       <p className="mt-1 text-sm text-slate-600">
-                        상태 <span className="font-semibold text-sky-700">{getApplicationStatusLabel(application)}</span>
+                        상태 <span className="font-semibold text-sky-700">{getReviewStatusLabel(application)}</span>
                       </p>
                     </div>
                   ))}
@@ -666,7 +704,7 @@ export default function MyLoanManagement() {
               <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.24em] text-sky-600">
-                    Self Development
+                    Preferential Rate
                   </p>
                   <h2 className="mt-2 text-2xl font-bold text-slate-900">
                     자기계발 대출 OCR 제출
@@ -685,7 +723,13 @@ export default function MyLoanManagement() {
                   <p className="mt-1">
                     상태{" "}
                     <span className="font-semibold text-sky-700">
-                      {getApplicationStatusLabel(selfDevelopmentApplication)}
+                      {getReviewStatusLabel(selfDevelopmentApplication)}
+                    </span>
+                  </p>
+                  <p className="mt-1">
+                    인증 상태{" "}
+                    <span className="font-semibold text-sky-700">
+                      {getPreferentialRateStatusLabel(selfDevelopmentApplication)}
                     </span>
                   </p>
                 </div>
@@ -712,7 +756,7 @@ export default function MyLoanManagement() {
                     </div>
                   </div>
 
-                  {!canSubmitCertificate && (
+                  {selfDevelopmentApplication.preferentialRateVerificationSubmitted && (
                     <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50/70 px-4 py-4">
                       <p className="text-sm font-semibold text-emerald-700">서류 제출 완료</p>
                       <p className="mt-2 text-sm text-slate-600">
