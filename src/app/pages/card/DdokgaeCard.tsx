@@ -49,6 +49,10 @@ type CardPreview = {
   cardHolderName: string;
 };
 
+type MyProfile = {
+  name: string;
+};
+
 const DEFAULT_CARD_PREVIEW: CardPreview = {
   cardNumber: "1234 5678 9012 3456",
   expiredYm: "03/29",
@@ -89,6 +93,7 @@ export default function DdokgaeCard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [issueResult, setIssueResult] = useState<CardIssueResponse | null>(null);
   const [cardPreview, setCardPreview] = useState<CardPreview>(DEFAULT_CARD_PREVIEW);
+  const [currentUserName, setCurrentUserName] = useState(DEFAULT_CARD_PREVIEW.cardHolderName);
 
   useEffect(() => {
     let isMounted = true;
@@ -100,14 +105,25 @@ export default function DdokgaeCard() {
       }
 
       try {
-        const response = await getJson<CardHistoryResponse>("/api/cards/history");
+        const [profile, response] = await Promise.all([
+          getJson<MyProfile>("/api/auth/me"),
+          getJson<CardHistoryResponse>("/api/cards/history"),
+        ]);
         if (!isMounted) {
           return;
         }
 
+        const resolvedUserName = profile.name?.trim()
+          ? profile.name.toUpperCase()
+          : DEFAULT_CARD_PREVIEW.cardHolderName;
+        setCurrentUserName(resolvedUserName);
+
         const ownedCards = response.accounts.filter((account) => account.cardId && account.cardNumber);
         if (ownedCards.length === 0) {
-          setCardPreview(DEFAULT_CARD_PREVIEW);
+          setCardPreview({
+            ...DEFAULT_CARD_PREVIEW,
+            cardHolderName: resolvedUserName,
+          });
           return;
         }
 
@@ -115,10 +131,11 @@ export default function DdokgaeCard() {
         setCardPreview({
           cardNumber: formatPreviewCardNumber(randomCard.cardNumber),
           expiredYm: formatPreviewExpiredYm(randomCard.expiredYm),
-          cardHolderName: (randomCard.accountName || DEFAULT_CARD_PREVIEW.cardHolderName).toUpperCase(),
+          cardHolderName: resolvedUserName,
         });
       } catch {
         if (isMounted) {
+          setCurrentUserName(DEFAULT_CARD_PREVIEW.cardHolderName);
           setCardPreview(DEFAULT_CARD_PREVIEW);
         }
       }
@@ -182,7 +199,7 @@ export default function DdokgaeCard() {
       setCardPreview({
         cardNumber: formatPreviewCardNumber(response.cardNumber),
         expiredYm: formatPreviewExpiredYm(response.expiredYm),
-        cardHolderName: (response.accountName || accountName || DEFAULT_CARD_PREVIEW.cardHolderName).toUpperCase(),
+        cardHolderName: currentUserName,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "REQUEST_FAILED";
