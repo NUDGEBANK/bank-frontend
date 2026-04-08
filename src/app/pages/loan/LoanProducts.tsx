@@ -209,16 +209,18 @@ export default function LoanProducts() {
                 <div className="mt-auto flex flex-col gap-4 sm:flex-row">
                   <Link
                     to={`/loan/products/${product.id}`}
-                    className="flex-1 rounded-xl border border-white/30 bg-white/10 py-4 text-center font-bold text-white shadow-sm backdrop-blur-sm transition-all hover:bg-white/20"
+                    className="flex-1 rounded-xl border border-slate-200 bg-white py-4 text-center font-bold text-slate-900 shadow-sm transition-all hover:bg-slate-50"
                   >
                     상세 보기
                   </Link>
                   <button
                     type="button"
                     onClick={() => handleApply(product)}
-                    className="flex-1 rounded-xl border border-white/30 bg-blue-500/30 py-4 font-bold text-white shadow-md backdrop-blur-sm transition-all hover:bg-blue-500/40"
+                    className="flex-1 rounded-xl border border-[#1e3a5f] bg-[#1e3a5f] py-4 font-bold text-white shadow-md transition-all hover:bg-[#17314f]"
                   >
-                    {application ? "내 대출 관리 보기" : "대출 신청하기"}
+                    <span style={{ color: "#fff" }}>
+                      {application ? "내 대출 관리 보기" : "대출 신청하기"}
+                    </span>
                   </button>
                 </div>
               </section>
@@ -254,16 +256,18 @@ export default function LoanProducts() {
               </div>
               <Link
                 to={`/loan/products/${product.id}`}
-                className="block w-full rounded-xl border border-white/30 bg-white/10 py-3 text-center font-bold text-white shadow-sm backdrop-blur-sm transition-all hover:bg-white/20"
+                className="block w-full rounded-xl border border-slate-200 bg-white py-3 text-center font-bold text-slate-900 shadow-sm transition-all hover:bg-slate-50"
               >
                 상세 보기
               </Link>
               <button
                 type="button"
                 onClick={() => handleApply(product)}
-                className="mt-3 block w-full rounded-xl border border-white/30 bg-blue-500/30 py-3 text-center font-bold text-white shadow-sm backdrop-blur-sm transition-all hover:bg-blue-500/40"
+                className="mt-3 block w-full rounded-xl border border-[#1e3a5f] bg-[#1e3a5f] py-3 text-center font-bold text-white shadow-sm transition-all hover:bg-[#17314f]"
               >
-                {application ? "내 대출 관리 보기" : "대출 신청하기"}
+                <span style={{ color: "#fff" }}>
+                  {application ? "내 대출 관리 보기" : "대출 신청하기"}
+                </span>
               </button>
             </div>
             );
