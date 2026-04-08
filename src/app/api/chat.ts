@@ -2,6 +2,7 @@ export interface ChatRequest {
   user_id: string;
   message: string;
   user_info: Record<string, any>;
+  session_id?: string;
 }
 
 export interface ChatResponse {
@@ -12,16 +13,19 @@ export async function sendMessage(
   userId: string,
   message: string,
   onChunk: (chunk: string) => void,
-): Promise<void> {
+  sessionId?: string,
+): Promise<string | null> {
   const response = await fetch("/api/chat", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
     body: JSON.stringify({
       user_id: userId,
       message,
       user_info: {},
+      session_id: sessionId,
     } as ChatRequest),
   });
 
@@ -36,6 +40,7 @@ export async function sendMessage(
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder("utf-8");
+  const nextSessionId = response.headers.get("X-Chat-Session-Id");
 
   while (true) {
     const { done, value } = await reader.read();
@@ -52,4 +57,6 @@ export async function sendMessage(
   if (lastChunk) {
     onChunk(lastChunk);
   }
+
+  return nextSessionId;
 }
