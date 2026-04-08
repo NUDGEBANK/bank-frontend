@@ -10,6 +10,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { getJson } from "../../lib/api";
+import { checkAuthentication } from "../../lib/auth";
 
 type LoanDetailItem = {
   name: string;
@@ -159,7 +160,8 @@ export default function LoanDetail() {
 
   useEffect(() => {
     const syncApplications = async () => {
-      if (localStorage.getItem("isLoggedIn") !== "true") {
+      const isAuthenticated = await checkAuthentication();
+      if (!isAuthenticated) {
         setApplications([]);
         return;
       }

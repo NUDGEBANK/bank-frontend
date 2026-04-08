@@ -20,7 +20,6 @@ export default function Login() {
         userId: username,
         password,
       });
-      localStorage.setItem("isLoggedIn", "true");
       window.dispatchEvent(new Event("auth-change"));
       navigate("/");
     } catch (err) {

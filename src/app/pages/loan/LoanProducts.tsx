@@ -2,6 +2,7 @@ import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { getJson } from "../../lib/api";
+import { checkAuthentication } from "../../lib/auth";
 
 type LoanProduct = {
   id: string;
@@ -91,7 +92,8 @@ export default function LoanProducts() {
 
   useEffect(() => {
     const syncApplications = async () => {
-      if (localStorage.getItem("isLoggedIn") !== "true") {
+      const isAuthenticated = await checkAuthentication();
+      if (!isAuthenticated) {
         setApplications([]);
         return;
       }

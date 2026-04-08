@@ -2,6 +2,7 @@ import { Calendar, Calculator, FileSearch, TrendingDown, Upload } from "lucide-r
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import { API_BASE, getJson } from "../../lib/api";
+import { checkAuthentication } from "../../lib/auth";
 
 type LoanApplicationSummary = {
   loanApplicationId: number;
@@ -174,7 +175,8 @@ export default function MyLoanManagement() {
   useEffect(() => {
     const syncApplications = async () => {
       const requestId = ++applicationsRequestIdRef.current;
-      if (localStorage.getItem("isLoggedIn") !== "true") {
+      const isAuthenticated = await checkAuthentication();
+      if (!isAuthenticated) {
         setApplications([]);
         return;
       }
@@ -207,7 +209,8 @@ export default function MyLoanManagement() {
   useEffect(() => {
     const syncLoanManagement = async () => {
       const requestId = ++loanManagementRequestIdRef.current;
-      if (localStorage.getItem("isLoggedIn") !== "true") {
+      const isAuthenticated = await checkAuthentication();
+      if (!isAuthenticated) {
         setSummary(null);
         setRepaymentSchedules([]);
         setRepaymentHistories([]);
