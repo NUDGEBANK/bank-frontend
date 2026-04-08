@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { LogIn, Menu, X } from "lucide-react";
 
 import { postJson } from "../lib/api";
+import { useAuthStatus } from "../hooks/useAuthStatus";
 
 interface MenuItem {
   label: string;
@@ -63,24 +64,7 @@ const menuItems: MenuItem[] = [
 export default function Header() {
   const [activeMenuLabel, setActiveMenuLabel] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(
-    () => localStorage.getItem("isLoggedIn") === "true",
-  );
-
-  useEffect(() => {
-    const syncAuthState = () => {
-      setIsLoggedIn(localStorage.getItem("isLoggedIn") === "true");
-    };
-
-    syncAuthState();
-    window.addEventListener("storage", syncAuthState);
-    window.addEventListener("auth-change", syncAuthState);
-
-    return () => {
-      window.removeEventListener("storage", syncAuthState);
-      window.removeEventListener("auth-change", syncAuthState);
-    };
-  }, []);
+  const { isAuthenticated } = useAuthStatus();
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 1180px)");
@@ -103,7 +87,6 @@ export default function Header() {
     } catch {
       // Ignore logout errors so local auth state is always cleared.
     } finally {
-      localStorage.removeItem("isLoggedIn");
       window.dispatchEvent(new Event("auth-change"));
     }
   };
@@ -180,7 +163,7 @@ export default function Header() {
               </nav>
 
               <div className="hidden items-center justify-end gap-2 lg:gap-3 min-[1180px]:flex">
-                {isLoggedIn ? (
+                {isAuthenticated ? (
                   <>
                     <Link
                       to="/account/mypage"
@@ -208,7 +191,7 @@ export default function Header() {
               </div>
 
               <div className="flex items-center justify-end gap-2 min-[1180px]:hidden">
-                {isLoggedIn ? (
+                {isAuthenticated ? (
                   <Link
                     to="/account/mypage"
                     className="inline-flex items-center justify-center rounded-lg border border-white/40 bg-white/20 px-3 py-2 text-sm font-semibold leading-none text-white transition-all hover:bg-white/30"
@@ -316,7 +299,7 @@ export default function Header() {
                   </div>
                 ))}
 
-                {isLoggedIn && (
+                {isAuthenticated && (
                   <button
                     type="button"
                     onClick={async () => {

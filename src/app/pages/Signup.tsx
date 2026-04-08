@@ -36,7 +36,6 @@ export default function Signup() {
         gender,
         phoneNumber,
       });
-      localStorage.setItem("isLoggedIn", "true");
       window.dispatchEvent(new Event("auth-change"));
       navigate("/");
     } catch (err) {

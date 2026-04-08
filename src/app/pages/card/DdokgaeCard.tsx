@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "../../components/ui/dialog";
 import { getJson, postJson } from "../../lib/api";
+import { checkAuthentication } from "../../lib/auth";
 
 type CardIssueResponse = {
   ok: boolean;
@@ -99,12 +100,18 @@ export default function DdokgaeCard() {
     let isMounted = true;
 
     async function loadCardPreview() {
-      if (localStorage.getItem("isLoggedIn") !== "true") {
-        setCardPreview(DEFAULT_CARD_PREVIEW);
-        return;
-      }
-
       try {
+        const isAuthenticated = await checkAuthentication();
+        if (!isMounted) {
+          return;
+        }
+
+        if (!isAuthenticated) {
+          setCurrentUserName(DEFAULT_CARD_PREVIEW.cardHolderName);
+          setCardPreview(DEFAULT_CARD_PREVIEW);
+          return;
+        }
+
         const [profile, response] = await Promise.all([
           getJson<MyProfile>("/api/auth/me"),
           getJson<CardHistoryResponse>("/api/cards/history"),
@@ -175,14 +182,17 @@ export default function DdokgaeCard() {
   ];
 
   const openApplyFlow = () => {
-    if (localStorage.getItem("isLoggedIn") !== "true") {
-      navigate("/login");
-      return;
-    }
+    void (async () => {
+      const isAuthenticated = await checkAuthentication();
+      if (!isAuthenticated) {
+        navigate("/login");
+        return;
+      }
 
-    setSubmitError("");
-    setIssueResult(null);
-    setIsApplyDialogOpen(true);
+      setSubmitError("");
+      setIssueResult(null);
+      setIsApplyDialogOpen(true);
+    })();
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -205,7 +215,6 @@ export default function DdokgaeCard() {
       const message = error instanceof Error ? error.message : "REQUEST_FAILED";
 
       if (message === "UNAUTHORIZED") {
-        localStorage.removeItem("isLoggedIn");
         window.dispatchEvent(new Event("auth-change"));
         setIsApplyDialogOpen(false);
         navigate("/login");

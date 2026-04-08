@@ -25,12 +25,10 @@ async function refreshTokens(): Promise<boolean> {
 
   const ok = await refreshPromise;
   if (ok) {
-    localStorage.setItem("isLoggedIn", "true");
     window.dispatchEvent(new Event("auth-change"));
     return true;
   }
 
-  localStorage.removeItem("isLoggedIn");
   window.dispatchEvent(new Event("auth-change"));
   return false;
 }
