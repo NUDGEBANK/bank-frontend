@@ -99,12 +99,12 @@ function maskCardNumber(cardNumber: string | null) {
     return "미발급";
   }
 
-  const parts = cardNumber.split("-");
-  if (parts.length !== 4) {
-    return cardNumber;
+  const digitsOnly = cardNumber.replace(/\D/g, "");
+  if (digitsOnly.length < 8) {
+    return "****-****-****-****";
   }
 
-  return `${parts[0]}-****-****-${parts[3]}`;
+  return `${digitsOnly.slice(0, 4)}-****-****-${digitsOnly.slice(-4)}`;
 }
 
 export default function MyPage() {

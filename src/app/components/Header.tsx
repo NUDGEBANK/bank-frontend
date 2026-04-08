@@ -82,6 +82,21 @@ export default function Header() {
     };
   }, []);
 
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 1180px)");
+    const syncMenuStateByViewport = () => {
+      if (mediaQuery.matches) {
+        setIsMobileMenuOpen(false);
+      } else {
+        setActiveMenuLabel(null);
+      }
+    };
+
+    syncMenuStateByViewport();
+    mediaQuery.addEventListener("change", syncMenuStateByViewport);
+    return () => mediaQuery.removeEventListener("change", syncMenuStateByViewport);
+  }, []);
+
   const handleLogout = async () => {
     try {
       await postJson<{ ok: boolean }>("/api/auth/logout", {});
@@ -223,7 +238,7 @@ export default function Header() {
         </header>
 
         {activeMenuLabel && (
-          <div className="pointer-events-none fixed inset-0 top-16 z-30 bg-black/20 backdrop-blur-sm" />
+          <div className="pointer-events-none fixed inset-0 top-16 z-30 hidden bg-black/20 backdrop-blur-sm min-[1180px]:block" />
         )}
 
         {activeMenuLabel && (
