@@ -107,8 +107,18 @@ function formatAmount(value: number) {
   return `${value.toLocaleString("ko-KR")}원`;
 }
 
+function normalizeSimulationAmount(value: number, max: number) {
+  if (!Number.isFinite(value) || max <= 0) {
+    return 0;
+  }
+
+  return Math.min(Math.max(value, 0), max);
+}
+
 export default function MyLoanManagement() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const applicationsRequestIdRef = useRef(0);
+  const loanManagementRequestIdRef = useRef(0);
   const [simulationAmount, setSimulationAmount] = useState(1000000);
   const [applications, setApplications] = useState<LoanApplicationSummary[]>([]);
   const [summary, setSummary] = useState<MyLoanSummary | null>(null);
@@ -124,6 +134,7 @@ export default function MyLoanManagement() {
 
   useEffect(() => {
     const syncApplications = async () => {
+      const requestId = ++applicationsRequestIdRef.current;
       if (localStorage.getItem("isLoggedIn") !== "true") {
         setApplications([]);
         return;
@@ -131,22 +142,32 @@ export default function MyLoanManagement() {
 
       try {
         const nextApplications = await getJson<LoanApplicationSummary[]>("/api/loan-applications/me");
-        setApplications(nextApplications);
+        if (requestId === applicationsRequestIdRef.current) {
+          setApplications(nextApplications);
+        }
       } catch {
-        setApplications([]);
+        if (requestId === applicationsRequestIdRef.current) {
+          setApplications([]);
+        }
       }
+    };
+    const handleStorageChange = () => {
+      void syncApplications();
     };
     void syncApplications();
     window.addEventListener("auth-change", syncApplications);
     window.addEventListener("loan-application-change", syncApplications);
+    window.addEventListener("storage", handleStorageChange);
     return () => {
       window.removeEventListener("auth-change", syncApplications);
       window.removeEventListener("loan-application-change", syncApplications);
+      window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
 
   useEffect(() => {
     const syncLoanManagement = async () => {
+      const requestId = ++loanManagementRequestIdRef.current;
       if (localStorage.getItem("isLoggedIn") !== "true") {
         setSummary(null);
         setRepaymentSchedules([]);
@@ -165,27 +186,44 @@ export default function MyLoanManagement() {
           getJson<MyLoanRepaymentHistory[]>("/api/loans/me/repayment-histories"),
         ]);
 
-        setSummary(nextSummary);
-        setRepaymentSchedules(nextSchedules);
-        setRepaymentHistories(nextHistories);
+        if (requestId === loanManagementRequestIdRef.current) {
+          setSummary(nextSummary);
+          setRepaymentSchedules(nextSchedules);
+          setRepaymentHistories(nextHistories);
+        }
       } catch (error) {
-        setSummary(null);
-        setRepaymentSchedules([]);
-        setRepaymentHistories([]);
-        setLoanDataError(error instanceof Error ? error.message : "REQUEST_FAILED");
+        if (requestId === loanManagementRequestIdRef.current) {
+          setSummary(null);
+          setRepaymentSchedules([]);
+          setRepaymentHistories([]);
+          setLoanDataError(error instanceof Error ? error.message : "REQUEST_FAILED");
+        }
       } finally {
-        setIsLoanDataLoading(false);
+        if (requestId === loanManagementRequestIdRef.current) {
+          setIsLoanDataLoading(false);
+        }
       }
     };
 
+    const handleStorageChange = () => {
+      void syncLoanManagement();
+    };
     void syncLoanManagement();
     window.addEventListener("auth-change", syncLoanManagement);
     window.addEventListener("loan-application-change", syncLoanManagement);
+    window.addEventListener("storage", handleStorageChange);
     return () => {
       window.removeEventListener("auth-change", syncLoanManagement);
       window.removeEventListener("loan-application-change", syncLoanManagement);
+      window.removeEventListener("storage", handleStorageChange);
     };
   }, []);
+
+  useEffect(() => {
+    setSimulationAmount((currentAmount) =>
+      normalizeSimulationAmount(currentAmount, summary?.remainingPrincipal ?? 0),
+    );
+  }, [summary?.remainingPrincipal]);
 
   const repaidPrincipal = summary?.repaidPrincipal ?? 0;
   const repaymentProgress =
@@ -200,15 +238,35 @@ export default function MyLoanManagement() {
         : 0,
     [repaymentSchedules],
   );
+  const normalizedSimulationAmount = normalizeSimulationAmount(
+    simulationAmount,
+    summary?.remainingPrincipal ?? 0,
+  );
   const estimatedSavedMonths =
-    averagePrincipalPayment > 0 ? Math.floor(simulationAmount / averagePrincipalPayment) : 0;
+    averagePrincipalPayment > 0 ? Math.floor(normalizedSimulationAmount / averagePrincipalPayment) : 0;
   const estimatedInterestSavings = Math.round(
-    simulationAmount *
+    normalizedSimulationAmount *
       ((summary?.interestRate ?? 0) / 100) *
       (Math.max(estimatedSavedMonths, 1) / 12) *
       0.55,
   );
-  const remainingAfterSimulation = Math.max((summary?.remainingPrincipal ?? 0) - simulationAmount, 0);
+  const remainingAfterSimulation = Math.max(
+    (summary?.remainingPrincipal ?? 0) - normalizedSimulationAmount,
+    0,
+  );
+  const remainingInterestAmount = repaymentSchedules.reduce((sum, schedule) => {
+    if (schedule.settled) {
+      return sum;
+    }
+
+    return sum + Math.max(schedule.plannedInterest - schedule.paidInterest, 0);
+  }, 0);
+  const hasLoanData = !!summary;
+  const showLoanLoadingState = isLoanDataLoading && !hasLoanData;
+  const showLoanEmptyState =
+    !isLoanDataLoading &&
+    !hasLoanData &&
+    loanDataError === "대출 관리 정보가 없습니다.";
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -318,6 +376,25 @@ export default function MyLoanManagement() {
         </div>
 
         <div className="space-y-8 px-6 py-8 md:px-8 lg:px-10">
+          {showLoanLoadingState ? (
+            <section className="rounded-3xl border border-slate-200 bg-slate-50/80 px-6 py-8 text-center text-sm text-slate-500">
+              대출 관리 정보를 불러오는 중입니다.
+            </section>
+          ) : showLoanEmptyState ? (
+            <section className="rounded-3xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-8 text-center">
+              <h2 className="text-xl font-bold text-slate-900">대출 관리 정보가 없습니다</h2>
+              <p className="mt-2 text-sm text-slate-500">
+                현재 실행된 대출 데이터가 없어 관리 정보를 표시할 수 없습니다.
+              </p>
+              <Link
+                to="/loan/products"
+                className="mt-4 inline-block rounded-xl bg-[#6d8ca6] px-4 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-[#5c7c97]"
+              >
+                대출 상품 보러가기
+              </Link>
+            </section>
+          ) : (
+            <>
           <section className="grid gap-4 md:grid-cols-4">
             <div className="rounded-3xl border border-sky-100 bg-sky-50/80 px-5 py-5">
               <p className="text-sm text-slate-500">잔여 원금</p>
@@ -364,14 +441,28 @@ export default function MyLoanManagement() {
                 min="0"
                 max={summary?.remainingPrincipal ?? 0}
                 step="100000"
-                value={simulationAmount}
-                onChange={(event) => setSimulationAmount(Number(event.target.value))}
+                value={normalizedSimulationAmount}
+                onChange={(event) =>
+                  setSimulationAmount(
+                    normalizeSimulationAmount(
+                      Number(event.target.value),
+                      summary?.remainingPrincipal ?? 0,
+                    ),
+                  )
+                }
                 className="w-full accent-sky-600"
               />
               <input
                 type="number"
-                value={simulationAmount}
-                onChange={(event) => setSimulationAmount(Number(event.target.value))}
+                value={normalizedSimulationAmount}
+                onChange={(event) =>
+                  setSimulationAmount(
+                    normalizeSimulationAmount(
+                      Number(event.target.value),
+                      summary?.remainingPrincipal ?? 0,
+                    ),
+                  )
+                }
                 className="mt-4 h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-700 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
               />
 
@@ -495,27 +586,74 @@ export default function MyLoanManagement() {
                 <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4">
                   <p className="text-sm text-slate-500">잔여 예상 이자</p>
                   <p className="mt-2 text-2xl font-bold text-slate-900">
-                    {formatAmount(
-                      repaymentSchedules.reduce((sum, schedule) => {
-                        if (schedule.settled) {
-                          return sum;
-                        }
-                        return sum + schedule.plannedInterest;
-                      }, 0),
-                    )}
+                    {formatAmount(remainingInterestAmount)}
                   </p>
                 </div>
               </div>
             </div>
           </section>
 
-          {isLoanDataLoading && (
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
+            <h2 className="text-xl font-bold text-slate-900">상환 일정</h2>
+            <div className="mt-5 space-y-3">
+              {repaymentSchedules.map((schedule) => (
+                <div
+                  key={schedule.scheduleId}
+                  className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4"
+                >
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="text-sm text-slate-500">{schedule.dueDate}</p>
+                      <p className="mt-1 text-base font-semibold text-slate-900">
+                        {schedule.settled ? "납부 완료" : "납부 예정"}
+                      </p>
+                    </div>
+                    <div className="grid gap-3 text-sm text-slate-600 md:grid-cols-2 lg:grid-cols-4">
+                      <div>
+                        <p className="text-slate-500">예정 원금</p>
+                        <p className="mt-1 font-semibold text-slate-900">
+                          {formatAmount(schedule.plannedPrincipal)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-slate-500">예정 이자</p>
+                        <p className="mt-1 font-semibold text-slate-900">
+                          {formatAmount(schedule.plannedInterest)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-slate-500">납부 원금</p>
+                        <p className="mt-1 font-semibold text-slate-900">
+                          {formatAmount(schedule.paidPrincipal)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-slate-500">납부 이자</p>
+                        <p className="mt-1 font-semibold text-slate-900">
+                          {formatAmount(schedule.paidInterest)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {repaymentSchedules.length === 0 && (
+                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-4 py-5 text-sm text-slate-500">
+                  상환 일정이 없습니다.
+                </div>
+              )}
+            </div>
+          </section>
+            </>
+          )}
+
+          {isLoanDataLoading && hasLoanData && (
             <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-4 text-sm text-slate-500">
               대출 관리 정보를 불러오는 중입니다.
             </div>
           )}
 
-          {loanDataError && !isLoanDataLoading && (
+          {loanDataError && !isLoanDataLoading && !showLoanEmptyState && (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
               {loanDataError === "대출 관리 정보가 없습니다."
                 ? "현재 조회할 대출 관리 정보가 없습니다."
