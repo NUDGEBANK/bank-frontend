@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
-import { LogIn } from "lucide-react";
+import { LogIn, Menu, X } from "lucide-react";
 
 import { postJson } from "../lib/api";
 
@@ -62,6 +62,7 @@ const menuItems: MenuItem[] = [
 
 export default function Header() {
   const [activeMenuLabel, setActiveMenuLabel] = useState<string | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(
     () => localStorage.getItem("isLoggedIn") === "true",
   );
@@ -107,17 +108,20 @@ export default function Header() {
 
   return (
     <>
-      <div className="sticky top-0 z-50" onMouseLeave={() => setActiveMenuLabel(null)}>
+      <div
+        className="sticky top-0 z-50"
+        onMouseLeave={() => setActiveMenuLabel(null)}
+      >
         <header className="border-b border-white/20 bg-gray-900/80 shadow-lg backdrop-blur-md">
           <div className="mx-auto max-w-7xl px-4">
-            <div className="grid h-16 grid-cols-[180px_1fr_280px] items-center gap-4">
+            <div className="grid h-16 grid-cols-[1fr_auto] items-center gap-4 sm:grid-cols-[150px_1fr_220px] lg:grid-cols-[180px_1fr_280px]">
               <Link to="/" className="text-2xl font-bold text-white drop-shadow-lg">
                 NUDGEBANK
               </Link>
 
-              <nav className="flex items-center justify-center">
+              <nav className="hidden items-center justify-center sm:flex">
                 <div
-                    className="mx-auto w-full flex items-center justify-center gap-14"
+                    className="mx-auto flex w-full items-center justify-center gap-6 md:gap-10 lg:gap-14"
                     style={{ maxWidth: `${MENU_TRACK_WIDTH}px` }}
                 >
                   {menuItems.map((item) => (
@@ -130,7 +134,7 @@ export default function Header() {
                         <Link
                           to={getPrimaryPath(item) || "#"}
                           onFocus={() => setActiveMenuLabel(item.label)}
-                          className="py-2 text-base font-semibold tracking-tight text-white/90 transition-colors hover:text-white"
+                          className="py-2 text-sm font-semibold tracking-tight text-white/90 transition-colors hover:text-white md:text-base"
                         >
                           {item.label}
                         </Link>
@@ -143,14 +147,14 @@ export default function Header() {
                           onClick={() =>
                             setActiveMenuLabel((current) => (current === item.label ? null : item.label))
                           }
-                          className="py-2 text-base font-semibold tracking-tight text-white/90 transition-colors hover:text-white"
+                          className="py-2 text-sm font-semibold tracking-tight text-white/90 transition-colors hover:text-white md:text-base"
                         >
                           {item.label}
                         </button>
                       ) : (
                         <Link
                           to={item.path || "#"}
-                          className="py-2 text-base font-semibold tracking-tight text-white/90 transition-colors hover:text-white"
+                          className="py-2 text-sm font-semibold tracking-tight text-white/90 transition-colors hover:text-white md:text-base"
                         >
                           {item.label}
                         </Link>
@@ -160,19 +164,19 @@ export default function Header() {
                 </div>
               </nav>
 
-              <div className="flex items-center justify-end gap-3">
+              <div className="hidden items-center justify-end gap-2 lg:gap-3 sm:flex">
                 {isLoggedIn ? (
                   <>
                     <Link
                       to="/account/mypage"
-                      className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/40 bg-white/20 px-4 py-2 font-semibold leading-none text-white shadow-lg transition-all hover:bg-white/30"
+                      className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/40 bg-white/20 px-3 py-2 text-sm font-semibold leading-none text-white shadow-lg transition-all hover:bg-white/30 lg:px-4"
                     >
                       마이페이지
                     </Link>
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/40 bg-white/20 px-4 py-2 font-semibold leading-none text-white shadow-lg transition-all hover:bg-white/30"
+                      className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/40 bg-white/20 px-3 py-2 text-sm font-semibold leading-none text-white shadow-lg transition-all hover:bg-white/30 lg:px-4"
                     >
                       로그아웃
                     </button>
@@ -180,12 +184,39 @@ export default function Header() {
                 ) : (
                   <Link
                     to="/login"
-                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/40 bg-white/20 px-4 py-2 font-semibold leading-none text-white shadow-lg transition-all hover:bg-white/30"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/40 bg-white/20 px-3 py-2 text-sm font-semibold leading-none text-white shadow-lg transition-all hover:bg-white/30 lg:px-4"
                   >
                     <LogIn className="h-4 w-4" />
                     로그인
                   </Link>
                 )}
+              </div>
+
+              <div className="flex items-center justify-end gap-2 sm:hidden">
+                {isLoggedIn ? (
+                  <Link
+                    to="/account/mypage"
+                    className="inline-flex items-center justify-center rounded-lg border border-white/40 bg-white/20 px-3 py-2 text-sm font-semibold leading-none text-white transition-all hover:bg-white/30"
+                  >
+                    마이페이지
+                  </Link>
+                ) : (
+                  <Link
+                    to="/login"
+                    className="inline-flex items-center justify-center rounded-lg border border-white/40 bg-white/20 px-3 py-2 text-sm font-semibold leading-none text-white transition-all hover:bg-white/30"
+                  >
+                    로그인
+                  </Link>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setIsMobileMenuOpen((prev) => !prev)}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/40 bg-white/20 text-white transition-all hover:bg-white/30"
+                  aria-label="메뉴 열기"
+                  aria-expanded={isMobileMenuOpen}
+                >
+                  {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                </button>
               </div>
             </div>
           </div>
@@ -196,7 +227,7 @@ export default function Header() {
         )}
 
         {activeMenuLabel && (
-          <div className="absolute left-0 right-0 top-full z-40 border-b border-white/20 bg-gray-800/50 shadow-2xl backdrop-blur-xl">
+          <div className="absolute left-0 right-0 top-full z-40 hidden border-b border-white/20 bg-gray-800/50 shadow-2xl backdrop-blur-xl sm:block">
             <div className="mx-auto max-w-7xl px-4 py-6">
               <div className="grid min-h-[116px] grid-cols-[180px_1fr_280px] items-start gap-4">
                 <div className="pt-1">
@@ -232,6 +263,56 @@ export default function Header() {
                 <div aria-hidden="true" className="invisible">
                   <div className="px-4 py-2">로그인</div>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isMobileMenuOpen && (
+          <div className="border-b border-white/20 bg-gray-900/95 shadow-2xl backdrop-blur-md sm:hidden">
+            <div className="mx-auto max-w-7xl px-4 py-4">
+              <div className="space-y-5">
+                {menuItems.map((item) => (
+                  <div key={item.label} className="border-b border-white/10 pb-4 last:border-b-0 last:pb-0">
+                    <Link
+                      to={getPrimaryPath(item) || "#"}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="block text-base font-semibold text-white"
+                    >
+                      {item.label}
+                    </Link>
+                    {item.description && (
+                      <p className="mt-2 text-sm leading-6 text-white/65">{item.description}</p>
+                    )}
+                    {item.submenu && item.submenu.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-3">
+                        {item.submenu.map((subItem) => (
+                          <Link
+                            key={subItem.label}
+                            to={subItem.path}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="rounded-full border border-white/15 bg-white/5 px-3 py-2 text-sm text-white/85 transition hover:bg-white/10"
+                          >
+                            {subItem.label}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {isLoggedIn && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await handleLogout();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-left text-sm font-semibold text-white transition hover:bg-white/15"
+                  >
+                    로그아웃
+                  </button>
+                )}
               </div>
             </div>
           </div>
