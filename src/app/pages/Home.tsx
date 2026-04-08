@@ -66,7 +66,7 @@ export default function Home() {
                       </p>
                       <Link
                           to="/account/ddokgae"
-                          className="inline-flex items-center justify-center rounded-lg bg-[#1e3a5f] px-7 py-3.5 text-base font-semibold leading-none text-white transition hover:bg-[#17314f]"
+                          className="inline-flex items-center justify-center rounded-lg bg-[#2a4b78] px-7 py-3.5 text-base font-semibold leading-none text-white transition hover:bg-[#223f64]"
                       >
                         <span style={{ color: "#fff", lineHeight: 1 }}>통장 개설하기</span>
                       </Link>
@@ -94,7 +94,7 @@ export default function Home() {
                       </p>
                       <Link
                           to="/loan/products"
-                          className="inline-flex items-center justify-center rounded-lg bg-[#1e3a5f] px-7 py-3.5 text-base font-semibold leading-none text-white transition hover:bg-[#17314f]"
+                          className="inline-flex items-center justify-center rounded-lg bg-[#2a4b78] px-7 py-3.5 text-base font-semibold leading-none text-white transition hover:bg-[#223f64]"
                       >
                         <span style={{ color: "#fff", lineHeight: 1 }}>대출 상담하기</span>
                       </Link>
@@ -122,7 +122,7 @@ export default function Home() {
                       </p>
                       <Link
                           to="/card/ddokgae"
-                          className="inline-flex items-center justify-center rounded-lg bg-[#1e3a5f] px-7 py-3.5 text-base font-semibold leading-none text-white transition hover:bg-[#17314f]"
+                          className="inline-flex items-center justify-center rounded-lg bg-[#2a4b78] px-7 py-3.5 text-base font-semibold leading-none text-white transition hover:bg-[#223f64]"
                       >
                         <span style={{ color: "#fff", lineHeight: 1 }}>카드 신청하기</span>
                       </Link>

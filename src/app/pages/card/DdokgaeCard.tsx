@@ -231,7 +231,7 @@ export default function DdokgaeCard() {
                 </p>
                 <div className="flex gap-3">
                   <button
-                    className="rounded-2xl bg-[#1e3a5f] px-8 py-3 font-semibold text-white transition hover:bg-[#17314f]"
+                    className="rounded-2xl bg-[#2a4b78] px-8 py-3 font-semibold text-white transition hover:bg-[#223f64]"
                     onClick={openApplyFlow}
                     type="button"
                   >
@@ -391,7 +391,7 @@ export default function DdokgaeCard() {
           <h3 className="mb-4 text-3xl font-bold tracking-tight">지금 바로 신청하세요</h3>
           <p className="mb-8 text-xl text-slate-300">똑똑한 소비 관리의 시작, 똑개 체크카드</p>
           <button
-            className="rounded-2xl bg-[#1e3a5f] px-12 py-4 text-lg font-bold text-white transition hover:bg-[#17314f]"
+            className="rounded-2xl bg-[#2a4b78] px-12 py-4 text-lg font-bold text-white transition hover:bg-[#223f64]"
             onClick={openApplyFlow}
             type="button"
           >
@@ -469,7 +469,7 @@ export default function DdokgaeCard() {
               </div>
 
               <DialogFooter className="border-t border-blue-200/80 bg-white/50 px-8 py-5">
-                <button className="rounded-lg bg-[#1e3a5f] px-5 py-2.5 font-semibold text-white transition-all hover:bg-[#17314f]" onClick={closeDialog} type="button">
+                <button className="rounded-lg bg-[#2a4b78] px-5 py-2.5 font-semibold text-white transition-all hover:bg-[#223f64]" onClick={closeDialog} type="button">
                   <span style={{ color: "#fff" }}>확인</span>
                 </button>
               </DialogFooter>
@@ -567,7 +567,7 @@ export default function DdokgaeCard() {
                   닫기
                 </button>
                 <button
-                  className="rounded-lg bg-[#1e3a5f] px-5 py-2.5 font-semibold text-white transition-all hover:bg-[#17314f] disabled:cursor-not-allowed disabled:bg-slate-400"
+                  className="rounded-lg bg-[#2a4b78] px-5 py-2.5 font-semibold text-white transition-all hover:bg-[#223f64] disabled:cursor-not-allowed disabled:bg-slate-400"
                   disabled={isSubmitting}
                   type="submit"
                 >

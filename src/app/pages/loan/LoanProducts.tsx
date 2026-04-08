@@ -216,7 +216,7 @@ export default function LoanProducts() {
                   <button
                     type="button"
                     onClick={() => handleApply(product)}
-                    className="flex-1 rounded-xl border border-[#1e3a5f] bg-[#1e3a5f] py-4 font-bold text-white shadow-md transition-all hover:bg-[#17314f]"
+                    className="flex-1 rounded-xl border border-[#2a4b78] bg-[#2a4b78] py-4 font-bold text-white shadow-md transition-all hover:bg-[#223f64]"
                   >
                     <span style={{ color: "#fff" }}>
                       {application ? "내 대출 관리 보기" : "대출 신청하기"}
@@ -263,7 +263,7 @@ export default function LoanProducts() {
               <button
                 type="button"
                 onClick={() => handleApply(product)}
-                className="mt-3 block w-full rounded-xl border border-[#1e3a5f] bg-[#1e3a5f] py-3 text-center font-bold text-white shadow-sm transition-all hover:bg-[#17314f]"
+                className="mt-3 block w-full rounded-xl border border-[#2a4b78] bg-[#2a4b78] py-3 text-center font-bold text-white shadow-sm transition-all hover:bg-[#223f64]"
               >
                 <span style={{ color: "#fff" }}>
                   {application ? "내 대출 관리 보기" : "대출 신청하기"}

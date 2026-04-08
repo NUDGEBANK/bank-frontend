@@ -97,7 +97,7 @@ export default function Login() {
             {/* 로그인 버튼 */}
             <button
               type="submit"
-              className="w-full rounded-lg border border-[#1e3a5f] bg-[#1e3a5f] py-3 font-bold text-white transition-all hover:bg-[#17314f] disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-lg border border-[#2a4b78] bg-[#2a4b78] py-3 font-bold text-white transition-all hover:bg-[#223f64] disabled:cursor-not-allowed disabled:opacity-60"
               disabled={isSubmitting}
             >
               <span style={{ color: "#fff" }}>{isSubmitting ? "로그인 중..." : "로그인"}</span>

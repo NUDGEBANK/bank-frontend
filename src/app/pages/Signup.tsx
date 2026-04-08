@@ -213,7 +213,7 @@ export default function Signup() {
             </div>
 
             <button
-              className="w-full rounded-2xl bg-[#1e3a5f] py-3 text-sm font-semibold text-white transition hover:bg-[#17314f] disabled:cursor-not-allowed disabled:bg-slate-400"
+              className="w-full rounded-2xl bg-[#2a4b78] py-3 text-sm font-semibold text-white transition hover:bg-[#223f64] disabled:cursor-not-allowed disabled:bg-slate-400"
               disabled={isSubmitting}
               type="submit"
             >
