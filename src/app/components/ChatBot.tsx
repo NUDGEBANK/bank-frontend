@@ -11,6 +11,7 @@ export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(() => sessionStorage.getItem("chat_session_id"));
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const bufferRef = useRef<string>("");
@@ -23,7 +24,7 @@ export default function ChatBot() {
 
     return [
       {
-        text: "안녕하세요! 넛지뱅크 AI 상담사입니다. 무엇을 도와드릴까요?",
+        text: "안녕하세요! \nNUDGEBANK 금융 상담 AI입니다. \n무엇을 도와드릴까요?",
         sender: "bot",
       },
     ];
@@ -32,6 +33,14 @@ export default function ChatBot() {
   useEffect(() => {
     sessionStorage.setItem("chat_history", JSON.stringify(messages));
   }, [messages]);
+
+  useEffect(() => {
+    if (sessionId) {
+      sessionStorage.setItem("chat_session_id", sessionId);
+      return;
+    }
+    sessionStorage.removeItem("chat_session_id");
+  }, [sessionId]);
 
   useEffect(() => {
     if (isOpen) {
@@ -117,9 +126,13 @@ export default function ChatBot() {
     startTypingEffect();
 
     try {
-      await sendMessage("user-123", userMessage, (chunk) => {
+      const nextSessionId = await sendMessage("user-123", userMessage, (chunk) => {
         bufferRef.current += chunk;
-      });
+      }, sessionId ?? undefined);
+
+      if (nextSessionId) {
+        setSessionId(nextSessionId);
+      }
 
       streamDoneRef.current = true;
     } catch (error) {
