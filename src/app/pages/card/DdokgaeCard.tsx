@@ -252,7 +252,7 @@ export default function DdokgaeCard() {
                     <div className="absolute right-0 top-12 h-24 w-24 rounded-full bg-sky-200/8 blur-2xl" />
                     <div className="relative flex h-full flex-col px-10 py-8">
                       <div className="flex items-start justify-between">
-                        <div className="relative h-14 w-22 rounded-2xl bg-gradient-to-br from-white/28 to-white/10 backdrop-blur-sm ring-1 ring-white/15">
+                        <div className="relative h-14 w-[5.5rem] rounded-2xl bg-gradient-to-br from-white/28 to-white/10 backdrop-blur-sm ring-1 ring-white/15">
                           <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/10 to-transparent" />
                         </div>
                         <div className="text-right">
