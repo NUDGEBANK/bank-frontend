@@ -1,34 +1,37 @@
 import { Link } from "react-router";
-import { CreditCard, Wallet, TrendingUp, PiggyBank, ChevronLeft, ChevronRight } from "lucide-react";
+import { BadgeCent, ChartColumn, ChevronLeft, ChevronRight, CreditCard, HandCoins } from "lucide-react";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import homeBanner1 from "../../assets/home/1.jpg";
+import homeBanner2 from "../../assets/home/2.jpg";
+import homeBanner3 from "../../assets/home/3.jpg";
 
 // 커스텀 화살표 컴포넌트
 function PrevArrow(props: any) {
   const { onClick } = props;
   return (
-    <button
-      onClick={onClick}
-      className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full p-3 transition-all shadow-lg"
-      aria-label="이전 슬라이드"
-    >
-      <ChevronLeft className="w-8 h-8 text-white" />
-    </button>
+      <button
+          onClick={onClick}
+          className="absolute left-4 top-1/2 z-10 -translate-y-1/2 rounded-full border border-white/50 bg-white/70 p-3 text-slate-700 transition hover:bg-white/85"
+          aria-label="이전 슬라이드"
+      >
+        <ChevronLeft className="h-7 w-7" />
+      </button>
   );
 }
 
 function NextArrow(props: any) {
   const { onClick } = props;
   return (
-    <button
-      onClick={onClick}
-      className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-white/20 hover:bg-white/30 backdrop-blur-md rounded-full p-3 transition-all shadow-lg"
-      aria-label="다음 슬라이드"
-    >
-      <ChevronRight className="w-8 h-8 text-white" />
-    </button>
+      <button
+          onClick={onClick}
+          className="absolute right-4 top-1/2 z-10 -translate-y-1/2 rounded-full border border-white/50 bg-white/70 p-3 text-slate-700 transition hover:bg-white/85"
+          aria-label="다음 슬라이드"
+      >
+        <ChevronRight className="h-7 w-7" />
+      </button>
   );
 }
 
@@ -46,170 +49,190 @@ export default function Home() {
   };
 
   return (
-    <div>
-      {/* 히어로 섹션 - 슬라이더 */}
-      <section className="text-white mt-24">
-        <div className="w-full">
-          <Slider {...sliderSettings}>
-            {/* 통장 배너 */}
-            <div>
-              <div className="relative bg-[#7BAAF7]/20 backdrop-blur-lg border-y-2 border-white/20 shadow-2xl">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center p-12 max-w-7xl mx-auto">
-                  <div className="text-left space-y-6">
-                    <h1 className="text-6xl text-[#3B4858] font-bold drop-shadow-md">똑개 통장</h1>
-                    <p className="text-2xl text-[#3B4858] drop-shadow-md">체크카드 연동 주거래 계좌</p>
-                    <p className="text-lg text-[#3B4858] drop-shadow-md">첫 입금 시 현금 3만원 지급</p>
-                    <Link
-                      to="/account/ddokgae"
-                      className="inline-block bg-[#478FFF] text-white px-8 py-4 rounded-lg font-semibold hover:bg-[#2f74d6] transition-all shadow-lg border-2 border-[#478FFF] text-lg"
-                    >
-                      통장 개설하기
-                    </Link>
-                  </div>
-                  <div className="relative h-80 rounded-xl overflow-hidden shadow-2xl">
-                    <ImageWithFallback
-                      src="https://images.unsplash.com/photo-1642055509518-adafcad1d22e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxiYW5rJTIwYWNjb3VudCUyMG1vYmlsZSUyMGFwcHxlbnwxfHx8fDE3NzQzMTQ1NTV8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-                      alt="똑개 통장"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 대출 배너 */}
-            <div>
-              <div className="relative bg-[#7BAAF7]/20 backdrop-blur-lg border-y-2 border-white/20 shadow-2xl">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center p-12 max-w-7xl mx-auto">
-                  <div className="text-left space-y-6">
-                    <h1 className="text-6xl text-[#3B4858] font-bold drop-shadow-lg">맞춤형 대출</h1>
-                    <p className="text-2xl text-[#3B4858] drop-shadow-md">AI가 분석한 최적의 대출 상품</p>
-                    <p className="text-lg text-[#3B4858] drop-shadow-md">연 3.2% ~ 8.5% 특별 금리</p>
-                    <Link
-                      to="/loan/products"
-                      className="inline-block bg-[#478FFF] text-white px-8 py-4 rounded-lg font-semibold hover:bg-[#2f74d6] transition-all shadow-lg border-2 border-[#478FFF] text-lg"
-                    >
-                      대출 상담하기
-                    </Link>
-                  </div>
-                  <div className="relative h-80 rounded-xl overflow-hidden shadow-2xl">
-                    <ImageWithFallback
-                      src="https://images.unsplash.com/photo-1762151717091-4e0633e0c431?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxsb2FuJTIwZmluYW5jaWFsJTIwcGxhbm5pbmd8ZW58MXx8fHwxNzc0MzM2NDQ3fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-                      alt="맞춤형 대출"
-                      className="w-full h-full object-cover"
-                    />
+      <div>
+        {/* 히어로 섹션 - 슬라이더 */}
+        <section className="mt-24">
+          <div className="w-full">
+            <Slider {...sliderSettings}>
+              {/* 통장 배너 */}
+              <div>
+                <div className="relative border-y border-slate-200 bg-[linear-gradient(180deg,#f8fbff_0%,#f2f7ff_100%)]">
+                  <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-8 px-8 py-11 md:grid-cols-2 md:px-10">
+                    <div className="max-w-xl text-left space-y-5">
+                      <h1 className="text-[40px] font-bold tracking-tight text-slate-800">똑개 통장</h1>
+                      <p className="text-[20px] text-slate-600">체크카드 연동 주거래 계좌</p>
+                      <p className="text-[15px] leading-7 text-slate-500">
+                        생활 자금을 관리하기 좋은 기본 계좌입니다. 첫 입금 고객에게는 현금 3만원 혜택을 제공합니다.
+                      </p>
+                      <Link
+                          to="/account/ddokgae"
+                          className="inline-flex items-center justify-center rounded-lg bg-[#2a4b78] px-7 py-3.5 text-base font-semibold leading-none text-white transition hover:bg-[#223f64]"
+                      >
+                        <span style={{ color: "#fff", lineHeight: 1 }}>통장 개설하기</span>
+                      </Link>
+                    </div>
+                    <div className="relative h-80 overflow-hidden rounded-2xl border border-slate-200 shadow-[0_10px_24px_rgba(15,23,42,0.06)]">
+                      <ImageWithFallback
+                          src={homeBanner1}
+                          alt="똑개 통장"
+                          className="w-full h-full object-cover"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* 카드 배너 */}
-            <div>
-              <div className="relative bg-[#7BAAF7]/20 backdrop-blur-lg border-y-2 border-white/20 shadow-2xl">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center p-12 max-w-7xl mx-auto">
-                  <div className="text-left space-y-6">
-                    <h1 className="text-6xl text-[#3B4858] font-bold drop-shadow-lg">똑개 카드</h1>
-                    <p className="text-2xl text-[#3B4858] drop-shadow-md">AI 소비 분석 체크카드</p>
-                    <p className="text-lg text-[#3B4858] drop-shadow-md">전월 실적 없이 5% 캐시백</p>
-                    <Link
-                      to="/card/ddokgae"
-                      className="inline-block bg-[#478FFF] text-white px-8 py-4 rounded-lg font-semibold hover:bg-[#2f74d6] transition-all shadow-lg border-2 border-[#478FFF] text-lg"
-                    >
-                      카드 신청하기
-                    </Link>
-                  </div>
-                  <div className="relative h-80 rounded-xl overflow-hidden shadow-2xl">
-                    <ImageWithFallback
-                      src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxjcmVkaXQlMjBjYXJkJTIwcGF5bWVudHxlbnwxfHx8fDE3NzQyODQwMzN8MA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-                      alt="똑개 카드"
-                      className="w-full h-full object-cover"
-                    />
+              {/* 대출 배너 */}
+              <div>
+                <div className="relative border-y border-slate-200 bg-[linear-gradient(180deg,#f8fbff_0%,#f1f5ff_100%)]">
+                  <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-8 px-8 py-11 md:grid-cols-2 md:px-10">
+                    <div className="max-w-xl text-left space-y-5">
+                      <h1 className="text-[40px] font-bold tracking-tight text-slate-800">맞춤형 대출</h1>
+                      <p className="text-[20px] text-slate-600">상황에 맞춰 비교하는 대출 상품</p>
+                      <p className="text-[15px] leading-7 text-slate-500">
+                        주요 상품의 한도와 금리를 비교하고, 현재 조건에 맞는 대출을 차분하게 검토할 수 있습니다.
+                      </p>
+                      <Link
+                          to="/loan/products"
+                          className="inline-flex items-center justify-center rounded-lg bg-[#2a4b78] px-7 py-3.5 text-base font-semibold leading-none text-white transition hover:bg-[#223f64]"
+                      >
+                        <span style={{ color: "#fff", lineHeight: 1 }}>대출 상담하기</span>
+                      </Link>
+                    </div>
+                    <div className="relative h-80 overflow-hidden rounded-2xl border border-slate-200 shadow-[0_10px_24px_rgba(15,23,42,0.06)]">
+                      <ImageWithFallback
+                          src={homeBanner2}
+                          alt="맞춤형 대출"
+                          className="w-full h-full object-cover"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </Slider>
-        </div>
-      </section>
 
-      {/* 주요 서비스 */}
-      <section className="py-16 bg-white/5 border-b border-white/10 mt-16">
-        <div className="max-w-7xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12 text-[#3B4858] drop-shadow-md">주요 서비스</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <Link
-              to="/account/ddokgae"
-              className="p-6 bg-gray-600/40 border-2 border-white/50 rounded-lg hover:shadow-2xl transition-all hover:bg-gray-600/80 text-white"
-            >
-              <Wallet className="w-12 h-12 text-black mb-4" />
-              <h3 className="text-xl font-bold mb-2">똑개 통장</h3>
-              <p className="text-blue-100">체크카드 연동 주거래 계좌</p>
-            </Link>
-
-            <Link
-              to="/loan/products"
-              className="p-6 bg-gray-600/40 border-2 border-white/50 rounded-lg hover:shadow-2xl transition-all hover:bg-gray-600/80 text-white"
-            >
-              <PiggyBank className="w-12 h-12 text-black mb-4" />
-              <h3 className="text-xl font-bold mb-2">대출 상품</h3>
-              <p className="text-blue-100">맞춤형 대출 솔루션</p>
-            </Link>
-
-            <Link
-              to="/card/ddokgae"
-              className="p-6 bg-gray-600/40 border-2 border-white/50 rounded-lg hover:shadow-2xl transition-all hover:bg-gray-600/80 text-white"
-            >
-              <CreditCard className="w-12 h-12 text-black mb-4" />
-              <h3 className="text-xl font-bold mb-2">똑개 카드</h3>
-              <p className="text-blue-100">AI 소비 분석 체크카드</p>
-            </Link>
-
-            <Link
-              to="/card/spending-analysis"
-              className="p-6 bg-gray-600/40 border-2 border-white/50 rounded-lg hover:shadow-2xl transition-all hover:bg-gray-600/80 text-white"
-            >
-              <TrendingUp className="w-12 h-12 text-black mb-4" />
-              <h3 className="text-xl font-bold mb-2">소비 분석</h3>
-              <p className="text-blue-100">스마트한 소비 관리</p>
-            </Link>
+              {/* 카드 배너 */}
+              <div>
+                <div className="relative border-y border-slate-200 bg-[linear-gradient(180deg,#f8fbff_0%,#f1f6ff_100%)]">
+                  <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-8 px-8 py-11 md:grid-cols-2 md:px-10">
+                    <div className="max-w-xl text-left space-y-5">
+                      <h1 className="text-[40px] font-bold tracking-tight text-slate-800">똑개 카드</h1>
+                      <p className="text-[20px] text-slate-600">AI 소비 분석 체크카드</p>
+                      <p className="text-[15px] leading-7 text-slate-500">
+                        전월 실적 부담 없이 생활 소비를 관리하고, 소비 흐름을 함께 확인할 수 있는 체크카드입니다.
+                      </p>
+                      <Link
+                          to="/card/ddokgae"
+                          className="inline-flex items-center justify-center rounded-lg bg-[#2a4b78] px-7 py-3.5 text-base font-semibold leading-none text-white transition hover:bg-[#223f64]"
+                      >
+                        <span style={{ color: "#fff", lineHeight: 1 }}>카드 신청하기</span>
+                      </Link>
+                    </div>
+                    <div className="relative h-80 overflow-hidden rounded-2xl border border-slate-200 shadow-[0_10px_24px_rgba(15,23,42,0.06)]">
+                      <ImageWithFallback
+                          src={homeBanner3}
+                          alt="똑개 카드"
+                          className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Slider>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* 특별 혜택 */}
-      <section className="py-16 bg-white/5">
-        <div className="max-w-7xl mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12 text-[#3B4858] drop-shadow-md">이달의 특별 혜택</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white/15 p-6 rounded-lg shadow-xl border-2 border-white/30">
-              <div className="text-blue-300 font-bold text-sm mb-2">신규 고객</div>
-              <h3 className="text-xl font-bold mb-2 text-white">통장 개설 이벤트</h3>
-              <p className="text-blue-100 mb-4">첫 입금 시 현금 3만원 지급</p>
-              <Link to="/account/ddokgae" className="text-blue-300 hover:text-blue-200 hover:underline font-semibold">
-                자세히 보기 →
-              </Link>
+        {/* 주요 서비스 */}
+        <section className="mt-16 border-b border-slate-200 py-16">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="mb-12 text-center">
+              <h2 className="text-3xl font-bold text-slate-800">주요 서비스</h2>
+              <p className="mt-3 text-base text-slate-500">자주 사용하는 기능을 한 화면에서 바로 이동할 수 있습니다.</p>
             </div>
-
-            <div className="bg-white/15 p-6 rounded-lg shadow-xl border-2 border-white/30">
-              <div className="text-blue-300 font-bold text-sm mb-2">대출</div>
-              <h3 className="text-xl font-bold mb-2 text-white">청년 대출 특별 금리</h3>
-              <p className="text-blue-100 mb-4">연 2.5% 특별 금리 적용</p>
-              <Link to="/loan/products" className="text-blue-300 hover:text-blue-200 hover:underline font-semibold">
-                자세히 보기 →
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+              <Link
+                  to="/account/ddokgae"
+                  className="rounded-2xl border border-slate-200 bg-white p-6 text-slate-800 shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_28px_rgba(15,23,42,0.08)]"
+              >
+                <div className="mb-4 flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100">
+                  <BadgeCent className="h-3.5 w-3.5 text-slate-500" />
+                </div>
+                <h3 className="mb-2 text-xl font-bold">똑개 통장</h3>
+                <p className="text-sm leading-6 text-slate-500">체크카드와 바로 연결되는 생활형 주거래 계좌</p>
               </Link>
-            </div>
 
-            <div className="bg-white/15 p-6 rounded-lg shadow-xl border-2 border-white/30">
-              <div className="text-blue-300 font-bold text-sm mb-2">카드</div>
-              <h3 className="text-xl font-bold mb-2 text-white">체크카드 캐시백</h3>
-              <p className="text-blue-100 mb-4">전월 실적 없이 5% 캐시백</p>
-              <Link to="/card/ddokgae" className="text-blue-300 hover:text-blue-200 hover:underline font-semibold">
-                자세히 보기 →
+              <Link
+                  to="/loan/products"
+                  className="rounded-2xl border border-slate-200 bg-white p-6 text-slate-800 shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_28px_rgba(15,23,42,0.08)]"
+              >
+                <div className="mb-4 flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100">
+                  <HandCoins className="h-3.5 w-3.5 text-slate-500" />
+                </div>
+                <h3 className="mb-2 text-xl font-bold">대출 상품</h3>
+                <p className="text-sm leading-6 text-slate-500">상황에 맞게 비교할 수 있는 주요 대출 상품</p>
+              </Link>
+
+              <Link
+                  to="/card/ddokgae"
+                  className="rounded-2xl border border-slate-200 bg-white p-6 text-slate-800 shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_28px_rgba(15,23,42,0.08)]"
+              >
+                <div className="mb-4 flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100">
+                  <CreditCard className="h-3.5 w-3.5 text-slate-500" />
+                </div>
+                <h3 className="mb-2 text-xl font-bold">똑개 카드</h3>
+                <p className="text-sm leading-6 text-slate-500">AI 소비 분석을 바탕으로 설계한 체크카드</p>
+              </Link>
+
+              <Link
+                  to="/card/spending-analysis"
+                  className="rounded-2xl border border-slate-200 bg-white p-6 text-slate-800 shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_28px_rgba(15,23,42,0.08)]"
+              >
+                <div className="mb-4 flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100">
+                  <ChartColumn className="h-3.5 w-3.5 text-slate-500" />
+                </div>
+                <h3 className="mb-2 text-xl font-bold">소비 분석</h3>
+                <p className="text-sm leading-6 text-slate-500">월별 소비 흐름과 카테고리 패턴을 한눈에 확인</p>
               </Link>
             </div>
           </div>
-        </div>
-      </section>
-    </div>
+        </section>
+
+        {/* 특별 혜택 */}
+        <section className="py-16">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="mb-12 text-center">
+              <h2 className="text-3xl font-bold text-slate-800">이달의 특별 혜택</h2>
+              <p className="mt-3 text-base text-slate-500">이번 달에 바로 확인할 수 있는 핵심 혜택만 모았습니다.</p>
+            </div>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+                <div className="mb-2 text-sm font-semibold text-slate-400">신규 고객</div>
+                <h3 className="mb-2 text-xl font-bold text-slate-900">통장 개설 이벤트</h3>
+                <p className="mb-4 text-sm leading-6 text-slate-500">첫 입금 시 현금 3만원을 지급하는 신규 고객 혜택입니다.</p>
+                <Link to="/account/ddokgae" className="font-semibold text-[#478FFF] hover:text-[#2f74d6]">
+                  자세히 보기 →
+                </Link>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+                <div className="mb-2 text-sm font-semibold text-slate-400">대출</div>
+                <h3 className="mb-2 text-xl font-bold text-slate-900">청년 대출 특별 금리</h3>
+                <p className="mb-4 text-sm leading-6 text-slate-500">대상 조건을 충족하면 특별 금리 구간을 확인할 수 있습니다.</p>
+                <Link to="/loan/products" className="font-semibold text-[#478FFF] hover:text-[#2f74d6]">
+                  자세히 보기 →
+                </Link>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+                <div className="mb-2 text-sm font-semibold text-slate-400">카드</div>
+                <h3 className="mb-2 text-xl font-bold text-slate-900">체크카드 캐시백</h3>
+                <p className="mb-4 text-sm leading-6 text-slate-500">전월 실적 없이도 주요 가맹점 캐시백 혜택을 제공합니다.</p>
+                <Link to="/card/ddokgae" className="font-semibold text-[#478FFF] hover:text-[#2f74d6]">
+                  자세히 보기 →
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
   );
 }

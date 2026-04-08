@@ -97,10 +97,10 @@ export default function Login() {
             {/* 로그인 버튼 */}
             <button
               type="submit"
-              className="w-full py-3 bg-white/90 backdrop-blur-sm text-blue-600 rounded-lg font-bold hover:bg-white transition-all shadow-lg border border-white/40 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full rounded-lg border border-[#2a4b78] bg-[#2a4b78] py-3 font-bold text-white transition-all hover:bg-[#223f64] disabled:cursor-not-allowed disabled:opacity-60"
               disabled={isSubmitting}
             >
-              {isSubmitting ? "로그인 중..." : "로그인"}
+              <span style={{ color: "#fff" }}>{isSubmitting ? "로그인 중..." : "로그인"}</span>
             </button>
           </form>
 
@@ -119,7 +119,7 @@ export default function Login() {
             <p className="text-blue-100 mb-4">아직 계정이 없으신가요?</p>
             <Link
               to="/Signup"
-              className="inline-block w-full py-3 bg-white/20 backdrop-blur-sm border-2 border-white/40 text-white rounded-lg font-semibold hover:bg-white/30 transition-all"
+              className="inline-block w-full rounded-lg border border-slate-200 bg-white py-3 font-semibold text-slate-700 transition-all hover:bg-slate-50"
             >
               회원가입
             </Link>
