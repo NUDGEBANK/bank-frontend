@@ -226,8 +226,10 @@ export default function CardHistory() {
             {selectedAccount.transactions.map((transaction) => (
               <div
                 key={transaction.transactionId}
-                className={`px-6 py-5 transition-colors hover:bg-slate-50 md:px-8 ${
-                  isLoanDisbursementTransaction(transaction) ? "bg-emerald-50/50" : ""
+                className={`px-6 py-5 transition-colors md:px-8 ${
+                  isLoanDisbursementTransaction(transaction)
+                    ? "bg-emerald-50/50 hover:bg-emerald-50"
+                    : "hover:bg-slate-50"
                 }`}
               >
                 <div className="flex items-start justify-between gap-4">
@@ -263,8 +265,12 @@ export default function CardHistory() {
                           : "text-slate-900"
                       }`}
                     >
-                      {isLoanDisbursementTransaction(transaction) ? "+" : ""}
-                      {formatAmount(transaction.amount)}
+                      {isLoanDisbursementTransaction(transaction) && transaction.amount > 0 ? "+" : ""}
+                      {formatAmount(
+                        isLoanDisbursementTransaction(transaction)
+                          ? Math.abs(transaction.amount)
+                          : transaction.amount,
+                      )}
                     </p>
                   </div>
                 </div>
