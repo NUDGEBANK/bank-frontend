@@ -1,10 +1,25 @@
-﻿let refreshPromise: Promise<boolean> | null = null;
+let refreshPromise: Promise<boolean> | null = null;
+let refreshFailed = false;
+const AUTH_REFRESH_BYPASS_PATHS = new Set([
+  "/api/auth/login",
+  "/api/auth/signup",
+  "/api/auth/logout",
+  "/api/auth/refresh",
+]);
 
 type JsonRecord = Record<string, unknown>;
 
 type ApiError = {
   message?: string;
 };
+
+function shouldRetryWithRefresh(path: string, status: number, retry: boolean): boolean {
+  if (!retry || refreshFailed || (status !== 401 && status !== 403)) {
+    return false;
+  }
+
+  return !AUTH_REFRESH_BYPASS_PATHS.has(path);
+}
 
 async function refreshTokens(): Promise<boolean> {
   if (!refreshPromise) {
@@ -23,10 +38,12 @@ async function refreshTokens(): Promise<boolean> {
 
   const ok = await refreshPromise;
   if (ok) {
+    refreshFailed = false;
     window.dispatchEvent(new Event("auth-change"));
     return true;
   }
 
+  refreshFailed = true;
   window.dispatchEvent(new Event("auth-change"));
   return false;
 }
@@ -48,7 +65,7 @@ async function requestJsonWithMethod<T>(
     body: method === "POST" && body ? JSON.stringify(body) : undefined,
   });
 
-  if (res.status === 401 && retry && !path.startsWith("/api/auth/")) {
+  if (shouldRetryWithRefresh(path, res.status, retry)) {
     const refreshed = await refreshTokens();
     if (refreshed) {
       return requestJsonWithMethod<T>(method, path, body, false);
@@ -61,6 +78,10 @@ async function requestJsonWithMethod<T>(
       ? (data as ApiError).message
       : "REQUEST_FAILED";
     throw new Error(message);
+  }
+
+  if (path === "/api/auth/login" || path === "/api/auth/signup") {
+    refreshFailed = false;
   }
 
   return data as T;
