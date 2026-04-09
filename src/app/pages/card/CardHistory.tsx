@@ -57,6 +57,13 @@ function formatAmount(amount: number) {
   return `${amount.toLocaleString("ko-KR")}\uC6D0`;
 }
 
+function isLoanDisbursementTransaction(transaction: CardHistoryTransaction) {
+  return (
+    transaction.marketName === "NudgeBank 대출 실행" ||
+    transaction.categoryName === "대출"
+  );
+}
+
 function maskCardNumber(cardNumber: string | null) {
   if (!cardNumber) {
     return UI_TEXT.noCardInfo;
@@ -219,11 +226,21 @@ export default function CardHistory() {
             {selectedAccount.transactions.map((transaction) => (
               <div
                 key={transaction.transactionId}
-                className="px-6 py-5 transition-colors hover:bg-slate-50 md:px-8"
+                className={`px-6 py-5 transition-colors md:px-8 ${
+                  isLoanDisbursementTransaction(transaction)
+                    ? "bg-emerald-50/50 hover:bg-emerald-50"
+                    : "hover:bg-slate-50"
+                }`}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex min-w-0 items-start gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-blue-500">
+                    <div
+                      className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border ${
+                        isLoanDisbursementTransaction(transaction)
+                          ? "border-emerald-100 bg-emerald-50 text-emerald-600"
+                          : "border-blue-100 bg-blue-50 text-blue-500"
+                      }`}
+                    >
                       <Receipt className="h-5 w-5" />
                     </div>
 
@@ -231,13 +248,29 @@ export default function CardHistory() {
                       <p className="truncate text-base font-semibold text-slate-900">
                         {transaction.marketName}
                       </p>
+                      <p className="mt-1 text-xs font-medium text-slate-500">
+                        {isLoanDisbursementTransaction(transaction)
+                          ? "대출 실행 입금"
+                          : transaction.categoryName}
+                      </p>
                       <p className="mt-1 text-xs text-slate-400">{transaction.transactionDatetime}</p>
                     </div>
                   </div>
 
                   <div className="shrink-0 text-right">
-                    <p className="text-lg font-bold text-slate-900 md:text-xl">
-                      {formatAmount(transaction.amount)}
+                    <p
+                      className={`text-lg font-bold md:text-xl ${
+                        isLoanDisbursementTransaction(transaction)
+                          ? "text-emerald-600"
+                          : "text-slate-900"
+                      }`}
+                    >
+                      {isLoanDisbursementTransaction(transaction) && transaction.amount > 0 ? "+" : ""}
+                      {formatAmount(
+                        isLoanDisbursementTransaction(transaction)
+                          ? Math.abs(transaction.amount)
+                          : transaction.amount,
+                      )}
                     </p>
                   </div>
                 </div>
