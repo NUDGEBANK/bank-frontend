@@ -3,6 +3,8 @@ import Root from "./Root";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import DepositApply from "./pages/account/DepositApply";
+import DepositProducts from "./pages/account/DepositProducts";
 import MyAccount from "./pages/account/MyAccount";
 import DdokgaeAccount from "./pages/account/DdokgaeAccount";
 import LoanProducts from "./pages/loan/LoanProducts";
@@ -25,6 +27,8 @@ export const router = createBrowserRouter([
       { index: true, Component: Home },
       { path: "login", Component: Login },
       { path: "signup", Component: Signup },
+      { path: "deposit/products", Component: DepositProducts },
+      { path: "deposit/products/:productId/apply", Component: DepositApply },
       { path: "account/my", Component: MyAccount },
       { path: "account/ddokgae", Component: DdokgaeAccount },
       { path: "loan/products", Component: LoanProducts },
