@@ -15,7 +15,7 @@ export async function sendMessage(
   onChunk: (chunk: string) => void,
   sessionId?: string,
 ): Promise<string | null> {
-  const response = await fetch("/api/chat", {
+  const response = await fetch("/chat-api/chat", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
