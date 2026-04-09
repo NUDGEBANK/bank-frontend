@@ -159,7 +159,7 @@ export default function ChatBot() {
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-t-lg flex items-center justify-between">
             <div className="flex items-center gap-2">
               <MessageCircle className="w-5 h-5" />
-              <span className="font-semibold">AI 상담</span>
+              <span className="font-semibold">NUDGEBOT</span>
             </div>
             <button
               onClick={() => setIsOpen(false)}
