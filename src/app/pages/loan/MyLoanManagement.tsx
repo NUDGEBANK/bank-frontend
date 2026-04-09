@@ -1,7 +1,7 @@
 import { Calendar, Calculator, FileSearch, TrendingDown, Upload } from "lucide-react";
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
-import { API_BASE, getJson } from "../../lib/api";
+import { getJson } from "../../lib/api";
 import { checkAuthentication } from "../../lib/auth";
 
 type LoanApplicationSummary = {
@@ -89,10 +89,6 @@ const failureReasonMessages: Record<string, string> = {
 };
 
 function getApplicationStatusLabel(application: LoanApplicationSummary) {
-  if (application.productKey === "youth-loan" && application.certificateSubmitted) {
-    return "서류 제출 완료";
-  }
-
   switch (application.applicationStatus) {
     case "DOCUMENT_REQUIRED":
       return "서류 제출 필요";
@@ -364,7 +360,7 @@ export default function MyLoanManagement() {
     setUploadError(null);
 
     try {
-      const response = await fetch(`${API_BASE}/api/certificates/submissions`, {
+      const response = await fetch(`/api/certificates/submissions`, {
         method: "POST",
         credentials: "include",
         body: formData,
