@@ -10,6 +10,10 @@ export default defineConfig({
     strictPort: true,
     proxy: {
       "/api": {
+        target: "http://localhost:9999",
+        changeOrigin: true,
+      },
+      "/chat-api": {
         target: "http://localhost:8000",
         changeOrigin: true,
       },
