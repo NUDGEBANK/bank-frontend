@@ -262,15 +262,11 @@ export default function CardHistory() {
                       className={`text-lg font-bold md:text-xl ${
                         isLoanDisbursementTransaction(transaction)
                           ? "text-emerald-600"
-                          : "text-slate-900"
+                          : "text-rose-600"
                       }`}
                     >
-                      {isLoanDisbursementTransaction(transaction) && transaction.amount > 0 ? "+" : ""}
-                      {formatAmount(
-                        isLoanDisbursementTransaction(transaction)
-                          ? Math.abs(transaction.amount)
-                          : transaction.amount,
-                      )}
+                      {isLoanDisbursementTransaction(transaction) ? "+" : "-"}
+                      {formatAmount(Math.abs(transaction.amount))}
                     </p>
                   </div>
                 </div>
