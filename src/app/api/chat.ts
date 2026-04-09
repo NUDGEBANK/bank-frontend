@@ -84,7 +84,7 @@ export async function sendMessage(
 }
 
 export async function getChatSessions(): Promise<ChatSessionSummary[]> {
-  const response = await fetch("/api/chat/sessions", {
+  const response = await fetch("/chat-api/chat/sessions", {
     method: "GET",
     credentials: "include",
   });
@@ -98,7 +98,7 @@ export async function getChatSessions(): Promise<ChatSessionSummary[]> {
 }
 
 export async function getChatSession(sessionId: string): Promise<ChatSessionDetail> {
-  const response = await fetch(`/api/chat/sessions/${sessionId}`, {
+  const response = await fetch(`/chat-api/chat/sessions/${sessionId}`, {
     method: "GET",
     credentials: "include",
   });
@@ -112,7 +112,7 @@ export async function getChatSession(sessionId: string): Promise<ChatSessionDeta
 }
 
 export async function renameChatSession(sessionId: string, title: string): Promise<ChatSessionSummary> {
-  const response = await fetch(`/api/chat/sessions/${sessionId}`, {
+  const response = await fetch(`/chat-api/chat/sessions/${sessionId}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -130,7 +130,7 @@ export async function renameChatSession(sessionId: string, title: string): Promi
 }
 
 export async function deleteChatSession(sessionId: string): Promise<void> {
-  const response = await fetch(`/api/chat/sessions/${sessionId}`, {
+  const response = await fetch(`/chat-api/chat/sessions/${sessionId}`, {
     method: "DELETE",
     credentials: "include",
   });
