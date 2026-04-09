@@ -28,10 +28,6 @@ type LoanApplicationSummary = {
 };
 
 function getApplicationStatusLabel(application: LoanApplicationSummary) {
-  if (application.productKey === "youth-loan" && application.certificateSubmitted) {
-    return "서류 제출 완료";
-  }
-
   switch (application.applicationStatus) {
     case "DOCUMENT_REQUIRED":
       return "서류 제출 필요";
