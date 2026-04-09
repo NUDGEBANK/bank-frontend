@@ -1,6 +1,4 @@
-﻿﻿export const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:9999";
-
-let refreshPromise: Promise<boolean> | null = null;
+﻿let refreshPromise: Promise<boolean> | null = null;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -10,7 +8,7 @@ type ApiError = {
 
 async function refreshTokens(): Promise<boolean> {
   if (!refreshPromise) {
-    refreshPromise = fetch(`${API_BASE}/api/auth/refresh`, {
+    refreshPromise = fetch(`/api/auth/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -43,7 +41,7 @@ async function requestJsonWithMethod<T>(
   body?: JsonRecord,
   retry = true,
 ): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(`${path}`, {
     method,
     headers: { "Content-Type": "application/json" },
     credentials: "include",
