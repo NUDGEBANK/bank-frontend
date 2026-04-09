@@ -14,6 +14,7 @@ import DdokgaeCard from "./pages/card/DdokgaeCard";
 import CardHistory from "./pages/card/CardHistory";
 import SpendingAnalysis from "./pages/card/SpendingAnalysis";
 import MyPage from "./pages/account/MyPage";
+import ChatHistory from "./pages/help/ChatHistory";
 
 
 export const router = createBrowserRouter([
@@ -34,7 +35,8 @@ export const router = createBrowserRouter([
       { path: "card/ddokgae", Component: DdokgaeCard },
       { path: "card/history", Component: CardHistory },
       { path: "card/spending-analysis", Component: SpendingAnalysis },
-      { path: "account/mypage", Component: MyPage }
+      { path: "account/mypage", Component: MyPage },
+      { path: "help/chat-history", Component: ChatHistory },
     ],
   },
 ]);

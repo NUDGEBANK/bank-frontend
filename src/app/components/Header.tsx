@@ -57,7 +57,10 @@ const menuItems: MenuItem[] = [
     label: "고객센터",
     path: "#",
     description: "이용 안내와 고객 지원 정보를 확인할 수 있습니다.",
-    submenu: [{ label: "고객센터", path: "" }],
+    submenu: [
+      { label: "고객센터", path: "" },
+      { label: "NUDGEBOT", path: "/help/chat-history" }
+    ],
   },
 ];
 

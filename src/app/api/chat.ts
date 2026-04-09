@@ -9,6 +9,28 @@ export interface ChatResponse {
   answer: string;
 }
 
+export interface ChatSessionSummary {
+  session_id: string;
+  title: string;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export interface ChatMessageItem {
+  message_id: number;
+  sender_type: "USER" | "BOT";
+  message_content: string;
+  created_at: string | null;
+}
+
+export interface ChatSessionDetail {
+  session_id: string;
+  title: string;
+  created_at: string | null;
+  updated_at: string | null;
+  messages: ChatMessageItem[];
+}
+
 export async function sendMessage(
   userId: string,
   message: string,
@@ -59,4 +81,62 @@ export async function sendMessage(
   }
 
   return nextSessionId;
+}
+
+export async function getChatSessions(): Promise<ChatSessionSummary[]> {
+  const response = await fetch("/api/chat/sessions", {
+    method: "GET",
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "채팅 목록을 불러오지 못했습니다.");
+  }
+
+  return response.json();
+}
+
+export async function getChatSession(sessionId: string): Promise<ChatSessionDetail> {
+  const response = await fetch(`/api/chat/sessions/${sessionId}`, {
+    method: "GET",
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "채팅 내용을 불러오지 못했습니다.");
+  }
+
+  return response.json();
+}
+
+export async function renameChatSession(sessionId: string, title: string): Promise<ChatSessionSummary> {
+  const response = await fetch(`/api/chat/sessions/${sessionId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({ title }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "채팅 이름을 변경하지 못했습니다.");
+  }
+
+  return response.json();
+}
+
+export async function deleteChatSession(sessionId: string): Promise<void> {
+  const response = await fetch(`/api/chat/sessions/${sessionId}`, {
+    method: "DELETE",
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || "채팅을 삭제하지 못했습니다.");
+  }
 }
