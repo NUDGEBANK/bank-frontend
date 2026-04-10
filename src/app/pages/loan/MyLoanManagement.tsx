@@ -37,7 +37,11 @@ type MyLoanSummary = {
   totalPrincipal: number;
   remainingPrincipal: number;
   repaidPrincipal: number;
+  baseInterestRate: number;
+  minimumInterestRate: number;
+  preferentialRateDiscount: number;
   interestRate: number;
+  repaymentType: string;
   startDate: string;
   endDate: string;
   nextPaymentDate: string | null;
@@ -73,6 +77,35 @@ const certificateGroups = [
   { label: "전문 자격", options: [{ id: "20", label: "공인중개사" }, { id: "21", label: "감정평가사" }, { id: "22", label: "세무사" }, { id: "23", label: "공인회계사" }, { id: "24", label: "변호사" }] },
   { label: "기사", options: [{ id: "25", label: "전기기사" }, { id: "26", label: "산업안전기사" }, { id: "27", label: "건축기사" }, { id: "28", label: "토목기사" }, { id: "29", label: "기계기사" }] },
 ];
+
+const certificateDiscountMap: Record<string, number> = {
+  "1": 0.2,
+  "2": 0.1,
+  "3": 0.1,
+  "4": 0.1,
+  "5": 0.3,
+  "6": 0.25,
+  "7": 0.2,
+  "8": 0.2,
+  "9": 0.3,
+  "10": 0.2,
+  "11": 0.2,
+  "12": 0.25,
+  "13": 0.2,
+  "14": 0.25,
+  "18": 0.1,
+  "19": 0.1,
+  "20": 0.25,
+  "21": 0.4,
+  "22": 0.4,
+  "23": 0.45,
+  "24": 0.5,
+  "25": 0.3,
+  "26": 0.3,
+  "27": 0.25,
+  "28": 0.25,
+  "29": 0.25,
+};
 
 const ocrSteps = ["자격증 선택", "파일 업로드", "OCR 추출", "정보 검증"];
 
@@ -344,6 +377,16 @@ export default function MyLoanManagement() {
     [applications, selectedProductKey],
   );
   const canSubmitCertificate = !!selectedApplication?.preferentialRateVerificationAvailable;
+  const isYouthLoanSelected = selectedApplication?.productKey === "youth-loan";
+  const repaymentMethodLabel =
+    summary?.repaymentType === "MATURITY_LUMP_SUM" ? "만기일시상환" : "원리금 분할 상환";
+  const repaymentMethodDescription = isYouthLoanSelected
+    ? "매달 이자를 납부하고 만기일에 원금을 한 번에 상환합니다."
+    : "매달 원금과 이자를 함께 나누어 상환합니다.";
+  const preferentialRateStatus = selectedApplication
+    ? getPreferentialRateStatusLabel(selectedApplication)
+    : "대상 아님";
+  const selectedCertificateDiscount = certificateId ? certificateDiscountMap[certificateId] ?? 0 : 0;
 
   const statusText: Record<UploadStatus, string> = {
     idle: "자기계발 대출 신청 후 자격증 파일을 제출할 수 있습니다.",
@@ -479,6 +522,55 @@ export default function MyLoanManagement() {
               </p>
             </div>
           </section>
+
+          <section className="grid gap-4 lg:grid-cols-3">
+            <div className="rounded-3xl border border-slate-200 bg-white px-5 py-5 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
+              <p className="text-sm text-slate-500">상환 방식</p>
+              <p className="mt-2 text-xl font-bold text-slate-900">{repaymentMethodLabel}</p>
+              <p className="mt-2 text-sm text-slate-600">{repaymentMethodDescription}</p>
+            </div>
+            <div className="rounded-3xl border border-sky-100 bg-sky-50/70 px-5 py-5">
+              <p className="text-sm text-slate-500">상환 가상계좌</p>
+              <p className="mt-2 text-xl font-bold text-slate-900">
+                {summary?.repaymentAccountNumber ?? "발급 예정"}
+              </p>
+              <p className="mt-2 text-sm text-slate-600">
+                선택한 대출 상품 기준으로 입금 및 상환에 사용하는 계좌입니다.
+              </p>
+            </div>
+            <div className="rounded-3xl border border-emerald-100 bg-emerald-50/70 px-5 py-5">
+              <p className="text-sm text-slate-500">우대금리 상태</p>
+              <p className="mt-2 text-xl font-bold text-slate-900">{preferentialRateStatus}</p>
+              <p className="mt-2 text-sm text-slate-600">
+                {isYouthLoanSelected
+                  ? "자격증 OCR 인증이 완료되면 우대금리가 현재 금리에 반영됩니다."
+                  : "현재 선택한 상품은 OCR 우대금리 대상이 아닙니다."}
+              </p>
+            </div>
+          </section>
+
+          {isYouthLoanSelected && (
+            <section className="grid gap-4 md:grid-cols-3">
+              <div className="rounded-3xl border border-slate-200 bg-slate-50/80 px-5 py-5">
+                <p className="text-sm text-slate-500">기준 금리</p>
+                <p className="mt-2 text-xl font-bold text-slate-900">
+                  연 {(summary?.baseInterestRate ?? 0).toFixed(1)}%
+                </p>
+              </div>
+              <div className="rounded-3xl border border-emerald-100 bg-emerald-50/70 px-5 py-5">
+                <p className="text-sm text-slate-500">누적 우대금리</p>
+                <p className="mt-2 text-xl font-bold text-slate-900">
+                  -{(summary?.preferentialRateDiscount ?? 0).toFixed(1)}%p
+                </p>
+              </div>
+              <div className="rounded-3xl border border-amber-100 bg-amber-50/70 px-5 py-5">
+                <p className="text-sm text-slate-500">최저 금리</p>
+                <p className="mt-2 text-xl font-bold text-slate-900">
+                  연 {(summary?.minimumInterestRate ?? 0).toFixed(1)}%
+                </p>
+              </div>
+            </section>
+          )}
 
           <section className="grid gap-5 lg:grid-cols-[minmax(0,1.18fr)_minmax(340px,0.82fr)]">
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
@@ -826,13 +918,22 @@ export default function MyLoanManagement() {
                         <optgroup key={group.label} label={group.label}>
                           {group.options.map((certificate) => (
                             <option key={certificate.id} value={certificate.id}>
-                              {certificate.label}
+                              {certificate.label} (-{(certificateDiscountMap[certificate.id] ?? 0).toFixed(1)}%p)
                             </option>
                           ))}
                         </optgroup>
                       ))}
                     </select>
                   </div>
+
+                  {certificateId && (
+                    <div className="mb-4 rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-4">
+                      <p className="text-sm font-semibold text-emerald-700">선택 자격증 우대금리</p>
+                      <p className="mt-2 text-sm text-slate-700">
+                        현재 선택한 자격증은 금리 <span className="font-semibold text-slate-900">-{selectedCertificateDiscount.toFixed(1)}%p</span> 인하 대상입니다.
+                      </p>
+                    </div>
+                  )}
 
                   <div className="rounded-3xl border-2 border-dashed border-sky-200 bg-slate-50 p-8">
                     <input

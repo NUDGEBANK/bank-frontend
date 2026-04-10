@@ -42,7 +42,11 @@ type MyLoanSummary = {
   totalPrincipal: number;
   remainingPrincipal: number;
   repaidPrincipal: number;
+  baseInterestRate: number;
+  minimumInterestRate: number;
+  preferentialRateDiscount: number;
   interestRate: number;
+  repaymentType: string;
   startDate: string;
   endDate: string;
   nextPaymentDate: string | null;
@@ -240,6 +244,10 @@ export default function MyPage() {
   const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0);
   const sectionToggleClass =
     "flex items-center justify-center p-0 text-slate-400 transition hover:text-slate-600";
+  const selectedLoanApplication =
+    loanApplications.find((application) => application.productKey === selectedProductKey) ?? null;
+  const repaymentMethodLabel =
+    loanSummary?.repaymentType === "MATURITY_LUMP_SUM" ? "만기일시상환" : "원리금 분할 상환";
 
   const handleOpenRevealForm = () => {
     setIsRevealFormOpen(true);
@@ -433,6 +441,54 @@ export default function MyPage() {
                       </p>
                     </div>
                   </div>
+                  <div className="mt-4 grid gap-4 md:grid-cols-3">
+                    <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
+                      <p className="text-sm text-slate-500">상환 방식</p>
+                      <p className="mt-2 text-lg font-semibold text-slate-900">{repaymentMethodLabel}</p>
+                    </div>
+                    <div className="rounded-2xl border border-sky-100 bg-sky-50/70 px-5 py-4">
+                      <p className="text-sm text-slate-500">상환 가상계좌</p>
+                      <p className="mt-2 text-lg font-semibold text-slate-900">
+                        {loanSummary?.repaymentAccountNumber ?? "발급 예정"}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 px-5 py-4">
+                      <p className="text-sm text-slate-500">현재 금리</p>
+                      <p className="mt-2 text-lg font-semibold text-slate-900">
+                        {loanSummary ? `연 ${loanSummary.interestRate.toFixed(1)}%` : "대출 정보 없음"}
+                      </p>
+                    </div>
+                  </div>
+                  {selectedLoanApplication?.productKey === "youth-loan" && loanSummary && (
+                    <div className="mt-4 grid gap-4 md:grid-cols-3">
+                      <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
+                        <p className="text-sm text-slate-500">기준 금리</p>
+                        <p className="mt-2 text-lg font-semibold text-slate-900">
+                          연 {loanSummary.baseInterestRate.toFixed(1)}%
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 px-5 py-4">
+                        <p className="text-sm text-slate-500">누적 우대금리</p>
+                        <p className="mt-2 text-lg font-semibold text-slate-900">
+                          -{loanSummary.preferentialRateDiscount.toFixed(1)}%p
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-amber-100 bg-amber-50/70 px-5 py-4">
+                        <p className="text-sm text-slate-500">최저 금리</p>
+                        <p className="mt-2 text-lg font-semibold text-slate-900">
+                          연 {loanSummary.minimumInterestRate.toFixed(1)}%
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {selectedLoanApplication?.productKey === "youth-loan" && (
+                    <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50/70 px-5 py-4">
+                      <p className="text-sm text-slate-500">자기계발 우대금리</p>
+                      <p className="mt-2 text-sm font-semibold text-slate-900">
+                        자격증 OCR 인증이 완료되면 현재 금리에 우대금리가 반영됩니다.
+                      </p>
+                    </div>
+                  )}
                   {loanApplications.length > 0 && (
                     <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
                       <p className="text-sm text-slate-500">신청 상품</p>
