@@ -150,7 +150,7 @@ function getApplicationStatusLabel(application: LoanApplicationSummary) {
 }
 
 function formatAmount(value: number) {
-  return `${Math.ceil(value).toLocaleString("ko-KR")}원`;
+  return `${value.toLocaleString("ko-KR")}원`;
 }
 
 function normalizeSimulationAmount(value: number, max: number) {
@@ -227,6 +227,9 @@ export default function MyLoanManagement() {
       setRepaymentSchedules([]);
       setRepaymentHistories([]);
       setLoanDataError(null);
+      if (requestId === loanManagementRequestIdRef.current) {
+        setIsLoanDataLoading(false);
+      }
       return;
     }
 
@@ -824,10 +827,19 @@ export default function MyLoanManagement() {
                 <p className="mt-2 text-lg font-semibold text-slate-900">
                   {overdueSchedules.length > 0 ? `연체 중 · ${maxOverdueDays}일` : "정상"}
                 </p>
-                <p className="mt-2 text-sm text-slate-600">
+                <p className="hidden">
                   {overdueSchedules.length > 0
                     ? `연체이자는 연 ${overdueRate.toFixed(1)}% 기준으로 계산되며, 현재 예상 연체이자는 ${formatAmount(Math.round(overdueInterestAmount))}입니다.`
                     : "납기일까지 가상계좌 입금이 없으면 연결 계좌에서 자동이체가 진행됩니다."}
+                </p>
+                <p className="mt-2 text-sm text-slate-600">
+                  {overdueSchedules.length > 0
+                    ? isYouthLoanSelected
+                      ? `연체이자는 연 ${overdueRate.toFixed(1)}% 기준으로 계산되며, 현재 예상 연체이자는 ${formatAmount(overdueInterestAmount)}입니다.`
+                      : "미납 회차가 있어 연체 상태로 반영되고 있습니다."
+                    : isYouthLoanSelected
+                      ? "납기일까지 가상계좌 입금이 없으면 연결 계좌에서 자동이체가 진행됩니다."
+                      : "현재 연체 중인 회차는 없습니다."}
                 </p>
               </div>
             </div>
