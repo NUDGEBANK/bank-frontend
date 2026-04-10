@@ -378,11 +378,16 @@ export default function MyLoanManagement() {
   );
   const canSubmitCertificate = !!selectedApplication?.preferentialRateVerificationAvailable;
   const isYouthLoanSelected = selectedApplication?.productKey === "youth-loan";
-  const repaymentMethodLabel =
-    summary?.repaymentType === "MATURITY_LUMP_SUM" ? "만기일시상환" : "원리금 분할 상환";
-  const repaymentMethodDescription = isYouthLoanSelected
-    ? "매달 이자를 납부하고 만기일에 원금을 한 번에 상환합니다."
-    : "매달 원금과 이자를 함께 나누어 상환합니다.";
+  const repaymentMethodLabel = !summary
+    ? "상환 방식 정보 없음"
+    : summary.repaymentType === "MATURITY_LUMP_SUM"
+      ? "만기일시상환"
+      : "원리금 분할 상환";
+  const repaymentMethodDescription = !summary
+    ? "대출 요약 정보가 준비되면 상환 방식을 확인할 수 있습니다."
+    : summary.repaymentType === "MATURITY_LUMP_SUM"
+      ? "매달 이자를 납부하고 만기일에 원금을 한 번에 상환합니다."
+      : "매달 원금과 이자를 함께 나누어 상환합니다.";
   const preferentialRateStatus = selectedApplication
     ? getPreferentialRateStatusLabel(selectedApplication)
     : "대상 아님";

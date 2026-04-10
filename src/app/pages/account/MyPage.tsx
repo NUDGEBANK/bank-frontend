@@ -246,8 +246,11 @@ export default function MyPage() {
     "flex items-center justify-center p-0 text-slate-400 transition hover:text-slate-600";
   const selectedLoanApplication =
     loanApplications.find((application) => application.productKey === selectedProductKey) ?? null;
-  const repaymentMethodLabel =
-    loanSummary?.repaymentType === "MATURITY_LUMP_SUM" ? "만기일시상환" : "원리금 분할 상환";
+  const repaymentMethodLabel = !loanSummary
+    ? "상환 방식 정보 없음"
+    : loanSummary.repaymentType === "MATURITY_LUMP_SUM"
+      ? "만기일시상환"
+      : "원리금 분할 상환";
 
   const handleOpenRevealForm = () => {
     setIsRevealFormOpen(true);
