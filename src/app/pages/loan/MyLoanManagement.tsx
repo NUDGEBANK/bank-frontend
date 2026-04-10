@@ -396,7 +396,7 @@ export default function MyLoanManagement() {
     ? "상환 방식 정보 없음"
     : summary.repaymentType === "MATURITY_LUMP_SUM"
       ? "만기일시상환"
-      : "원리금 분할 상환";
+      : "원리금균등분할상환";
   const repaymentMethodDescription = !summary
     ? "대출 요약 정보가 준비되면 상환 방식을 확인할 수 있습니다."
     : summary.repaymentType === "MATURITY_LUMP_SUM"

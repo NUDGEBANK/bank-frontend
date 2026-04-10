@@ -253,7 +253,7 @@ export default function MyPage() {
     ? "상환 방식 정보 없음"
     : loanSummary.repaymentType === "MATURITY_LUMP_SUM"
       ? "만기일시상환"
-      : "원리금 분할 상환";
+      : "원리금균등분할상환";
 
   const handleOpenRevealForm = () => {
     setIsRevealFormOpen(true);
