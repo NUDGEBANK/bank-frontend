@@ -1,7 +1,7 @@
 import { CheckCircle2, FileText, ShieldCheck } from "lucide-react";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
-import { postJson } from "../../lib/api";
+import { getJson, postJson } from "../../lib/api";
 
 type LoanApplyConfig = {
   name: string;
@@ -35,6 +35,20 @@ type LoanApplicationSummary = {
   appliedAt: string;
   requiresCertificateSubmission: boolean;
   certificateSubmitted: boolean;
+};
+
+type CardHistoryResponse = {
+  ok: boolean;
+  message: string;
+  accounts: CardHistoryAccount[];
+};
+
+type CardHistoryAccount = {
+  accountId: number;
+  accountName: string;
+  accountNumber: string;
+  cardId: number | null;
+  cardNumber: string | null;
 };
 
 const productConfigs: Record<string, LoanApplyConfig> = {
@@ -79,10 +93,41 @@ export default function LoanApply() {
   const [purpose, setPurpose] = useState(product?.defaultPurpose ?? "");
   const [monthlyIncome, setMonthlyIncome] = useState("");
   const [salaryDate, setSalaryDate] = useState("");
+  const [accounts, setAccounts] = useState<CardHistoryAccount[]>([]);
+  const [selectedCardId, setSelectedCardId] = useState<number | "">("");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadAccounts() {
+      try {
+        const response = await getJson<CardHistoryResponse>("/api/cards/history");
+        if (!isMounted) {
+          return;
+        }
+
+        setAccounts(response.accounts);
+        setSelectedCardId(
+          (current) =>
+            current || response.accounts.find((account) => account.cardId)?.cardId || "",
+        );
+      } catch {
+        if (isMounted) {
+          setAccounts([]);
+        }
+      }
+    }
+
+    void loadAccounts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   if (!productId || !product) {
     return (
@@ -137,6 +182,11 @@ export default function LoanApply() {
       return;
     }
 
+    if (!selectedCardId) {
+      setError("신청 카드를 선택해 주세요.");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await postJson<LoanApplicationSummary>("/api/loan-applications", {
@@ -146,6 +196,7 @@ export default function LoanApply() {
         monthlyIncome: parsedMonthlyIncome,
         salaryDate: parsedSalaryDate,
         purpose,
+        cardId: selectedCardId,
       });
       window.dispatchEvent(new Event("loan-application-change"));
       navigate("/loan/management");
@@ -213,6 +264,24 @@ export default function LoanApply() {
                     {termOption}
                   </option>
                 ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-600">신청 카드</label>
+              <select
+                value={selectedCardId}
+                onChange={(event) => setSelectedCardId(event.target.value ? Number(event.target.value) : "")}
+                className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-700 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+              >
+                <option value="">카드를 선택해 주세요</option>
+                {accounts
+                  .filter((account) => account.cardId)
+                  .map((account) => (
+                    <option key={account.cardId} value={account.cardId ?? ""}>
+                      {account.cardNumber ?? "카드 없음"} / {account.accountName}
+                    </option>
+                  ))}
               </select>
             </div>
 
