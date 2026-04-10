@@ -343,6 +343,16 @@ export default function LoanDetail() {
                   실제 적용 금리는 신용도, 심사 결과, 거래 조건에 따라 달라질 수 있습니다.
                 </p>
               </div>
+              {productId === "youth-loan" && (
+                <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50/80 p-6 backdrop-blur-sm">
+                  <p className="text-sm font-semibold text-emerald-700">자기계발 대출 상환 기준</p>
+                  <ul className="mt-3 space-y-2 text-sm text-gray-700">
+                    <li>매달 이자를 납부하고 만기 회차에 원금을 일괄 상환합니다.</li>
+                    <li>납기일까지 가상계좌 입금이 없으면 연결 계좌에서 자동이체가 진행됩니다.</li>
+                    <li>연체 시 약정 금리에 3.0%p가 가산되며 최대 연 15.0%까지 적용됩니다.</li>
+                  </ul>
+                </div>
+              )}
             </section>
           )}
 
