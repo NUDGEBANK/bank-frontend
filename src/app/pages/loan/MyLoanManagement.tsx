@@ -1,7 +1,7 @@
-import { Calendar, Calculator, FileSearch, TrendingDown, Upload } from "lucide-react";
+import { Calendar, Calculator, ChevronDown, ChevronUp, FileSearch, TrendingDown, Upload } from "lucide-react";
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
-import { getJson } from "../../lib/api";
+import { getJson, postJson } from "../../lib/api";
 import { checkAuthentication } from "../../lib/auth";
 
 type LoanApplicationSummary = {
@@ -45,8 +45,11 @@ type MyLoanSummary = {
   startDate: string;
   endDate: string;
   nextPaymentDate: string | null;
+  nextPaymentPrincipal: number;
+  nextPaymentInterest: number;
   nextPaymentAmount: number;
   cumulativeInterest: number;
+  remainingInterestAmount: number;
   repaymentAccountNumber: string;
 };
 
@@ -67,6 +70,16 @@ type MyLoanRepaymentHistory = {
   repaymentRate: number;
   repaymentDatetime: string;
   remainingBalance: number;
+};
+
+type LoanRepaymentExecuteResponse = {
+  repaymentAmount: number;
+  paidPrincipal: number;
+  paidInterest: number;
+  overdueInterest: number;
+  remainingPrincipal: number;
+  loanStatus: string;
+  autoTransferred: boolean;
 };
 
 const certificateGroups = [
@@ -201,6 +214,54 @@ export default function MyLoanManagement() {
   const [ocrResult, setOcrResult] = useState<CertificateSubmissionResponse | null>(null);
   const [certificateId, setCertificateId] = useState("");
   const [selectedProductKey, setSelectedProductKey] = useState("");
+  const [repaymentAmountInput, setRepaymentAmountInput] = useState("");
+  const [repaymentActionMessage, setRepaymentActionMessage] = useState<string | null>(null);
+  const [isRepaymentSubmitting, setIsRepaymentSubmitting] = useState(false);
+  const [isRepaymentHistoryExpanded, setIsRepaymentHistoryExpanded] = useState(false);
+
+  const refreshLoanManagement = async () => {
+    const requestId = ++loanManagementRequestIdRef.current;
+    const isAuthenticated = await checkAuthentication();
+    if (!isAuthenticated) {
+      setSummary(null);
+      setRepaymentSchedules([]);
+      setRepaymentHistories([]);
+      setLoanDataError(null);
+      if (requestId === loanManagementRequestIdRef.current) {
+        setIsLoanDataLoading(false);
+      }
+      return;
+    }
+
+    setIsLoanDataLoading(true);
+    setLoanDataError(null);
+
+    try {
+      const productQuery = selectedProductKey ? `?productKey=${selectedProductKey}` : "";
+      const [nextSummary, nextSchedules, nextHistories] = await Promise.all([
+        getJson<MyLoanSummary>(`/api/loans/me/summary${productQuery}`),
+        getJson<MyLoanRepaymentSchedule[]>(`/api/loans/me/repayment-schedules${productQuery}`),
+        getJson<MyLoanRepaymentHistory[]>(`/api/loans/me/repayment-histories${productQuery}`),
+      ]);
+
+      if (requestId === loanManagementRequestIdRef.current) {
+        setSummary(nextSummary);
+        setRepaymentSchedules(nextSchedules);
+        setRepaymentHistories(nextHistories);
+      }
+    } catch (error) {
+      if (requestId === loanManagementRequestIdRef.current) {
+        setSummary(null);
+        setRepaymentSchedules([]);
+        setRepaymentHistories([]);
+        setLoanDataError(error instanceof Error ? error.message : "REQUEST_FAILED");
+      }
+    } finally {
+      if (requestId === loanManagementRequestIdRef.current) {
+        setIsLoanDataLoading(false);
+      }
+    }
+  };
 
   useEffect(() => {
     const syncApplications = async () => {
@@ -237,57 +298,16 @@ export default function MyLoanManagement() {
   }, []);
 
   useEffect(() => {
-    const syncLoanManagement = async () => {
-      const requestId = ++loanManagementRequestIdRef.current;
-      const isAuthenticated = await checkAuthentication();
-      if (!isAuthenticated) {
-        setSummary(null);
-        setRepaymentSchedules([]);
-        setRepaymentHistories([]);
-        setLoanDataError(null);
-        return;
-      }
-
-      setIsLoanDataLoading(true);
-      setLoanDataError(null);
-
-      try {
-        const productQuery = selectedProductKey ? `?productKey=${selectedProductKey}` : "";
-        const [nextSummary, nextSchedules, nextHistories] = await Promise.all([
-          getJson<MyLoanSummary>(`/api/loans/me/summary${productQuery}`),
-          getJson<MyLoanRepaymentSchedule[]>(`/api/loans/me/repayment-schedules${productQuery}`),
-          getJson<MyLoanRepaymentHistory[]>(`/api/loans/me/repayment-histories${productQuery}`),
-        ]);
-
-        if (requestId === loanManagementRequestIdRef.current) {
-          setSummary(nextSummary);
-          setRepaymentSchedules(nextSchedules);
-          setRepaymentHistories(nextHistories);
-        }
-      } catch (error) {
-        if (requestId === loanManagementRequestIdRef.current) {
-          setSummary(null);
-          setRepaymentSchedules([]);
-          setRepaymentHistories([]);
-          setLoanDataError(error instanceof Error ? error.message : "REQUEST_FAILED");
-        }
-      } finally {
-        if (requestId === loanManagementRequestIdRef.current) {
-          setIsLoanDataLoading(false);
-        }
-      }
+      const handleStorageChange = () => {
+      void refreshLoanManagement();
     };
-
-    const handleStorageChange = () => {
-      void syncLoanManagement();
-    };
-    void syncLoanManagement();
-    window.addEventListener("auth-change", syncLoanManagement);
-    window.addEventListener("loan-application-change", syncLoanManagement);
+    void refreshLoanManagement();
+    window.addEventListener("auth-change", refreshLoanManagement);
+    window.addEventListener("loan-application-change", refreshLoanManagement);
     window.addEventListener("storage", handleStorageChange);
     return () => {
-      window.removeEventListener("auth-change", syncLoanManagement);
-      window.removeEventListener("loan-application-change", syncLoanManagement);
+      window.removeEventListener("auth-change", refreshLoanManagement);
+      window.removeEventListener("loan-application-change", refreshLoanManagement);
       window.removeEventListener("storage", handleStorageChange);
     };
   }, [selectedProductKey]);
@@ -343,13 +363,7 @@ export default function MyLoanManagement() {
     (summary?.remainingPrincipal ?? 0) - normalizedSimulationAmount,
     0,
   );
-  const remainingInterestAmount = repaymentSchedules.reduce((sum, schedule) => {
-    if (schedule.settled) {
-      return sum;
-    }
-
-    return sum + Math.max(schedule.plannedInterest - schedule.paidInterest, 0);
-  }, 0);
+  const remainingInterestAmount = summary?.remainingInterestAmount ?? 0;
   const hasLoanData = !!summary;
   const showLoanLoadingState = isLoanDataLoading && !hasLoanData;
   const showLoanEmptyState =
@@ -392,6 +406,25 @@ export default function MyLoanManagement() {
     ? getPreferentialRateStatusLabel(selectedApplication)
     : "대상 아님";
   const selectedCertificateDiscount = certificateId ? certificateDiscountMap[certificateId] ?? 0 : 0;
+  const isMaturityLumpSum = summary?.repaymentType === "MATURITY_LUMP_SUM";
+  const overdueRate = Math.min((summary?.interestRate ?? 0) + 3, 15);
+  const overdueSchedules = repaymentSchedules.filter(
+    (schedule) => !schedule.settled && (schedule.overdueDays ?? 0) > 0,
+  );
+  const maxOverdueDays = overdueSchedules.reduce(
+    (max, schedule) => Math.max(max, schedule.overdueDays ?? 0),
+    0,
+  );
+  const overdueInterestAmount = overdueSchedules.reduce((sum, schedule) => {
+    const remainingDue =
+      Math.max(schedule.plannedPrincipal - schedule.paidPrincipal, 0) +
+      Math.max(schedule.plannedInterest - schedule.paidInterest, 0);
+    const overdueDays = schedule.overdueDays ?? 0;
+    return sum + (remainingDue * overdueRate * overdueDays) / 100 / 365;
+  }, 0);
+  const visibleRepaymentHistories = isRepaymentHistoryExpanded
+    ? repaymentHistories
+    : repaymentHistories.slice(0, 5);
 
   const statusText: Record<UploadStatus, string> = {
     idle: "자기계발 대출 신청 후 자격증 파일을 제출할 수 있습니다.",
@@ -399,6 +432,52 @@ export default function MyLoanManagement() {
     uploading: "OCR 요청을 전송하고 있습니다.",
     completed: "OCR 업로드가 완료되었습니다. 인증 결과를 확인해 주세요.",
     failed: uploadError ?? "업로드 중 오류가 발생했습니다.",
+  };
+
+  useEffect(() => {
+    if (!summary?.nextPaymentAmount) {
+      setRepaymentAmountInput("");
+      return;
+    }
+
+    setRepaymentAmountInput(String(Math.trunc(summary.nextPaymentAmount)));
+  }, [summary?.nextPaymentAmount, selectedProductKey]);
+
+  const handleManualRepayment = async () => {
+    if (!selectedProductKey) {
+      return;
+    }
+
+    const normalizedAmountText = repaymentAmountInput.trim().replaceAll(",", "");
+    const repaymentAmountValue =
+      normalizedAmountText.length > 0
+        ? Number.parseFloat(normalizedAmountText)
+        : summary?.nextPaymentAmount ?? 0;
+
+    if (!Number.isFinite(repaymentAmountValue) || repaymentAmountValue <= 0) {
+      setRepaymentActionMessage("상환 금액을 입력해 주세요.");
+      return;
+    }
+
+    setIsRepaymentSubmitting(true);
+    setRepaymentActionMessage(null);
+
+    try {
+      const response = await postJson<LoanRepaymentExecuteResponse>("/api/loans/me/repayments", {
+        productKey: selectedProductKey,
+        amount: repaymentAmountValue,
+      });
+      await refreshLoanManagement();
+      setRepaymentActionMessage(
+        `상환 완료: 원금 ${formatAmount(response.paidPrincipal)}, 이자 ${formatAmount(response.paidInterest)}`,
+      );
+    } catch (error) {
+      setRepaymentActionMessage(
+        error instanceof Error ? error.message : "상환 처리 중 오류가 발생했습니다.",
+      );
+    } finally {
+      setIsRepaymentSubmitting(false);
+    }
   };
 
   const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
@@ -712,18 +791,127 @@ export default function MyLoanManagement() {
                 <p className="mt-2 text-lg font-semibold text-slate-900">
                   {(summary?.nextPaymentDate ?? "-")} / {formatAmount(summary?.nextPaymentAmount ?? 0)}
                 </p>
+                {summary && (
+                  <div className="mt-3 grid gap-2 text-sm text-slate-600 md:grid-cols-2">
+                    <p>
+                      예정 원금{" "}
+                      <span className="font-semibold text-slate-900">
+                        {formatAmount(summary.nextPaymentPrincipal)}
+                      </span>
+                    </p>
+                    <p>
+                      예정 이자{" "}
+                      <span className="font-semibold text-slate-900">
+                        {formatAmount(summary.nextPaymentInterest)}
+                      </span>
+                    </p>
+                  </div>
+                )}
                 <p className="mt-2 text-sm text-slate-600">
                   오늘 기준 {daysUntilNextPayment}일 남았습니다.
+                </p>
+                {isMaturityLumpSum && (
+                  <p className="mt-2 text-xs text-sky-700">
+                    만기일시상환 상품은 매달 이자를 납부하고 만기 회차에 원금을 일괄 상환합니다.
+                  </p>
+                )}
+              </div>
+              <div
+                className={`mt-4 rounded-2xl px-4 py-4 ${
+                  overdueSchedules.length > 0
+                    ? "border border-rose-200 bg-rose-50/80"
+                    : "border border-emerald-100 bg-emerald-50/70"
+                }`}
+              >
+                <p className="text-sm text-slate-500">연체 상태</p>
+                <p className="mt-2 text-lg font-semibold text-slate-900">
+                  {overdueSchedules.length > 0 ? `연체 중 · ${maxOverdueDays}일` : "정상"}
+                </p>
+                <p className="hidden">
+                  {overdueSchedules.length > 0
+                    ? `연체이자는 연 ${overdueRate.toFixed(1)}% 기준으로 계산되며, 현재 예상 연체이자는 ${formatAmount(Math.round(overdueInterestAmount))}입니다.`
+                    : "납기일까지 가상계좌 입금이 없으면 연결 계좌에서 자동이체가 진행됩니다."}
+                </p>
+                <p className="mt-2 text-sm text-slate-600">
+                  {overdueSchedules.length > 0
+                    ? isYouthLoanSelected
+                      ? `연체이자는 연 ${overdueRate.toFixed(1)}% 기준으로 계산되며, 현재 예상 연체이자는 ${formatAmount(overdueInterestAmount)}입니다.`
+                      : "미납 회차가 있어 연체 상태로 반영되고 있습니다."
+                    : isYouthLoanSelected
+                      ? "납기일까지 가상계좌 입금이 없으면 연결 계좌에서 자동이체가 진행됩니다."
+                      : "현재 연체 중인 회차는 없습니다."}
                 </p>
               </div>
             </div>
           </section>
 
           <section className="grid gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(300px,0.9fr)]">
+            {isYouthLoanSelected && summary && (
+              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)] lg:col-span-2">
+                <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-900">상환 실행</h2>
+                    <p className="mt-2 text-sm text-slate-500">
+                      가상계좌 입금 상환을 기본으로 하며, 미입금 시 연결 계좌 기준 자동이체를 실행할 수 있습니다.
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-sky-100 bg-sky-50/70 px-4 py-3 text-sm text-slate-600">
+                    <p>상환 가상계좌</p>
+                    <p className="mt-1 font-semibold text-slate-900">
+                      {summary.repaymentAccountNumber || "발급 예정"}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-5 grid gap-4 md:grid-cols-[minmax(0,1fr)_auto]">
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={repaymentAmountInput}
+                    onChange={(event) => setRepaymentAmountInput(event.target.value)}
+                    className="h-12 rounded-2xl border border-slate-200 px-4 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                    placeholder="상환 금액 입력"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleManualRepayment}
+                    disabled={isRepaymentSubmitting}
+                    className="rounded-2xl bg-sky-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                  >
+                    수동 상환
+                  </button>
+                </div>
+                <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3 text-sm text-slate-700">
+                  납기일까지 가상계좌 입금이 없으면, 신청 시 선택한 카드의 연결 계좌에서 해당 회차 금액이 자동이체됩니다.
+                </div>
+                {repaymentActionMessage && (
+                  <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm text-slate-700">
+                    {repaymentActionMessage}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-              <h2 className="text-xl font-bold text-slate-900">최근 상환 내역</h2>
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-xl font-bold text-slate-900">최근 상환 내역</h2>
+                {repaymentHistories.length > 5 && (
+                  <button
+                    type="button"
+                    onClick={() => setIsRepaymentHistoryExpanded((prev) => !prev)}
+                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
+                  >
+                    {isRepaymentHistoryExpanded ? "접기" : "더보기"}
+                    {isRepaymentHistoryExpanded ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </button>
+                )}
+              </div>
               <div className="mt-5 space-y-3">
-                {repaymentHistories.map((repayment) => (
+                {visibleRepaymentHistories.map((repayment) => (
                   <div
                     key={repayment.repaymentId}
                     className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4 md:flex-row md:items-center md:justify-between"
@@ -738,13 +926,13 @@ export default function MyLoanManagement() {
                       <div>
                         <p className="text-slate-500">원금</p>
                         <p className="mt-1 font-semibold text-slate-900">
-                          -
+                          상환 이력에서 별도 제공 예정
                         </p>
                       </div>
                       <div>
                         <p className="text-slate-500">이자</p>
                         <p className="mt-1 font-semibold text-slate-900">
-                          -
+                          상환 이력에서 별도 제공 예정
                         </p>
                       </div>
                     </div>
@@ -773,6 +961,23 @@ export default function MyLoanManagement() {
                     {formatAmount(remainingInterestAmount)}
                   </p>
                 </div>
+                {summary && (
+                  <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4">
+                    <p className="text-sm text-slate-500">다음 회차 이자 정보</p>
+                    <p className="mt-2 text-sm text-slate-600">
+                      예정 원금{" "}
+                      <span className="font-semibold text-slate-900">
+                        {formatAmount(summary.nextPaymentPrincipal)}
+                      </span>
+                    </p>
+                    <p className="mt-1 text-sm text-slate-600">
+                      예정 이자{" "}
+                      <span className="font-semibold text-slate-900">
+                        {formatAmount(summary.nextPaymentInterest)}
+                      </span>
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </section>

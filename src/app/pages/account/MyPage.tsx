@@ -50,8 +50,11 @@ type MyLoanSummary = {
   startDate: string;
   endDate: string;
   nextPaymentDate: string | null;
+  nextPaymentPrincipal: number;
+  nextPaymentInterest: number;
   nextPaymentAmount: number;
   cumulativeInterest: number;
+  remainingInterestAmount: number;
   repaymentAccountNumber: string;
 };
 
@@ -458,28 +461,66 @@ export default function MyPage() {
                     <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 px-5 py-4">
                       <p className="text-sm text-slate-500">현재 금리</p>
                       <p className="mt-2 text-lg font-semibold text-slate-900">
-                        {loanSummary ? `연 ${loanSummary.interestRate.toFixed(1)}%` : "대출 정보 없음"}
+                        {loanSummary ? `연 ${(loanSummary.interestRate ?? 0).toFixed(1)}%` : "대출 정보 없음"}
                       </p>
                     </div>
                   </div>
+                  {loanSummary && (
+                    <div className="mt-4 grid gap-4 md:grid-cols-3">
+                      <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
+                        <p className="text-sm text-slate-500">다음 납입 예정일</p>
+                        <p className="mt-2 text-lg font-semibold text-slate-900">
+                          {loanSummary.nextPaymentDate ?? "-"}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
+                        <p className="text-sm text-slate-500">다음 회차 예정 원금</p>
+                        <p className="mt-2 text-lg font-semibold text-slate-900">
+                          {formatAmount(loanSummary.nextPaymentPrincipal ?? 0)}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
+                        <p className="text-sm text-slate-500">다음 회차 예정 이자</p>
+                        <p className="mt-2 text-lg font-semibold text-slate-900">
+                          {formatAmount(loanSummary.nextPaymentInterest ?? 0)}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   {selectedLoanApplication?.productKey === "youth-loan" && loanSummary && (
                     <div className="mt-4 grid gap-4 md:grid-cols-3">
                       <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
                         <p className="text-sm text-slate-500">기준 금리</p>
                         <p className="mt-2 text-lg font-semibold text-slate-900">
-                          연 {loanSummary.baseInterestRate.toFixed(1)}%
+                          연 {(loanSummary.baseInterestRate ?? 0).toFixed(1)}%
                         </p>
                       </div>
                       <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 px-5 py-4">
                         <p className="text-sm text-slate-500">누적 우대금리</p>
                         <p className="mt-2 text-lg font-semibold text-slate-900">
-                          -{loanSummary.preferentialRateDiscount.toFixed(1)}%p
+                          -{(loanSummary.preferentialRateDiscount ?? 0).toFixed(1)}%p
                         </p>
                       </div>
                       <div className="rounded-2xl border border-amber-100 bg-amber-50/70 px-5 py-4">
                         <p className="text-sm text-slate-500">최저 금리</p>
                         <p className="mt-2 text-lg font-semibold text-slate-900">
-                          연 {loanSummary.minimumInterestRate.toFixed(1)}%
+                          연 {(loanSummary.minimumInterestRate ?? 0).toFixed(1)}%
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {loanSummary && (
+                    <div className="mt-4 grid gap-4 md:grid-cols-2">
+                      <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
+                        <p className="text-sm text-slate-500">누적 납입 이자</p>
+                        <p className="mt-2 text-lg font-semibold text-slate-900">
+                          {formatAmount(loanSummary.cumulativeInterest ?? 0)}
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
+                        <p className="text-sm text-slate-500">잔여 예상 이자</p>
+                        <p className="mt-2 text-lg font-semibold text-slate-900">
+                          {formatAmount(loanSummary.remainingInterestAmount ?? 0)}
                         </p>
                       </div>
                     </div>
