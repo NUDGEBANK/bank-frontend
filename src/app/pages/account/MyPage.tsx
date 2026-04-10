@@ -51,6 +51,13 @@ type MyLoanSummary = {
   repaymentAccountNumber: string;
 };
 
+type LoanApplicationSummary = {
+  loanApplicationId: number;
+  productKey: string;
+  productName: string;
+  applicationStatus: string;
+};
+
 const quickMenus = [
   {
     title: "회원정보 관리",
@@ -111,6 +118,8 @@ export default function MyPage() {
   const [profile, setProfile] = useState<MyProfile | null>(null);
   const [accounts, setAccounts] = useState<CardHistoryAccount[]>([]);
   const [loanSummary, setLoanSummary] = useState<MyLoanSummary | null>(null);
+  const [loanApplications, setLoanApplications] = useState<LoanApplicationSummary[]>([]);
+  const [selectedProductKey, setSelectedProductKey] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const [isShowingAllCardNumbers, setIsShowingAllCardNumbers] = useState(false);
@@ -132,10 +141,11 @@ export default function MyPage() {
       setErrorMessage("");
 
       try {
-        const [profileResponse, cardHistoryResponse, loanSummaryResponse] = await Promise.all([
+        const [profileResponse, cardHistoryResponse, loanSummaryResponse, loanApplicationsResponse] = await Promise.all([
           getJson<MyProfile>("/api/auth/me"),
           getJson<CardHistoryResponse>("/api/cards/history"),
           getJson<MyLoanSummary>("/api/loans/me/summary").catch(() => null),
+          getJson<LoanApplicationSummary[]>("/api/loan-applications/me").catch(() => []),
         ]);
 
         if (!isMounted) {
@@ -145,6 +155,7 @@ export default function MyPage() {
         setProfile(profileResponse);
         setAccounts(cardHistoryResponse.accounts);
         setLoanSummary(loanSummaryResponse);
+        setLoanApplications(loanApplicationsResponse);
       } catch (error) {
         if (!isMounted) {
           return;
@@ -154,6 +165,7 @@ export default function MyPage() {
         setProfile(null);
         setAccounts([]);
         setLoanSummary(null);
+        setLoanApplications([]);
         setErrorMessage(
           message === "UNAUTHORIZED"
             ? "로그인 후 마이페이지를 확인할 수 있습니다."
@@ -172,6 +184,57 @@ export default function MyPage() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (loanApplications.length === 0) {
+      setSelectedProductKey("");
+      return;
+    }
+
+    if (loanApplications.some((application) => application.productKey === selectedProductKey)) {
+      return;
+    }
+
+    setSelectedProductKey(
+      loanApplications.find((application) => application.productKey === "youth-loan")?.productKey ??
+        loanApplications[0].productKey,
+    );
+  }, [loanApplications, selectedProductKey]);
+
+  useEffect(() => {
+    if (!selectedProductKey) {
+      return;
+    }
+
+    let isMounted = true;
+
+    async function loadLoanSummary() {
+      try {
+        const productQuery = `?productKey=${selectedProductKey}`;
+        const nextLoanSummary = await getJson<MyLoanSummary>(`/api/loans/me/summary${productQuery}`).catch(
+          () => null,
+        );
+
+        if (!isMounted) {
+          return;
+        }
+
+        setLoanSummary(nextLoanSummary);
+      } catch {
+        if (!isMounted) {
+          return;
+        }
+
+        setLoanSummary(null);
+      }
+    }
+
+    void loadLoanSummary();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedProductKey]);
 
   const issuedCards = accounts.filter((account) => account.cardId);
   const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0);
@@ -334,20 +397,58 @@ export default function MyPage() {
                 </span>
               </button>
               {isLoanOpen && (
-                <div className="mt-6 grid gap-4 md:grid-cols-2">
-                  <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
-                    <p className="text-sm text-slate-500">잔여 원금</p>
-                    <p className="mt-2 text-2xl font-semibold text-slate-900">
-                      {loanSummary ? formatAmount(loanSummary.remainingPrincipal) : "대출 정보 없음"}
-                    </p>
+                <>
+                  {loanApplications.length > 0 && (
+                    <div className="mt-6 flex flex-wrap gap-2">
+                      {loanApplications.map((application) => {
+                        const isSelected = application.productKey === selectedProductKey;
+                        return (
+                          <button
+                            key={application.loanApplicationId}
+                            type="button"
+                            onClick={() => setSelectedProductKey(application.productKey)}
+                            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                              isSelected
+                                ? "bg-sky-600 text-white shadow-sm"
+                                : "border border-slate-200 bg-white text-slate-600 hover:border-sky-200 hover:text-sky-700"
+                            }`}
+                          >
+                            {application.productName}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <div className="mt-6 grid gap-4 md:grid-cols-2">
+                    <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
+                      <p className="text-sm text-slate-500">잔여 원금</p>
+                      <p className="mt-2 text-2xl font-semibold text-slate-900">
+                        {loanSummary ? formatAmount(loanSummary.remainingPrincipal) : "대출 정보 없음"}
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
+                      <p className="text-sm text-slate-500">누적 상환액</p>
+                      <p className="mt-2 text-2xl font-semibold text-slate-900">
+                        {loanSummary ? formatAmount(loanSummary.repaidPrincipal) : "대출 정보 없음"}
+                      </p>
+                    </div>
                   </div>
-                  <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
-                    <p className="text-sm text-slate-500">누적 상환액</p>
-                    <p className="mt-2 text-2xl font-semibold text-slate-900">
-                      {loanSummary ? formatAmount(loanSummary.repaidPrincipal) : "대출 정보 없음"}
-                    </p>
-                  </div>
-                </div>
+                  {loanApplications.length > 0 && (
+                    <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
+                      <p className="text-sm text-slate-500">신청 상품</p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {loanApplications.map((application) => (
+                          <span
+                            key={application.loanApplicationId}
+                            className="rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700"
+                          >
+                            {application.productName}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </section>
 

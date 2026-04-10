@@ -167,6 +167,7 @@ export default function MyLoanManagement() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [ocrResult, setOcrResult] = useState<CertificateSubmissionResponse | null>(null);
   const [certificateId, setCertificateId] = useState("");
+  const [selectedProductKey, setSelectedProductKey] = useState("");
 
   useEffect(() => {
     const syncApplications = async () => {
@@ -218,10 +219,11 @@ export default function MyLoanManagement() {
       setLoanDataError(null);
 
       try {
+        const productQuery = selectedProductKey ? `?productKey=${selectedProductKey}` : "";
         const [nextSummary, nextSchedules, nextHistories] = await Promise.all([
-          getJson<MyLoanSummary>("/api/loans/me/summary"),
-          getJson<MyLoanRepaymentSchedule[]>("/api/loans/me/repayment-schedules"),
-          getJson<MyLoanRepaymentHistory[]>("/api/loans/me/repayment-histories"),
+          getJson<MyLoanSummary>(`/api/loans/me/summary${productQuery}`),
+          getJson<MyLoanRepaymentSchedule[]>(`/api/loans/me/repayment-schedules${productQuery}`),
+          getJson<MyLoanRepaymentHistory[]>(`/api/loans/me/repayment-histories${productQuery}`),
         ]);
 
         if (requestId === loanManagementRequestIdRef.current) {
@@ -255,13 +257,29 @@ export default function MyLoanManagement() {
       window.removeEventListener("loan-application-change", syncLoanManagement);
       window.removeEventListener("storage", handleStorageChange);
     };
-  }, []);
+  }, [selectedProductKey]);
 
   useEffect(() => {
     setSimulationAmount((currentAmount) =>
       normalizeSimulationAmount(currentAmount, summary?.remainingPrincipal ?? 0),
     );
   }, [summary?.remainingPrincipal]);
+
+  useEffect(() => {
+    if (applications.length === 0) {
+      setSelectedProductKey("");
+      return;
+    }
+
+    if (applications.some((application) => application.productKey === selectedProductKey)) {
+      return;
+    }
+
+    setSelectedProductKey(
+      applications.find((application) => application.productKey === "youth-loan")?.productKey ??
+        applications[0].productKey,
+    );
+  }, [applications, selectedProductKey]);
 
   const repaidPrincipal = summary?.repaidPrincipal ?? 0;
   const repaymentProgress =
@@ -318,11 +336,14 @@ export default function MyLoanManagement() {
     0,
   );
 
-  const selfDevelopmentApplication = useMemo(
-    () => applications.find((application) => application.productKey === "youth-loan") ?? null,
-    [applications],
+  const selectedApplication = useMemo(
+    () =>
+      applications.find((application) => application.productKey === selectedProductKey) ??
+      applications[0] ??
+      null,
+    [applications, selectedProductKey],
   );
-  const canSubmitCertificate = !!selfDevelopmentApplication;
+  const canSubmitCertificate = !!selectedApplication?.preferentialRateVerificationAvailable;
 
   const statusText: Record<UploadStatus, string> = {
     idle: "자기계발 대출 신청 후 자격증 파일을 제출할 수 있습니다.",
@@ -341,7 +362,7 @@ export default function MyLoanManagement() {
   };
 
   const handleUpload = async () => {
-    if (!selfDevelopmentApplication || !selectedFile) {
+    if (!selectedApplication || !selectedFile) {
       return;
     }
 
@@ -352,7 +373,7 @@ export default function MyLoanManagement() {
     }
 
     const formData = new FormData();
-    formData.append("loanApplicationId", String(selfDevelopmentApplication.loanApplicationId));
+    formData.append("loanApplicationId", String(selectedApplication.loanApplicationId));
     formData.append("certificateId", certificateId);
     formData.append("file", selectedFile);
 
@@ -534,16 +555,45 @@ export default function MyLoanManagement() {
                 </p>
               </div>
 
+              {applications.length > 0 && (
+                <div className="mb-4 flex flex-wrap gap-2">
+                  {applications.map((application) => {
+                    const isSelected = application.productKey === selectedProductKey;
+                    return (
+                      <button
+                        key={`selector-${application.loanApplicationId}`}
+                        type="button"
+                        onClick={() => setSelectedProductKey(application.productKey)}
+                        className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                          isSelected
+                            ? "bg-sky-600 text-white shadow-sm"
+                            : "border border-slate-200 bg-white text-slate-600 hover:border-sky-200 hover:text-sky-700"
+                        }`}
+                      >
+                        {application.productName}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
               {applications.length > 0 ? (
                 <div className="space-y-4">
                   {applications.map((application) => (
                     <div
                       key={application.loanApplicationId}
-                      className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4"
+                      className={`rounded-2xl px-4 py-4 ${
+                        application.productKey === selectedProductKey
+                          ? "border border-sky-200 bg-sky-50/80"
+                          : "border border-slate-100 bg-slate-50/80"
+                      }`}
                     >
                       <p className="text-sm text-slate-500">{application.productName}</p>
                       <p className="mt-1 text-sm text-slate-600">
                         상태 <span className="font-semibold text-sky-700">{getReviewStatusLabel(application)}</span>
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        신청일 {application.appliedAt.slice(0, 10)}
                       </p>
                     </div>
                   ))}
@@ -698,7 +748,7 @@ export default function MyLoanManagement() {
             </div>
           )}
 
-          {selfDevelopmentApplication && (
+          {selectedApplication?.preferentialRateVerificationAvailable && (
             <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
               <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                 <div>
@@ -716,19 +766,19 @@ export default function MyLoanManagement() {
                   <p>
                     신청 상품{" "}
                     <span className="font-semibold text-slate-900">
-                      {selfDevelopmentApplication.productName}
+                      {selectedApplication.productName}
                     </span>
                   </p>
                   <p className="mt-1">
                     상태{" "}
                     <span className="font-semibold text-sky-700">
-                      {getReviewStatusLabel(selfDevelopmentApplication)}
+                      {getReviewStatusLabel(selectedApplication)}
                     </span>
                   </p>
                   <p className="mt-1">
                     인증 상태{" "}
                     <span className="font-semibold text-sky-700">
-                      {getPreferentialRateStatusLabel(selfDevelopmentApplication)}
+                      {getPreferentialRateStatusLabel(selectedApplication)}
                     </span>
                   </p>
                 </div>
@@ -755,7 +805,7 @@ export default function MyLoanManagement() {
                     </div>
                   </div>
 
-                  {selfDevelopmentApplication.preferentialRateVerificationSubmitted && (
+                  {selectedApplication.preferentialRateVerificationSubmitted && (
                     <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50/70 px-4 py-4">
                       <p className="text-sm font-semibold text-emerald-700">서류 제출 완료</p>
                       <p className="mt-2 text-sm text-slate-600">
