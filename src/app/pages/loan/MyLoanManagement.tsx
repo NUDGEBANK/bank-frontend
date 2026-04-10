@@ -45,8 +45,11 @@ type MyLoanSummary = {
   startDate: string;
   endDate: string;
   nextPaymentDate: string | null;
+  nextPaymentPrincipal: number;
+  nextPaymentInterest: number;
   nextPaymentAmount: number;
   cumulativeInterest: number;
+  remainingInterestAmount: number;
   repaymentAccountNumber: string;
 };
 
@@ -343,13 +346,7 @@ export default function MyLoanManagement() {
     (summary?.remainingPrincipal ?? 0) - normalizedSimulationAmount,
     0,
   );
-  const remainingInterestAmount = repaymentSchedules.reduce((sum, schedule) => {
-    if (schedule.settled) {
-      return sum;
-    }
-
-    return sum + Math.max(schedule.plannedInterest - schedule.paidInterest, 0);
-  }, 0);
+  const remainingInterestAmount = summary?.remainingInterestAmount ?? 0;
   const hasLoanData = !!summary;
   const showLoanLoadingState = isLoanDataLoading && !hasLoanData;
   const showLoanEmptyState =
@@ -392,6 +389,7 @@ export default function MyLoanManagement() {
     ? getPreferentialRateStatusLabel(selectedApplication)
     : "대상 아님";
   const selectedCertificateDiscount = certificateId ? certificateDiscountMap[certificateId] ?? 0 : 0;
+  const isMaturityLumpSum = summary?.repaymentType === "MATURITY_LUMP_SUM";
 
   const statusText: Record<UploadStatus, string> = {
     idle: "자기계발 대출 신청 후 자격증 파일을 제출할 수 있습니다.",
@@ -712,9 +710,30 @@ export default function MyLoanManagement() {
                 <p className="mt-2 text-lg font-semibold text-slate-900">
                   {(summary?.nextPaymentDate ?? "-")} / {formatAmount(summary?.nextPaymentAmount ?? 0)}
                 </p>
+                {summary && (
+                  <div className="mt-3 grid gap-2 text-sm text-slate-600 md:grid-cols-2">
+                    <p>
+                      예정 원금{" "}
+                      <span className="font-semibold text-slate-900">
+                        {formatAmount(summary.nextPaymentPrincipal)}
+                      </span>
+                    </p>
+                    <p>
+                      예정 이자{" "}
+                      <span className="font-semibold text-slate-900">
+                        {formatAmount(summary.nextPaymentInterest)}
+                      </span>
+                    </p>
+                  </div>
+                )}
                 <p className="mt-2 text-sm text-slate-600">
                   오늘 기준 {daysUntilNextPayment}일 남았습니다.
                 </p>
+                {isMaturityLumpSum && (
+                  <p className="mt-2 text-xs text-sky-700">
+                    만기일시상환 상품은 매달 이자를 납부하고 만기 회차에 원금을 일괄 상환합니다.
+                  </p>
+                )}
               </div>
             </div>
           </section>
@@ -738,13 +757,13 @@ export default function MyLoanManagement() {
                       <div>
                         <p className="text-slate-500">원금</p>
                         <p className="mt-1 font-semibold text-slate-900">
-                          -
+                          상환 이력에서 별도 제공 예정
                         </p>
                       </div>
                       <div>
                         <p className="text-slate-500">이자</p>
                         <p className="mt-1 font-semibold text-slate-900">
-                          -
+                          상환 이력에서 별도 제공 예정
                         </p>
                       </div>
                     </div>
@@ -773,6 +792,23 @@ export default function MyLoanManagement() {
                     {formatAmount(remainingInterestAmount)}
                   </p>
                 </div>
+                {summary && (
+                  <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4">
+                    <p className="text-sm text-slate-500">다음 회차 이자 정보</p>
+                    <p className="mt-2 text-sm text-slate-600">
+                      예정 원금{" "}
+                      <span className="font-semibold text-slate-900">
+                        {formatAmount(summary.nextPaymentPrincipal)}
+                      </span>
+                    </p>
+                    <p className="mt-1 text-sm text-slate-600">
+                      예정 이자{" "}
+                      <span className="font-semibold text-slate-900">
+                        {formatAmount(summary.nextPaymentInterest)}
+                      </span>
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </section>
