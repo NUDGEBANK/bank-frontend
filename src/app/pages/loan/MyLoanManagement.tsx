@@ -392,6 +392,7 @@ export default function MyLoanManagement() {
   );
   const canSubmitCertificate = !!selectedApplication?.preferentialRateVerificationAvailable;
   const isYouthLoanSelected = selectedApplication?.productKey === "youth-loan";
+  const isConsumptionLoanSelected = selectedApplication?.productKey === "consumption-loan";
   const repaymentMethodLabel = !summary
     ? "상환 방식 정보 없음"
     : summary.repaymentType === "MATURITY_LUMP_SUM"
@@ -408,6 +409,55 @@ export default function MyLoanManagement() {
   const selectedCertificateDiscount = certificateId ? certificateDiscountMap[certificateId] ?? 0 : 0;
   const isMaturityLumpSum = summary?.repaymentType === "MATURITY_LUMP_SUM";
   const overdueRate = Math.min((summary?.interestRate ?? 0) + 3, 15);
+  const manualRepaymentLimit = useMemo(() => {
+    if (!repaymentSchedules.length) {
+      return 0;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const unsettledSchedules = repaymentSchedules.filter((schedule) => !schedule.settled);
+    if (!unsettledSchedules.length) {
+      return 0;
+    }
+
+    const dueSchedules = unsettledSchedules.filter((schedule) => {
+      const dueDate = new Date(schedule.dueDate);
+      dueDate.setHours(0, 0, 0, 0);
+      return dueDate.getTime() <= today.getTime();
+    });
+
+    const sumScheduleAmount = (schedules: MyLoanRepaymentSchedule[]) =>
+      schedules.reduce(
+        (sum, schedule) =>
+          sum +
+          Math.max(schedule.plannedPrincipal - schedule.paidPrincipal, 0) +
+          Math.max(schedule.plannedInterest - schedule.paidInterest, 0),
+        0,
+      );
+
+    if (dueSchedules.length > 0) {
+      return sumScheduleAmount(dueSchedules);
+    }
+
+    if (isConsumptionLoanSelected) {
+      const hasPrepaidFutureSchedule = repaymentSchedules.some((schedule) => {
+        if (!schedule.settled) {
+          return false;
+        }
+        const dueDate = new Date(schedule.dueDate);
+        dueDate.setHours(0, 0, 0, 0);
+        return dueDate.getTime() > today.getTime();
+      });
+
+      if (hasPrepaidFutureSchedule) {
+        return 0;
+      }
+    }
+
+    return sumScheduleAmount([unsettledSchedules[0]]);
+  }, [isConsumptionLoanSelected, repaymentSchedules]);
   const overdueSchedules = repaymentSchedules.filter(
     (schedule) => !schedule.settled && (schedule.overdueDays ?? 0) > 0,
   );
@@ -456,6 +506,22 @@ export default function MyLoanManagement() {
 
     if (!Number.isFinite(repaymentAmountValue) || repaymentAmountValue <= 0) {
       setRepaymentActionMessage("상환 금액을 입력해 주세요.");
+      return;
+    }
+
+    if (manualRepaymentLimit <= 0) {
+      setRepaymentActionMessage(
+        isConsumptionLoanSelected
+          ? "현재 상환 가능한 회차가 없습니다. 소비분석 대출은 다음 달 1회차까지만 선납할 수 있습니다."
+          : "현재 상환 가능한 회차가 없습니다.",
+      );
+      return;
+    }
+
+    if (repaymentAmountValue > manualRepaymentLimit) {
+      setRepaymentActionMessage(
+        `현재 상환 가능 금액은 ${formatAmount(manualRepaymentLimit)}입니다. 입력한 금액을 다시 확인해 주세요.`,
+      );
       return;
     }
 
@@ -846,14 +912,21 @@ export default function MyLoanManagement() {
           </section>
 
           <section className="grid gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(300px,0.9fr)]">
-            {isYouthLoanSelected && summary && (
+            {summary && (
               <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)] lg:col-span-2">
                 <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                   <div>
                     <h2 className="text-xl font-bold text-slate-900">상환 실행</h2>
                     <p className="mt-2 text-sm text-slate-500">
-                      가상계좌 입금 상환을 기본으로 하며, 미입금 시 연결 계좌 기준 자동이체를 실행할 수 있습니다.
+                      {isYouthLoanSelected
+                        ? "가상계좌 입금 상환을 기본으로 하며, 미입금 시 연결 계좌 기준 자동이체를 실행할 수 있습니다."
+                        : "가상계좌 입금 또는 원하는 금액 입력으로 수동 상환을 진행할 수 있습니다."}
                     </p>
+                    {isConsumptionLoanSelected && (
+                      <p className="mt-2 text-sm text-sky-700">
+                        수동상환은 도래한 회차를 우선 처리하며, 도래분이 없으면 다음 달 1회차까지만 선납할 수 있습니다.
+                      </p>
+                    )}
                   </div>
                   <div className="rounded-2xl border border-sky-100 bg-sky-50/70 px-4 py-3 text-sm text-slate-600">
                     <p>상환 가상계좌</p>
@@ -881,9 +954,11 @@ export default function MyLoanManagement() {
                     수동 상환
                   </button>
                 </div>
-                <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3 text-sm text-slate-700">
-                  납기일까지 가상계좌 입금이 없으면, 신청 시 선택한 카드의 연결 계좌에서 해당 회차 금액이 자동이체됩니다.
-                </div>
+                {isYouthLoanSelected && (
+                  <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3 text-sm text-slate-700">
+                    납기일까지 가상계좌 입금이 없으면, 신청 시 선택한 카드의 연결 계좌에서 해당 회차 금액이 자동이체됩니다.
+                  </div>
+                )}
                 {repaymentActionMessage && (
                   <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm text-slate-700">
                     {repaymentActionMessage}
