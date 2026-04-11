@@ -85,6 +85,7 @@ export default function LoanApply() {
   const navigate = useNavigate();
   const { productId } = useParams<{ productId: string }>();
   const product = productId ? productConfigs[productId] : undefined;
+  const requiresProtectedBalance = productId === "consumption-loan";
   const [amount, setAmount] = useState(product?.defaultAmount ?? "");
   const termOptions = productId ? termOptionsByProduct[productId] ?? ["12개월"] : ["12개월"];
   const amountRange =
@@ -93,6 +94,7 @@ export default function LoanApply() {
   const [purpose, setPurpose] = useState(product?.defaultPurpose ?? "");
   const [monthlyIncome, setMonthlyIncome] = useState("");
   const [salaryDate, setSalaryDate] = useState("");
+  const [protectedBalance, setProtectedBalance] = useState("");
   const [accounts, setAccounts] = useState<CardHistoryAccount[]>([]);
   const [selectedCardId, setSelectedCardId] = useState<number | "">("");
   const [agreeTerms, setAgreeTerms] = useState(false);
@@ -161,6 +163,7 @@ export default function LoanApply() {
     const parsedAmount = Number(amount);
     const parsedMonthlyIncome = Number(monthlyIncome);
     const parsedSalaryDate = Number(salaryDate);
+    const parsedProtectedBalance = requiresProtectedBalance ? Number(protectedBalance) : 0;
 
     if (Number.isNaN(parsedAmount) || parsedAmount < amountRange.min || parsedAmount > amountRange.max) {
       setError(`신청 금액은 ${amountRange.min.toLocaleString("ko-KR")}원~${amountRange.max.toLocaleString("ko-KR")}원 범위로 입력해 주세요.`);
@@ -182,6 +185,11 @@ export default function LoanApply() {
       return;
     }
 
+    if (requiresProtectedBalance && (Number.isNaN(parsedProtectedBalance) || parsedProtectedBalance < 0)) {
+      setError("보호잔액은 0원 이상으로 입력해 주세요.");
+      return;
+    }
+
     if (!selectedCardId) {
       setError("신청 카드를 선택해 주세요.");
       return;
@@ -192,6 +200,7 @@ export default function LoanApply() {
       await postJson<LoanApplicationSummary>("/api/loan-applications/submit", {
         productKey: productId,
         loanAmount: parsedAmount,
+        protectedBalance: parsedProtectedBalance,
         loanTerm,
         monthlyIncome: parsedMonthlyIncome,
         salaryDate: parsedSalaryDate,
@@ -305,6 +314,21 @@ export default function LoanApply() {
                 />
               </div>
             </div>
+
+            {requiresProtectedBalance && (
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-600">최소 생활비</label>
+                <input
+                  value={protectedBalance}
+                  onChange={(event) => setProtectedBalance(event.target.value)}
+                  className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-700 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+                  placeholder="상환에서 제외할 최소 생활비를 입력해 주세요"
+                />
+                <p className="mt-2 text-sm leading-6 text-slate-500">
+                  입력한 금액은 보호잔액으로 저장되며, 계좌 잔액에서 제외한 나머지 금액만 상환 가능 금액으로 계산됩니다.
+                </p>
+              </div>
+            )}
 
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-600">신청 목적</label>
