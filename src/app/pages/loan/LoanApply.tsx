@@ -504,7 +504,7 @@ export default function LoanApply() {
               <p>2. 대출 가능 여부 확인</p>
               <p>3. 신청 정보 입력 및 동의</p>
               <p>4. 신청 완료 후 내 대출 관리에서 상태 확인</p>
-              {productId === "youth-loan" && <p>4. 자기계발 대출은 OCR 서류 제출 진행</p>}
+              {productId === "youth-loan" && <p>5. 자기계발 대출은 OCR 서류 제출 진행</p>}
             </div>
           </div>
 
