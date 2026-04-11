@@ -189,7 +189,7 @@ export default function LoanApply() {
 
     setIsSubmitting(true);
     try {
-      await postJson<LoanApplicationSummary>("/api/loan-applications", {
+      await postJson<LoanApplicationSummary>("/api/loan-applications/submit", {
         productKey: productId,
         loanAmount: parsedAmount,
         loanTerm,
