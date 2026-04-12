@@ -153,6 +153,11 @@ function formatAmount(value: number) {
   return `${value.toLocaleString("ko-KR")}원`;
 }
 
+function parseLocalDate(dateText: string) {
+  const [year, month, day] = dateText.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
 function normalizeSimulationAmount(value: number, max: number) {
   if (!Number.isFinite(value) || max <= 0) {
     return 0;
@@ -374,7 +379,7 @@ export default function MyLoanManagement() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const nextPaymentDate = summary?.nextPaymentDate
-    ? new Date(`${summary.nextPaymentDate}T00:00:00`)
+    ? parseLocalDate(summary.nextPaymentDate)
     : null;
   const daysUntilNextPayment = Math.max(
     nextPaymentDate
@@ -417,14 +422,15 @@ export default function MyLoanManagement() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const unsettledSchedules = repaymentSchedules.filter((schedule) => !schedule.settled);
+    const unsettledSchedules = repaymentSchedules
+      .filter((schedule) => !schedule.settled)
+      .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
     if (!unsettledSchedules.length) {
       return 0;
     }
 
     const dueSchedules = unsettledSchedules.filter((schedule) => {
-      const dueDate = new Date(schedule.dueDate);
-      dueDate.setHours(0, 0, 0, 0);
+      const dueDate = parseLocalDate(schedule.dueDate);
       return dueDate.getTime() <= today.getTime();
     });
 
@@ -446,8 +452,7 @@ export default function MyLoanManagement() {
         if (!schedule.settled) {
           return false;
         }
-        const dueDate = new Date(schedule.dueDate);
-        dueDate.setHours(0, 0, 0, 0);
+        const dueDate = parseLocalDate(schedule.dueDate);
         return dueDate.getTime() > today.getTime();
       });
 
