@@ -16,6 +16,7 @@ import {
   getChatSessions,
   renameChatSession,
   sendMessage,
+  type ChatAction,
   type ChatMessageItem,
   type ChatSessionDetail,
   type ChatSessionSummary,
@@ -27,27 +28,12 @@ type ComposerState = {
   isStreaming: boolean;
 };
 
-type QuickReplyAction =
-  | {
-      type: "ask";
-      value: string;
-    }
-  | {
-      type: "navigate";
-      href: string;
-    };
-
-type QuickReply = {
-  label: string;
-  action: QuickReplyAction;
-};
-
 type ViewMessage = {
   id: string;
   sender: "user" | "bot";
   text: string;
   createdAt: string | null;
-  quickReplies?: QuickReply[]; // 메시지별 버튼형 응답
+  quickReplies?: ChatAction[];
 };
 
 const UI_TEXT = {
@@ -68,36 +54,74 @@ const UI_TEXT = {
   streamingError: "답변을 생성하지 못했습니다. 잠시 후 다시 시도해주세요.",
 } as const;
 
-const DEFAULT_LOAN_QUICK_REPLIES: QuickReply[] = [
-  {
-    label: "상품 설명 보기",
-    action: { type: "ask", value: "대출 상품 설명 자세히 보여줘" },
-  },
-  {
-    label: "가능 여부 조회",
-    action: { type: "ask", value: "이 상품이 나한테 맞는지 알려줘" },
-  },
-  {
-    label: "신청 안내 보기",
-    action: { type: "navigate", href: "/loan/apply" },
-  },
-];
-
-// 챗봇 응답 텍스트에 기반해 버튼형 응답을 생성하는 함수
-function buildQuickReplies(botText: string): QuickReply[] {
+function buildQuickReplies(botText: string): ChatAction[] {
   const text = botText.toLowerCase();
 
   if (
-    text.includes("대출") ||
-    text.includes("상품") ||
-    text.includes("신청") ||
-    text.includes("심사") ||
-    text.includes("한도")
+    text.includes("받을 수 있는 대출") ||
+    text.includes("추천") ||
+    text.includes("상품")
   ) {
-    return DEFAULT_LOAN_QUICK_REPLIES;
+    return [
+      {
+        type: "ask",
+        label: "상품 설명 보기",
+        value: "이 상품 설명 자세히 보여줘",
+      },
+      { type: "ask", label: "가능 여부 조회", value: "이 상품이 나한테 맞아?" },
+      {
+        type: "ask",
+        label: "신청 안내 보기",
+        value: "신청하려면 뭐가 필요해?",
+      },
+    ];
   }
 
-  return [];
+  if (text.includes("금리") || text.includes("기간") || text.includes("상환")) {
+    return [
+      { type: "ask", label: "가능 여부 조회", value: "이 상품이 나한테 맞아?" },
+      { type: "ask", label: "심사 기준 보기", value: "심사 기준이 뭐야?" },
+      {
+        type: "ask",
+        label: "신청 안내 보기",
+        value: "신청하려면 뭐가 필요해?",
+      },
+    ];
+  }
+
+  if (text.includes("가능") || text.includes("대상") || text.includes("조건")) {
+    return [
+      { type: "ask", label: "내 한도 보기", value: "내 한도는 어느 정도야?" },
+      { type: "ask", label: "심사 기준 보기", value: "심사 기준이 뭐야?" },
+      { type: "ask", label: "신청 안내 보기", value: "신청은 어디서 해?" },
+    ];
+  }
+
+  if (
+    text.includes("서류") ||
+    text.includes("신청") ||
+    text.includes("어디서")
+  ) {
+    return [
+      {
+        type: "ask",
+        label: "필요 서류 다시 보기",
+        value: "신청하려면 뭐가 필요해?",
+      },
+      { type: "ask", label: "심사 기준 보기", value: "심사 기준이 뭐야?" },
+      { type: "navigate", label: "신청 페이지 이동", href: "/loan/apply" },
+    ];
+  }
+
+  return [
+    {
+      type: "ask",
+      label: "대출 상품 보기",
+      value: "내가 받을 수 있는 대출 뭐 있어?",
+    },
+    { type: "ask", label: "가능 여부 조회", value: "이 상품이 나한테 맞아?" },
+    { type: "ask", label: "신청 안내 보기", value: "신청하려면 뭐가 필요해?" },
+  ];
 }
 
 function formatRelativeLabel(value: string | null) {
@@ -197,16 +221,12 @@ export default function ChatHistory() {
 
       try {
         const data = await getChatSessions();
-        if (!isMounted) {
-          return;
-        }
+        if (!isMounted) return;
 
         setSessions(data);
         setActiveSessionId((current) => current ?? data[0]?.session_id ?? null);
       } catch (error) {
-        if (!isMounted) {
-          return;
-        }
+        if (!isMounted) return;
 
         const message = error instanceof Error ? error.message : "";
         setListError(
@@ -242,14 +262,11 @@ export default function ChatHistory() {
 
       try {
         const data = await getChatSession(activeSessionId);
-        if (!isMounted) {
-          return;
-        }
+        if (!isMounted) return;
         setActiveSession(data);
       } catch (error) {
-        if (!isMounted) {
-          return;
-        }
+        if (!isMounted) return;
+
         setDetailError(
           error instanceof Error && error.message.includes("401")
             ? UI_TEXT.unauthorized
@@ -357,15 +374,15 @@ export default function ChatHistory() {
     await submitMessage(composer.value);
   }
 
-  // 챗봇 버튼 클릭 시 재질문 또는 화면 이동
-  async function handleQuickReplyClick(reply: QuickReply) {
-    if (reply.action.type === "ask") {
-      await submitMessage(reply.action.value);
+  const handleQuickReplyClick = async (reply: ChatAction) => {
+    // 재질문 또는 이동
+    if (reply.type === "navigate") {
+      navigate(reply.href);
       return;
     }
 
-    navigate(reply.action.href);
-  }
+    await submitMessage(reply.value);
+  };
 
   async function handleRenameSession(session: ChatSessionSummary) {
     const nextTitle = window.prompt("채팅 이름을 입력하세요", session.title);
@@ -638,19 +655,21 @@ export default function ChatHistory() {
                     {message.sender === "bot" &&
                     message.quickReplies?.length ? (
                       <div className="mt-2 flex max-w-[85%] flex-wrap gap-2">
-                        {message.quickReplies.slice(0, 3).map((reply) => (
-                          <Button
-                            key={`${reply.label}-${reply.action.type}`}
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="rounded-full border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
-                            onClick={() => void handleQuickReplyClick(reply)}
-                            disabled={composer.isStreaming}
-                          >
-                            {reply.label}
-                          </Button>
-                        ))}
+                        {message.quickReplies
+                          .slice(0, 3)
+                          .map((reply, replyIndex) => (
+                            <Button
+                              key={`${reply.label}-${replyIndex}`}
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="rounded-full border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                              onClick={() => void handleQuickReplyClick(reply)}
+                              disabled={composer.isStreaming}
+                            >
+                              {reply.label}
+                            </Button>
+                          ))}
                       </div>
                     ) : null}
                   </div>

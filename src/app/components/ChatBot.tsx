@@ -1,23 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { MessageCircle, X, Send } from "lucide-react";
-import { sendMessage } from "../api/chat";
+import { sendMessage, type ChatAction } from "../api/chat";
 import { useNavigate } from "react-router";
 import { Button } from "./ui/button";
 
-type QuickReplyAction =
-  | {
-      type: "ask"; // 재질문 전송
-      value: string;
-    }
-  | {
-      type: "navigate"; // 특정 화면 이동
-      href: string;
-    };
-
-type QuickReply = {
-  label: string;
-  action: QuickReplyAction;
-};
+type QuickReply = ChatAction;
 
 type Message = {
   text: string;
@@ -25,35 +12,79 @@ type Message = {
   quickReplies?: QuickReply[];
 };
 
-const DEFAULT_LOAN_QUICK_REPLIES: QuickReply[] = [
-  {
-    label: "상품 설명 보기",
-    action: { type: "ask", value: "대출 상품 설명 자세히 보여줘" },
-  },
-  {
-    label: "가능 여부 조회",
-    action: { type: "ask", value: "이 상품이 나한테 맞는지 알려줘" },
-  },
-  {
-    label: "신청 안내 보기",
-    action: { type: "navigate", href: "/loan/apply" },
-  },
-];
-
 function buildQuickReplies(botText: string): QuickReply[] {
   const text = botText.toLowerCase();
 
+  // 상품 조회 단계
   if (
-    text.includes("대출") ||
-    text.includes("상품") ||
-    text.includes("신청") ||
-    text.includes("심사") ||
-    text.includes("한도")
+    text.includes("받을 수 있는 대출") ||
+    text.includes("추천") ||
+    text.includes("상품")
   ) {
-    return DEFAULT_LOAN_QUICK_REPLIES;
+    return [
+      {
+        type: "ask",
+        label: "상품 설명 보기",
+        value: "이 상품 설명 자세히 보여줘",
+      },
+      { type: "ask", label: "가능 여부 조회", value: "이 상품이 나한테 맞아?" },
+      {
+        type: "ask",
+        label: "신청 안내 보기",
+        value: "신청하려면 뭐가 필요해?",
+      },
+    ];
   }
 
-  return [];
+  // 상품 설명 단계
+  if (text.includes("금리") || text.includes("기간") || text.includes("상환")) {
+    return [
+      { type: "ask", label: "가능 여부 조회", value: "이 상품이 나한테 맞아?" },
+      { type: "ask", label: "심사 기준 보기", value: "심사 기준이 뭐야?" },
+      {
+        type: "ask",
+        label: "신청 안내 보기",
+        value: "신청하려면 뭐가 필요해?",
+      },
+    ];
+  }
+
+  // 가능 여부 단계
+  if (text.includes("가능") || text.includes("대상") || text.includes("조건")) {
+    return [
+      { type: "ask", label: "내 한도 보기", value: "내 한도는 어느 정도야?" },
+      { type: "ask", label: "심사 기준 보기", value: "심사 기준이 뭐야?" },
+      { type: "ask", label: "신청 안내 보기", value: "신청은 어디서 해?" },
+    ];
+  }
+
+  // 신청 안내 단계
+  if (
+    text.includes("서류") ||
+    text.includes("신청") ||
+    text.includes("어디서")
+  ) {
+    return [
+      {
+        type: "ask",
+        label: "필요 서류 다시 보기",
+        value: "신청하려면 뭐가 필요해?",
+      },
+      { type: "ask", label: "심사 기준 보기", value: "심사 기준이 뭐야?" },
+      { type: "navigate", label: "신청 페이지 이동", href: "/loan/apply" },
+    ];
+  }
+
+  // 기본 버튼
+  return [
+    {
+      type: "ask",
+      label: "대출 상품 보기",
+      value: "내가 받을 수 있는 대출 뭐 있어?",
+    },
+    { type: "ask", label: "가능 여부 조회", value: "이 상품이 나한테 맞아?" },
+    { type: "ask", label: "신청 안내 보기", value: "신청하려면 뭐가 필요해?" },
+  ];
 }
 
 export default function ChatBot() {
@@ -73,15 +104,30 @@ export default function ChatBot() {
 
   const [messages, setMessages] = useState<Message[]>(() => {
     const saved = sessionStorage.getItem("chat_history");
-    if (saved) {
-      return JSON.parse(saved) as Message[];
-    }
+    if (saved) return JSON.parse(saved);
 
     return [
       {
-        text: "안녕하세요! \nNUDGEBANK 금융 상담 AI입니다. \n무엇을 도와드릴까요?",
+        text: "안녕하세요!\nNUDGEBANK 금융 상담 AI입니다.\n무엇을 도와드릴까요?",
         sender: "bot",
-        quickReplies: DEFAULT_LOAN_QUICK_REPLIES,
+        quickReplies: [
+          // 첫 진입 버튼
+          {
+            type: "ask",
+            label: "대출 상품 보기",
+            value: "내가 받을 수 있는 대출 뭐 있어?",
+          },
+          {
+            type: "ask",
+            label: "가능 여부 조회",
+            value: "이 상품이 나한테 맞아?",
+          },
+          {
+            type: "ask",
+            label: "신청 안내 보기",
+            value: "신청하려면 뭐가 필요해?",
+          },
+        ],
       },
     ];
   });
@@ -224,7 +270,15 @@ export default function ChatBot() {
       console.error("챗봇 API 호출 실패:", error);
       bufferRef.current +=
         "챗봇 서버와 연결할 수 없습니다. 잠시 후 다시 시도해주세요.";
-      attachQuickRepliesToLastBotMessage(DEFAULT_LOAN_QUICK_REPLIES);
+      attachQuickRepliesToLastBotMessage([
+        { type: "ask", label: "다시 질문하기", value: userMessage },
+        {
+          type: "ask",
+          label: "대출 상품 보기",
+          value: "내가 받을 수 있는 대출 뭐 있어?",
+        },
+        { type: "navigate", label: "신청 페이지 이동", href: "/loan/apply" },
+      ]); 
       streamDoneRef.current = true;
     }
   };
@@ -233,15 +287,15 @@ export default function ChatBot() {
     await submitMessage(inputValue);
   };
 
-  // 챗봇 버튼 클릭 시 재질문 또는 이동
   const handleQuickReplyClick = async (reply: QuickReply) => {
-    if (reply.action.type === "ask") {
-      await submitMessage(reply.action.value);
+    // 재질문 또는 화면 이동 분기
+    if (reply.type === "navigate") {
+      setIsOpen(false);
+      navigate(reply.href);
       return;
     }
 
-    setIsOpen(false);
-    navigate(reply.action.href);
+    await submitMessage(reply.value);
   };
 
   return (
@@ -293,19 +347,21 @@ export default function ChatBot() {
 
                 {message.sender === "bot" && message.quickReplies?.length ? (
                   <div className="mt-2 flex max-w-[80%] flex-wrap gap-2">
-                    {message.quickReplies.slice(0, 3).map((reply) => (
-                      <Button
-                        key={`${reply.label}-${reply.action.type}`}
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="rounded-full border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
-                        onClick={() => void handleQuickReplyClick(reply)}
-                        disabled={isStreaming}
-                      >
-                        {reply.label}
-                      </Button>
-                    ))}
+                    {message.quickReplies
+                      .slice(0, 3)
+                      .map((reply, replyIndex) => (
+                        <Button
+                          key={`${reply.label}-${replyIndex}`}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="rounded-full border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                          onClick={() => void handleQuickReplyClick(reply)}
+                          disabled={isStreaming}
+                        >
+                          {reply.label}
+                        </Button>
+                      ))}
                   </div>
                 ) : null}
               </div>

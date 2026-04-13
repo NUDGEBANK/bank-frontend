@@ -5,6 +5,23 @@ export interface ChatRequest {
   session_id?: string;
 }
 
+export type ChatAction =
+  | {
+      type: "ask";
+      label: string;
+      value: string;
+    }
+  | {
+      type: "navigate";
+      label: string;
+      href: string;
+    };
+
+export interface ChatResponsePayload {
+  answer: string;
+  quickReplies?: ChatAction[]; // 버튼형 다음 질문 데이터
+}
+
 export interface ChatResponse {
   answer: string;
 }
@@ -66,7 +83,6 @@ export async function sendMessage(
 
   while (true) {
     const { done, value } = await reader.read();
-
     if (done) break;
 
     const chunk = decoder.decode(value, { stream: true });
@@ -97,7 +113,8 @@ export async function getChatSessions(): Promise<ChatSessionSummary[]> {
   return response.json();
 }
 
-export async function getChatSession(sessionId: string): Promise<ChatSessionDetail> {
+export async function getChatSession(sessionId: string,
+): Promise<ChatSessionDetail> {
   const response = await fetch(`/chat-api/chat/sessions/${sessionId}`, {
     method: "GET",
     credentials: "include",
@@ -111,7 +128,10 @@ export async function getChatSession(sessionId: string): Promise<ChatSessionDeta
   return response.json();
 }
 
-export async function renameChatSession(sessionId: string, title: string): Promise<ChatSessionSummary> {
+export async function renameChatSession(
+  sessionId: string,
+  title: string,
+): Promise<ChatSessionSummary> {
   const response = await fetch(`/chat-api/chat/sessions/${sessionId}`, {
     method: "PATCH",
     headers: {
