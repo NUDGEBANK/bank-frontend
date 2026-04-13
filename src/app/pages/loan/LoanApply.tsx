@@ -37,6 +37,14 @@ type LoanApplicationSummary = {
   certificateSubmitted: boolean;
 };
 
+type LoanEligibilityResponse = {
+  eligible: boolean;
+  decision: "APPROVED" | "REJECTED";
+  creditScore: number;
+  productKey: string;
+  reasons: string[];
+};
+
 type CardHistoryResponse = {
   ok: boolean;
   message: string;
@@ -60,6 +68,8 @@ const productConfigs: Record<string, LoanApplyConfig> = {
     rate: "연 4.2% ~ 8.9%",
     defaultAmount: "2000000",
     defaultPurpose: "생활비 및 소비 관리",
+    amountRange: { min: 500000, max: 3000000 },
+    termOptions: ["6개월", "12개월", "18개월"],
   },
   "youth-loan": {
     name: "자기계발 대출",
@@ -69,6 +79,8 @@ const productConfigs: Record<string, LoanApplyConfig> = {
     rate: "연 3.8% ~ 6.2%",
     defaultAmount: "3000000",
     defaultPurpose: "자격증 및 직무 교육 준비",
+    amountRange: { min: 500000, max: 5000000 },
+    termOptions: ["12개월", "18개월", "24개월"],
   },
   "situate-loan": {
     name: "비상금 대출",
@@ -78,6 +90,8 @@ const productConfigs: Record<string, LoanApplyConfig> = {
     rate: "연 5.1% ~ 9.9%",
     defaultAmount: "1000000",
     defaultPurpose: "단기 긴급 자금",
+    amountRange: { min: 300000, max: 2000000 },
+    termOptions: ["1개월", "3개월", "6개월", "12개월"],
   },
 };
 
@@ -101,6 +115,19 @@ export default function LoanApply() {
   const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [eligibility, setEligibility] = useState<LoanEligibilityResponse | null>(null);
+  const [isCheckingEligibility, setIsCheckingEligibility] = useState(false);
+  const [eligibilityError, setEligibilityError] = useState("");
+
+  useEffect(() => {
+    if (!product) {
+      return;
+    }
+    setAmount(product.defaultAmount);
+    setPurpose(product.defaultPurpose);
+    setLoanTerm(product.termOptions[0] ?? "12개월");
+  }, [productId, product]);
 
   useEffect(() => {
     let isMounted = true;
@@ -131,11 +158,53 @@ export default function LoanApply() {
     };
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function checkEligibility() {
+      if (!productId) {
+        return;
+      }
+
+      setIsCheckingEligibility(true);
+      setEligibilityError("");
+      setEligibility(null);
+
+      try {
+        const result = await postJson<LoanEligibilityResponse>("/api/loan-products/eligibility", {
+          productKey: productId,
+        });
+
+        if (!isMounted) {
+          return;
+        }
+
+        setEligibility(result);
+      } catch (err) {
+        if (!isMounted) {
+          return;
+        }
+        setEligibility(null);
+        setEligibilityError(err instanceof Error ? err.message : "대출 가능 여부를 확인하지 못했습니다.");
+      } finally {
+        if (isMounted) {
+          setIsCheckingEligibility(false);
+        }
+      }
+    }
+
+    void checkEligibility();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [productId]);
+
   if (!productId || !product) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-12">
         <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-lg">
-          <h1 className="text-2xl font-bold text-slate-900">신청할 상품을 찾을 수 없습니다</h1>
+          <h1 className="text-2xl font-bold text-slate-900">요청한 상품을 찾을 수 없습니다.</h1>
           <Link
             to="/loan/products"
             className="mt-4 inline-block font-semibold text-blue-600 hover:underline"
@@ -147,16 +216,23 @@ export default function LoanApply() {
     );
   }
 
+  const isSubmitDisabled =
+      isSubmitting ||
+      isCheckingEligibility ||
+      !eligibility ||
+      !eligibility.eligible;
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
 
-    if (!agreeTerms || !agreePrivacy) {
-      setError("약관 동의와 개인정보 동의를 모두 체크해 주세요.");
+    if (!eligibility || !eligibility.eligible) {
+      setError("현재 조건으로는 대출 신청이 불가능합니다.");
       return;
     }
 
-    if (!productId) {
+    if (!agreeTerms || !agreePrivacy) {
+      setError("약관 및 개인정보 동의를 모두 체크해 주세요.");
       return;
     }
 
@@ -248,6 +324,34 @@ export default function LoanApply() {
               <p className="text-sm font-medium text-slate-600">금리</p>
               <p className="mt-2 text-lg font-semibold text-slate-900">{product.rate}</p>
             </div>
+          </div>
+
+          <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4">
+            <p className="text-sm font-medium text-slate-600">대출 가능 여부</p>
+
+            {isCheckingEligibility ? (
+                <p className="mt-2 text-sm text-slate-500">조회 중입니다...</p>
+            ) : eligibilityError ? (
+                <p className="mt-2 text-sm text-red-600">대출 가능 여부를 확인하지 못했습니다.</p>
+            ) : eligibility ? (
+                <>
+                  <p
+                      className={`mt-2 text-base font-semibold ${
+                          eligibility.eligible ? "text-emerald-600" : "text-red-600"
+                      }`}
+                  >
+                    {eligibility.eligible ? "대출 신청 가능" : "대출 신청 불가"}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    현재 내부 신용점수는 {eligibility.creditScore}점입니다.
+                  </p>
+                  {eligibility.reasons[0] && (
+                      <p className="mt-1 text-sm text-slate-500">{eligibility.reasons[0]}</p>
+                  )}
+                </>
+            ) : (
+                <p className="mt-2 text-sm text-slate-500">대출 가능 여부 정보가 없습니다.</p>
+            )}
           </div>
 
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -368,10 +472,18 @@ export default function LoanApply() {
 
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="w-full rounded-2xl bg-[#6d8ca6] py-4 font-semibold text-white shadow-md transition hover:bg-[#5c7c97]"
+              disabled={isSubmitDisabled}
+              className={`w-full rounded-2xl py-4 font-semibold text-white shadow-md transition ${
+                    isSubmitDisabled
+                        ? "cursor-not-allowed bg-slate-300"
+                        : "bg-[#6d8ca6] hover:bg-[#5c7c97]"
+                }`}
             >
-              {isSubmitting ? "신청 처리 중..." : "대출 신청 완료"}
+              {isSubmitting
+                  ? "대출 신청 처리 중..."
+                  : eligibility && !eligibility.eligible
+                      ? "대출 신청 불가"
+                      : "대출 신청 완료"}
             </button>
           </form>
         </section>
@@ -389,9 +501,10 @@ export default function LoanApply() {
             </div>
             <div className="mt-5 space-y-3 text-sm leading-6 text-slate-700">
               <p>1. 상품 조건 확인</p>
-              <p>2. 약관 동의 및 신청 정보 입력</p>
-              <p>3. 신청 완료 후 내 대출 관리에서 상태 확인</p>
-              {productId === "youth-loan" && <p>4. 자기계발 대출은 OCR 서류 제출 진행</p>}
+              <p>2. 대출 가능 여부 확인</p>
+              <p>3. 신청 정보 입력 및 동의</p>
+              <p>4. 신청 완료 후 내 대출 관리에서 상태 확인</p>
+              {productId === "youth-loan" && <p>5. 자기계발 대출은 OCR 서류 제출 진행</p>}
             </div>
           </div>
 
@@ -409,6 +522,9 @@ export default function LoanApply() {
               <p>신청 후 실제 승인 여부는 심사 결과에 따라 달라질 수 있습니다.</p>
               <p>자기계발 대출은 신청 후 내 대출 관리에서 OCR 인증을 진행합니다.</p>
               <p>소비분석 대출은 신청 후 바로 심사 상태를 조회할 수 있습니다.</p>
+              <p>대출 가능 여부는 내부 신용점수를 기준으로 판단됩니다.</p>
+              <p>신용점수가 500점 이상이면 신청 버튼이 활성화됩니다.</p>
+              <p>신청 후에는 대출 관리 화면에서 상태를 확인할 수 있습니다.</p>
             </div>
           </div>
 
@@ -423,7 +539,7 @@ export default function LoanApply() {
               </div>
             </div>
             <p className="mt-4 text-sm leading-6 text-slate-700">
-              신청 정보는 백엔드에 바로 저장되며, 내 대출 관리에서 실제 신청 상태를 확인할 수 있습니다.
+              신청 정보는 백엔드에 저장되며, 대출 관리 화면에서 실제 신청 상태를 확인할 수 있습니다.
             </p>
           </div>
         </aside>
