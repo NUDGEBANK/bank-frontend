@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { MessageCircle, X, Send } from "lucide-react";
+import { useNavigate } from "react-router";
 import { sendMessage } from "../api/chat";
 
 type Message = {
@@ -8,6 +9,7 @@ type Message = {
 };
 
 export default function ChatBot() {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
@@ -143,6 +145,18 @@ export default function ChatBot() {
     }
   };
 
+  const handleMoveToGuide = () => {
+    // 챗봇 UI에서 대출 신청 안내 페이지로 이동
+    setIsOpen(false);
+    navigate("/loan/apply-guide");
+  };
+
+  const handleMoveToChatHistory = () => {
+    // 챗봇 UI에서 전체 상담 화면으로 이동
+    setIsOpen(false);
+    navigate("/help/chat-history");
+  };
+
   return (
     <>
       <button
@@ -155,7 +169,7 @@ export default function ChatBot() {
       </button>
 
       {isOpen && (
-        <div className="fixed bottom-8 right-8 w-96 h-[500px] bg-white/95 backdrop-blur-md rounded-lg shadow-2xl flex flex-col z-50 border border-white/20">
+        <div className="fixed bottom-8 right-8 z-50 flex h-[560px] w-96 flex-col rounded-lg border border-white/20 bg-white/95 shadow-2xl backdrop-blur-md">
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-t-lg flex items-center justify-between">
             <div className="flex items-center gap-2">
               <MessageCircle className="w-5 h-5" />
@@ -169,13 +183,29 @@ export default function ChatBot() {
             </button>
           </div>
 
+          {/* 버튼 3개로 변경 필요 */}
+          <div className="flex gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3">
+            <button
+              type="button"
+              onClick={handleMoveToGuide}
+              className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+            >
+              대출 신청 안내
+            </button>
+            <button
+              type="button"
+              onClick={handleMoveToChatHistory}
+              className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+            >
+              상담 기록 보기
+            </button>
+          </div>
+
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {messages.map((message, index) => (
               <div
                 key={index}
-                className={`flex ${
-                  message.sender === "user" ? "justify-end" : "justify-start"
-                }`}
+                className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
                   className={`max-w-[80%] px-4 py-2 rounded-lg whitespace-pre-wrap ${

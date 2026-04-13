@@ -34,7 +34,8 @@ const menuItems: MenuItem[] = [
     label: "대출",
     description: "맞춤형 대출 상품과 대출 관리, 신용 평가 정보를 확인할 수 있습니다.",
     submenu: [
-      { label: "대출상품", path: "/loan/products" },
+      { label: "대출 상품", path: "/loan/products" },
+      { label: "대출 신청 안내", path: "/loan/apply-guide" },
       { label: "대출 관리", path: "/loan/management" },
       { label: "신용 평가", path: "/loan/credit-score" },
     ],
@@ -146,7 +147,9 @@ export default function Header() {
                           aria-expanded={activeMenuLabel === item.label}
                           onFocus={() => setActiveMenuLabel(item.label)}
                           onClick={() =>
-                            setActiveMenuLabel((current) => (current === item.label ? null : item.label))
+                            setActiveMenuLabel((current) =>
+                              current === item.label ? null : item.label,
+                            )
                           }
                           className="whitespace-nowrap py-2 text-sm font-semibold tracking-tight text-white/90 transition-colors hover:text-white md:text-base"
                         >
@@ -216,7 +219,11 @@ export default function Header() {
                   aria-label="메뉴 열기"
                   aria-expanded={isMobileMenuOpen}
                 >
-                  {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                  {isMobileMenuOpen ? (
+                    <X className="h-5 w-5" />
+                  ) : (
+                    <Menu className="h-5 w-5" />
+                  )}
                 </button>
               </div>
             </div>
