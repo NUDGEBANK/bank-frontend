@@ -439,8 +439,11 @@ export default function DepositApply() {
 
                   <div className="grid gap-6 md:grid-cols-2">
                     <div>
-                      <label className="mb-2 block text-sm font-medium text-slate-600">가입 기간</label>
+                      <label htmlFor="saving-month" className="mb-2 block text-sm font-medium text-slate-600">
+                        가입 기간
+                      </label>
                       <select
+                        id="saving-month"
                         value={savingMonth}
                         onChange={(event) => setSavingMonth(event.target.value)}
                         className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
@@ -453,8 +456,11 @@ export default function DepositApply() {
                       </select>
                     </div>
                     <div>
-                      <label className="mb-2 block text-sm font-medium text-slate-600">가입 금액</label>
+                      <label htmlFor="join-amount" className="mb-2 block text-sm font-medium text-slate-600">
+                        가입 금액
+                      </label>
                       <input
+                        id="join-amount"
                         value={joinAmount}
                         onChange={(event) => setJoinAmount(event.target.value.replace(/[^\d]/g, ""))}
                         className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
@@ -466,8 +472,11 @@ export default function DepositApply() {
                   {isSavingProduct && (
                     <div className="mt-6 grid gap-6 md:grid-cols-2">
                       <div>
-                        <label className="mb-2 block text-sm font-medium text-slate-600">월 납입 금액</label>
+                        <label htmlFor="monthly-amount" className="mb-2 block text-sm font-medium text-slate-600">
+                          월 납입 금액
+                        </label>
                         <input
+                          id="monthly-amount"
                           value={monthlyAmount}
                           onChange={(event) => setMonthlyAmount(event.target.value.replace(/[^\d]/g, ""))}
                           className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
@@ -475,8 +484,11 @@ export default function DepositApply() {
                         />
                       </div>
                       <div>
-                        <label className="mb-2 block text-sm font-medium text-slate-600">자동이체일</label>
+                        <label htmlFor="auto-transfer-day" className="mb-2 block text-sm font-medium text-slate-600">
+                          자동이체일
+                        </label>
                         <input
+                          id="auto-transfer-day"
                           value={autoTransferDay}
                           onChange={(event) => setAutoTransferDay(event.target.value.replace(/[^\d]/g, "").slice(0, 2))}
                           className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
@@ -494,8 +506,11 @@ export default function DepositApply() {
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-slate-600">출금 계좌</label>
+                    <label htmlFor="source-account" className="mb-2 block text-sm font-medium text-slate-600">
+                      출금 계좌
+                    </label>
                     <select
+                      id="source-account"
                       value={sourceAccountId}
                       onChange={(event) => setSourceAccountId(event.target.value)}
                       className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"

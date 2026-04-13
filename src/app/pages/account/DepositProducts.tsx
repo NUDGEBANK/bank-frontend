@@ -144,6 +144,22 @@ export default function DepositProducts() {
         <section className="rounded-[32px] border border-red-200 bg-red-50 p-12 text-center text-sm text-red-700 shadow-[0_20px_50px_rgba(15,23,42,0.06)]">
           상품 정보를 불러오지 못했습니다. {error}
         </section>
+      ) : products.length === 0 ? (
+        <section className="rounded-[32px] border border-slate-200 bg-white p-12 text-center shadow-[0_20px_50px_rgba(15,23,42,0.06)]">
+          <h2 className="text-2xl font-bold text-slate-900">현재 가입 가능한 상품이 없습니다.</h2>
+          <p className="mt-3 text-sm text-slate-600">
+            잠시 후 다시 확인하거나 예적금 관리 페이지에서 기존 가입 내역을 확인해 주세요.
+          </p>
+          <div className="mt-6 flex justify-center gap-3">
+            <Link
+              to="/deposit/management"
+              className="rounded-full bg-[#2a4b78] px-4 py-2 text-sm font-semibold transition hover:bg-[#223f64]"
+              style={{ color: "#ffffff" }}
+            >
+              예적금 관리
+            </Link>
+          </div>
+        </section>
       ) : (
         <div className="grid gap-6 lg:grid-cols-2">
           {products.map((product) => {

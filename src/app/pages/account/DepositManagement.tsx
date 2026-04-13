@@ -133,6 +133,14 @@ function getProductLabel(type: DepositAccountSummary["depositProductType"] | Dep
   return type === "FIXED_DEPOSIT" ? "정기예금" : "정기적금";
 }
 
+function getDisplayJoinAmount(detail: DepositAccountDetail) {
+  if (detail.depositProductType === "FIXED_DEPOSIT") {
+    return detail.joinAmount;
+  }
+
+  return detail.schedules[0]?.plannedAmount ?? detail.joinAmount;
+}
+
 export default function DepositManagement() {
   const [accounts, setAccounts] = useState<DepositAccountSummary[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -230,13 +238,22 @@ export default function DepositManagement() {
   }, [selectedId]);
 
   async function refreshAccountsAndDetail(targetId: number) {
-    const [nextAccounts, nextDetail] = await Promise.all([
-      getJson<DepositAccountSummary[]>("/api/deposit-accounts/me"),
-      getJson<DepositAccountDetail>(`/api/deposit-accounts/me/${targetId}`),
-    ]);
+    const nextAccounts = await getJson<DepositAccountSummary[]>("/api/deposit-accounts/me");
+    const nextSelectedId =
+      nextAccounts.find((account) => account.depositAccountId === targetId)?.depositAccountId ??
+      nextAccounts[0]?.depositAccountId ??
+      null;
 
     setAccounts(nextAccounts);
-    setSelectedId(targetId);
+    setSelectedId(nextSelectedId);
+
+    if (nextSelectedId == null) {
+      setDetail(null);
+      setPaymentAmount("");
+      return;
+    }
+
+    const nextDetail = await getJson<DepositAccountDetail>(`/api/deposit-accounts/me/${nextSelectedId}`);
     setDetail(nextDetail);
 
     if (nextDetail.depositProductType === "FIXED_SAVING") {
@@ -460,7 +477,7 @@ export default function DepositManagement() {
                         <p className="text-sm text-slate-500">
                           {detail.depositProductType === "FIXED_DEPOSIT" ? "가입 금액" : "월 납입 금액"}
                         </p>
-                        <p className="mt-1 font-semibold text-slate-900">{formatWon(detail.joinAmount)}</p>
+                        <p className="mt-1 font-semibold text-slate-900">{formatWon(getDisplayJoinAmount(detail))}</p>
                       </div>
                     </div>
                   </div>
