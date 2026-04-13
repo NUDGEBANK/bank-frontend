@@ -489,15 +489,6 @@ export default function MyLoanManagement() {
     failed: uploadError ?? "업로드 중 오류가 발생했습니다.",
   };
 
-  useEffect(() => {
-    if (!summary?.nextPaymentAmount) {
-      setRepaymentAmountInput("");
-      return;
-    }
-
-    setRepaymentAmountInput(String(Math.trunc(summary.nextPaymentAmount)));
-  }, [summary?.nextPaymentAmount, selectedProductKey]);
-
   const handleManualRepayment = async () => {
     if (!selectedProductKey) {
       return;
