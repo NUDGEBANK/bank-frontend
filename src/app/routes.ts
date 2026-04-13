@@ -4,6 +4,7 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import DepositApply from "./pages/account/DepositApply";
+import DepositManagement from "./pages/account/DepositManagement";
 import DepositProducts from "./pages/account/DepositProducts";
 import MyAccount from "./pages/account/MyAccount";
 import DdokgaeAccount from "./pages/account/DdokgaeAccount";
@@ -28,6 +29,7 @@ export const router = createBrowserRouter([
       { path: "signup", Component: Signup },
       { path: "deposit/products", Component: DepositProducts },
       { path: "deposit/products/:productId/apply", Component: DepositApply },
+      { path: "deposit/management", Component: DepositManagement },
       { path: "account/my", Component: MyAccount },
       { path: "account/ddokgae", Component: DdokgaeAccount },
       { path: "loan/products", Component: LoanProducts },
