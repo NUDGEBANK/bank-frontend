@@ -1,6 +1,14 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router";
-import { Bot, MessageSquarePlus, PanelLeft, Pencil, Send, Sparkles, Trash2 } from "lucide-react";
+import { Link, useNavigate } from "react-router";
+import {
+  Bot,
+  MessageSquarePlus,
+  PanelLeft,
+  Pencil,
+  Send,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
 
 import {
   deleteChatSession,
@@ -12,10 +20,34 @@ import {
   type ChatSessionDetail,
   type ChatSessionSummary,
 } from "../../api/chat";
+import { Button } from "../../components/ui/button";
 
 type ComposerState = {
   value: string;
   isStreaming: boolean;
+};
+
+type QuickReplyAction =
+  | {
+      type: "ask";
+      value: string;
+    }
+  | {
+      type: "navigate";
+      href: string;
+    };
+
+type QuickReply = {
+  label: string;
+  action: QuickReplyAction;
+};
+
+type ViewMessage = {
+  id: string;
+  sender: "user" | "bot";
+  text: string;
+  createdAt: string | null;
+  quickReplies?: QuickReply[]; // 메시지별 버튼형 응답
 };
 
 const UI_TEXT = {
@@ -27,13 +59,46 @@ const UI_TEXT = {
   loadingList: "대화 목록을 불러오는 중입니다.",
   loadingDetail: "대화를 불러오는 중입니다.",
   emptyThreadTitle: "새 상담을 시작해보세요",
-  emptyThreadBody: "왼쪽 기록을 열거나 아래 입력창에서 바로 질문을 보내면 새 세션이 생성됩니다.",
+  emptyThreadBody:
+    "왼쪽 기록을 열거나 아래 입력창에서 바로 질문을 보내면 새 세션이 생성됩니다.",
   inputPlaceholder: "대출, 신용점수, 상품 추천 등 궁금한 점을 입력하세요",
   unauthorized: "로그인 후 채팅 기록을 확인할 수 있습니다.",
   listError: "채팅 목록을 불러오지 못했습니다.",
   detailError: "선택한 대화를 불러오지 못했습니다.",
   streamingError: "답변을 생성하지 못했습니다. 잠시 후 다시 시도해주세요.",
 } as const;
+
+const DEFAULT_LOAN_QUICK_REPLIES: QuickReply[] = [
+  {
+    label: "상품 설명 보기",
+    action: { type: "ask", value: "대출 상품 설명 자세히 보여줘" },
+  },
+  {
+    label: "가능 여부 조회",
+    action: { type: "ask", value: "이 상품이 나한테 맞는지 알려줘" },
+  },
+  {
+    label: "신청 안내 보기",
+    action: { type: "navigate", href: "/loan/apply" },
+  },
+];
+
+// 챗봇 응답 텍스트에 기반해 버튼형 응답을 생성하는 함수
+function buildQuickReplies(botText: string): QuickReply[] {
+  const text = botText.toLowerCase();
+
+  if (
+    text.includes("대출") ||
+    text.includes("상품") ||
+    text.includes("신청") ||
+    text.includes("심사") ||
+    text.includes("한도")
+  ) {
+    return DEFAULT_LOAN_QUICK_REPLIES;
+  }
+
+  return [];
+}
 
 function formatRelativeLabel(value: string | null) {
   if (!value) {
@@ -53,25 +118,41 @@ function formatRelativeLabel(value: string | null) {
   }).format(date);
 }
 
-function mapMessages(messages: ChatMessageItem[]) {
-  return messages.map((message) => ({
-    id: String(message.message_id),
-    sender: message.sender_type === "USER" ? "user" : "bot",
-    text: message.message_content,
-    createdAt: message.created_at,
-  }));
+// 챗봇 API에서 받아온 메시지 데이터를 화면에 표시할 메시지 형태로 변환하는 함수
+function mapMessages(messages: ChatMessageItem[]): ViewMessage[] {
+  return messages.map((message) => {
+    const sender = message.sender_type === "USER" ? "user" : "bot";
+    const text = message.message_content;
+
+    return {
+      id: String(message.message_id),
+      sender,
+      text,
+      createdAt: message.created_at,
+      quickReplies: sender === "bot" ? buildQuickReplies(text) : undefined,
+    };
+  });
 }
 
 export default function ChatHistory() {
+  const navigate = useNavigate(); // 챗봇 버튼에서 페이지 이동을 위해 추가
+
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
-  const [activeSession, setActiveSession] = useState<ChatSessionDetail | null>(null);
+  const [activeSession, setActiveSession] = useState<ChatSessionDetail | null>(
+    null,
+  );
   const [listLoading, setListLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [listError, setListError] = useState("");
   const [detailError, setDetailError] = useState("");
-  const [pendingActionSessionId, setPendingActionSessionId] = useState<string | null>(null);
-  const [composer, setComposer] = useState<ComposerState>({ value: "", isStreaming: false });
+  const [pendingActionSessionId, setPendingActionSessionId] = useState<
+    string | null
+  >(null);
+  const [composer, setComposer] = useState<ComposerState>({
+    value: "",
+    isStreaming: false,
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -81,7 +162,10 @@ export default function ChatHistory() {
   );
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+    });
   }, [visibleMessages, composer.isStreaming]);
 
   useEffect(() => {
@@ -125,7 +209,9 @@ export default function ChatHistory() {
         }
 
         const message = error instanceof Error ? error.message : "";
-        setListError(message.includes("401") ? UI_TEXT.unauthorized : UI_TEXT.listError);
+        setListError(
+          message.includes("401") ? UI_TEXT.unauthorized : UI_TEXT.listError,
+        );
       } finally {
         if (isMounted) {
           setListLoading(false);
@@ -164,7 +250,11 @@ export default function ChatHistory() {
         if (!isMounted) {
           return;
         }
-        setDetailError(error instanceof Error && error.message.includes("401") ? UI_TEXT.unauthorized : UI_TEXT.detailError);
+        setDetailError(
+          error instanceof Error && error.message.includes("401")
+            ? UI_TEXT.unauthorized
+            : UI_TEXT.detailError,
+        );
       } finally {
         if (isMounted) {
           setDetailLoading(false);
@@ -183,7 +273,10 @@ export default function ChatHistory() {
     const data = await getChatSessions();
     setSessions(data);
 
-    if (preferredSessionId && data.some((session) => session.session_id === preferredSessionId)) {
+    if (
+      preferredSessionId &&
+      data.some((session) => session.session_id === preferredSessionId)
+    ) {
       setActiveSessionId(preferredSessionId);
       return;
     }
@@ -191,10 +284,8 @@ export default function ChatHistory() {
     setActiveSessionId(data[0]?.session_id ?? null);
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    const trimmed = composer.value.trim();
+  async function submitMessage(rawMessage: string) {
+    const trimmed = rawMessage.trim();
     if (!trimmed || composer.isStreaming) {
       return;
     }
@@ -261,8 +352,23 @@ export default function ChatHistory() {
     }
   }
 
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await submitMessage(composer.value);
+  }
+
+  // 챗봇 버튼 클릭 시 재질문 또는 화면 이동
+  async function handleQuickReplyClick(reply: QuickReply) {
+    if (reply.action.type === "ask") {
+      await submitMessage(reply.action.value);
+      return;
+    }
+
+    navigate(reply.action.href);
+  }
+
   async function handleRenameSession(session: ChatSessionSummary) {
-    const nextTitle = window.prompt("채팅 이름을 입력하세요.", session.title);
+    const nextTitle = window.prompt("채팅 이름을 입력하세요", session.title);
     if (nextTitle === null) {
       return;
     }
@@ -276,13 +382,22 @@ export default function ChatHistory() {
     setListError("");
 
     try {
-      const updatedSession = await renameChatSession(session.session_id, trimmedTitle);
+      const updatedSession = await renameChatSession(
+        session.session_id,
+        trimmedTitle,
+      );
       setSessions((current) =>
-        current.map((item) => (item.session_id === session.session_id ? updatedSession : item)),
+        current.map((item) =>
+          item.session_id === session.session_id ? updatedSession : item,
+        ),
       );
       setActiveSession((current) =>
         current && current.session_id === session.session_id
-          ? { ...current, title: updatedSession.title, updated_at: updatedSession.updated_at }
+          ? {
+              ...current,
+              title: updatedSession.title,
+              updated_at: updatedSession.updated_at,
+            }
           : current,
       );
     } catch (error) {
@@ -294,7 +409,7 @@ export default function ChatHistory() {
   }
 
   async function handleDeleteSession(session: ChatSessionSummary) {
-    const confirmed = window.confirm(`"${session.title}" 대화를 삭제할까요?`);
+    const confirmed = window.confirm(`"${session.title}" 상담을 삭제할까요?`);
     if (!confirmed) {
       return;
     }
@@ -305,7 +420,9 @@ export default function ChatHistory() {
     try {
       await deleteChatSession(session.session_id);
 
-      const remainingSessions = sessions.filter((item) => item.session_id !== session.session_id);
+      const remainingSessions = sessions.filter(
+        (item) => item.session_id !== session.session_id,
+      );
       setSessions(remainingSessions);
 
       if (activeSessionId === session.session_id) {
@@ -336,11 +453,15 @@ export default function ChatHistory() {
                 <Bot className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-200/80">{UI_TEXT.eyebrow}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-200/80">
+                  {UI_TEXT.eyebrow}
+                </p>
                 <h1 className="mt-1 text-xl font-semibold">{UI_TEXT.title}</h1>
               </div>
             </div>
-            <p className="mt-4 text-sm leading-6 text-slate-200/80">{UI_TEXT.subtitle}</p>
+            <p className="mt-4 text-sm leading-6 text-slate-200/80">
+              {UI_TEXT.subtitle}
+            </p>
             <button
               type="button"
               onClick={() => {
@@ -355,13 +476,17 @@ export default function ChatHistory() {
             </button>
           </div>
 
-          <div className="max-h-[48vh] overflow-y-auto px-3 py-3 lg:max-h-none lg:h-[calc(100%-210px)]">
+          <div className="max-h-[48vh] overflow-y-auto px-3 py-3 lg:h-[calc(100%-210px)] lg:max-h-none">
             {listLoading ? (
-              <p className="px-3 py-4 text-sm text-slate-300">{UI_TEXT.loadingList}</p>
+              <p className="px-3 py-4 text-sm text-slate-300">
+                {UI_TEXT.loadingList}
+              </p>
             ) : listError ? (
               <p className="px-3 py-4 text-sm text-rose-200">{listError}</p>
             ) : sessions.length === 0 ? (
-              <p className="px-3 py-4 text-sm text-slate-300">{UI_TEXT.emptyList}</p>
+              <p className="px-3 py-4 text-sm text-slate-300">
+                {UI_TEXT.emptyList}
+              </p>
             ) : (
               <div className="space-y-2">
                 {sessions.map((session) => {
@@ -382,14 +507,22 @@ export default function ChatHistory() {
                           onClick={() => setActiveSessionId(session.session_id)}
                           className="flex-1 text-left"
                         >
-                          <p className="line-clamp-2 text-sm font-semibold leading-5 text-white">{session.title}</p>
-                          <p className="mt-2 text-xs text-slate-300/80">{formatRelativeLabel(session.updated_at ?? session.created_at)}</p>
+                          <p className="line-clamp-2 text-sm font-semibold leading-5 text-white">
+                            {session.title}
+                          </p>
+                          <p className="mt-2 text-xs text-slate-300/80">
+                            {formatRelativeLabel(
+                              session.updated_at ?? session.created_at,
+                            )}
+                          </p>
                         </button>
                         <div className="flex items-center gap-1">
                           <button
                             type="button"
                             aria-label="이름 변경"
-                            disabled={pendingActionSessionId === session.session_id}
+                            disabled={
+                              pendingActionSessionId === session.session_id
+                            }
                             onClick={() => {
                               void handleRenameSession(session);
                             }}
@@ -400,7 +533,9 @@ export default function ChatHistory() {
                           <button
                             type="button"
                             aria-label="삭제"
-                            disabled={pendingActionSessionId === session.session_id}
+                            disabled={
+                              pendingActionSessionId === session.session_id
+                            }
                             onClick={() => {
                               void handleDeleteSession(session);
                             }}
@@ -427,7 +562,9 @@ export default function ChatHistory() {
                   <Sparkles className="h-4 w-4" />
                   Personal Chat Archive
                 </div>
-                <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">{currentTitle}</h2>
+                <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+                  {currentTitle}
+                </h2>
               </div>
               <Link
                 to="/"
@@ -440,10 +577,14 @@ export default function ChatHistory() {
 
           <div className="flex-1 overflow-y-auto bg-[linear-gradient(180deg,_rgba(248,250,252,0.72)_0%,_rgba(255,255,255,1)_18%,_rgba(248,250,252,0.9)_100%)] px-4 py-6 md:px-8">
             {detailLoading ? (
-              <div className="flex h-full items-center justify-center text-sm text-slate-500">{UI_TEXT.loadingDetail}</div>
+              <div className="flex h-full items-center justify-center text-sm text-slate-500">
+                {UI_TEXT.loadingDetail}
+              </div>
             ) : detailError ? (
               <div className="flex h-full items-center justify-center">
-                <p className="rounded-full bg-rose-50 px-4 py-2 text-sm font-medium text-rose-600">{detailError}</p>
+                <p className="rounded-full bg-rose-50 px-4 py-2 text-sm font-medium text-rose-600">
+                  {detailError}
+                </p>
               </div>
             ) : visibleMessages.length === 0 ? (
               <div className="flex h-full items-center justify-center">
@@ -451,8 +592,12 @@ export default function ChatHistory() {
                   <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[22px] bg-[linear-gradient(135deg,_#dbeafe_0%,_#eff6ff_100%)] text-blue-600 shadow-[0_20px_35px_rgba(59,130,246,0.18)]">
                     <Bot className="h-8 w-8" />
                   </div>
-                  <h3 className="mt-6 text-2xl font-semibold text-slate-900">{UI_TEXT.emptyThreadTitle}</h3>
-                  <p className="mt-3 text-sm leading-6 text-slate-500">{UI_TEXT.emptyThreadBody}</p>
+                  <h3 className="mt-6 text-2xl font-semibold text-slate-900">
+                    {UI_TEXT.emptyThreadTitle}
+                  </h3>
+                  <p className="mt-3 text-sm leading-6 text-slate-500">
+                    {UI_TEXT.emptyThreadBody}
+                  </p>
                 </div>
               </div>
             ) : (
@@ -460,7 +605,9 @@ export default function ChatHistory() {
                 {visibleMessages.map((message) => (
                   <div
                     key={message.id}
-                    className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
+                    className={`flex flex-col ${
+                      message.sender === "user" ? "items-end" : "items-start"
+                    }`}
                   >
                     <div
                       className={`max-w-[85%] rounded-[26px] px-5 py-4 shadow-sm ${
@@ -469,13 +616,43 @@ export default function ChatHistory() {
                           : "border border-slate-200 bg-white text-slate-800"
                       }`}
                     >
-                      <p className="whitespace-pre-wrap text-sm leading-7">{message.text || (composer.isStreaming && message.sender === "bot" ? "답변을 작성하는 중입니다..." : "")}</p>
+                      <p className="whitespace-pre-wrap text-sm leading-7">
+                        {message.text ||
+                          (composer.isStreaming && message.sender === "bot"
+                            ? "답변을 작성하는 중입니다..."
+                            : "")}
+                      </p>
                       {message.createdAt ? (
-                        <p className={`mt-2 text-[11px] ${message.sender === "user" ? "text-white/75" : "text-slate-400"}`}>
+                        <p
+                          className={`mt-2 text-[11px] ${
+                            message.sender === "user"
+                              ? "text-white/75"
+                              : "text-slate-400"
+                          }`}
+                        >
                           {formatRelativeLabel(message.createdAt)}
                         </p>
                       ) : null}
                     </div>
+
+                    {message.sender === "bot" &&
+                    message.quickReplies?.length ? (
+                      <div className="mt-2 flex max-w-[85%] flex-wrap gap-2">
+                        {message.quickReplies.slice(0, 3).map((reply) => (
+                          <Button
+                            key={`${reply.label}-${reply.action.type}`}
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="rounded-full border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                            onClick={() => void handleQuickReplyClick(reply)}
+                            disabled={composer.isStreaming}
+                          >
+                            {reply.label}
+                          </Button>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                 ))}
                 <div ref={messagesEndRef} />
@@ -484,11 +661,19 @@ export default function ChatHistory() {
           </div>
 
           <div className="border-t border-slate-100 bg-white px-4 py-4 md:px-8">
-            <form onSubmit={handleSubmit} className="mx-auto flex max-w-4xl items-end gap-3">
+            <form
+              onSubmit={handleSubmit}
+              className="mx-auto flex max-w-4xl items-end gap-3"
+            >
               <textarea
                 ref={inputRef}
                 value={composer.value}
-                onChange={(event) => setComposer((current) => ({ ...current, value: event.target.value }))}
+                onChange={(event) =>
+                  setComposer((current) => ({
+                    ...current,
+                    value: event.target.value,
+                  }))
+                }
                 onKeyDown={(event) => {
                   if (event.key === "Enter" && !event.shiftKey) {
                     event.preventDefault();
