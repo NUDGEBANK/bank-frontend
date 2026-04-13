@@ -311,7 +311,7 @@ export default function DepositApply() {
       });
 
       window.alert(response.message || "예적금 가입이 완료되었습니다.");
-      navigate("/deposit/products");
+      navigate("/deposit/management");
     } catch (nextError) {
       setError(nextError instanceof Error ? nextError.message : "가입 요청에 실패했습니다.");
     } finally {

@@ -27,8 +27,7 @@ const menuItems: MenuItem[] = [
     description: "일상 자금 관리에 맞는 입출금 상품과 적금 상품을 안내합니다.",
     submenu: [
       { label: "예적금 상품", path: "/deposit/products" },
-      { label: "예적금 입금", path: "#" },
-      { label: "예적금 출금", path: "#" },
+      { label: "예적금 관리", path: "/deposit/management" },
     ],
   },
   {

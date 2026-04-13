@@ -212,7 +212,8 @@ export default function DepositProducts() {
                 <div className="mt-auto flex flex-col gap-3 pt-6 sm:flex-row">
                   <Link
                     to={`/deposit/products/${product.depositProductId}/apply`}
-                    className="flex-1 rounded-2xl bg-[#2a4b78] px-5 py-4 text-center text-sm font-semibold text-white transition hover:bg-[#223f64]"
+                    className="flex-1 rounded-2xl bg-[#2a4b78] px-5 py-4 text-center text-sm font-semibold transition hover:bg-[#223f64]"
+                    style={{ color: "#ffffff" }}
                   >
                     가입하기
                   </Link>
@@ -235,6 +236,13 @@ export default function DepositProducts() {
               연결하면 됩니다.
             </p>
             <div className="mt-4 flex flex-wrap gap-3">
+              <Link
+                to="/deposit/management"
+                className="rounded-full bg-[#2a4b78] px-4 py-2 text-sm font-semibold transition hover:bg-[#223f64]"
+                style={{ color: "#ffffff" }}
+              >
+                예적금 관리
+              </Link>
               <Link
                 to="/account/mypage"
                 className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
