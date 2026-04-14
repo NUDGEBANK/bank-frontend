@@ -1,12 +1,10 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 import {
   Bot,
   MessageSquarePlus,
-  PanelLeft,
   Pencil,
   Send,
-  Sparkles,
   Trash2,
 } from "lucide-react";
 
@@ -23,6 +21,25 @@ import {
 } from "../../api/chat";
 import MessageMarkdown from "../../components/MessageMarkdown";
 import { Button } from "../../components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../../components/ui/dialog";
+import { Input } from "../../components/ui/input";
 
 type ComposerState = {
   value: string;
@@ -35,6 +52,17 @@ type ViewMessage = {
   text: string;
   createdAt: string | null;
   quickReplies?: ChatAction[];
+};
+
+type RenameDialogState = {
+  open: boolean;
+  session: ChatSessionSummary | null;
+  value: string;
+};
+
+type DeleteDialogState = {
+  open: boolean;
+  session: ChatSessionSummary | null;
 };
 
 const UI_TEXT = {
@@ -178,8 +206,18 @@ export default function ChatHistory() {
     value: "",
     isStreaming: false,
   });
+  const [renameDialog, setRenameDialog] = useState<RenameDialogState>({
+    open: false,
+    session: null,
+    value: "",
+  });
+  const [deleteDialog, setDeleteDialog] = useState<DeleteDialogState>({
+    open: false,
+    session: null,
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const renameInputRef = useRef<HTMLInputElement>(null);
 
   const visibleMessages = useMemo(
     () => (activeSession ? mapMessages(activeSession.messages) : []),
@@ -212,6 +250,19 @@ export default function ChatHistory() {
 
     return () => window.cancelAnimationFrame(frameId);
   }, [composer.isStreaming, activeSessionId]);
+
+  useEffect(() => {
+    if (!renameDialog.open) {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      renameInputRef.current?.focus();
+      renameInputRef.current?.select();
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [renameDialog.open]);
 
   useEffect(() => {
     let isMounted = true;
@@ -385,14 +436,31 @@ export default function ChatHistory() {
     await submitMessage(reply.value);
   };
 
-  async function handleRenameSession(session: ChatSessionSummary) {
-    const nextTitle = window.prompt("채팅 이름을 입력하세요", session.title);
-    if (nextTitle === null) {
+  function openRenameDialog(session: ChatSessionSummary) {
+    setRenameDialog({
+      open: true,
+      session,
+      value: session.title,
+    });
+  }
+
+  function closeRenameDialog() {
+    setRenameDialog({
+      open: false,
+      session: null,
+      value: "",
+    });
+  }
+
+  async function handleRenameSession() {
+    const session = renameDialog.session;
+    if (!session) {
       return;
     }
 
-    const trimmedTitle = nextTitle.trim();
+    const trimmedTitle = renameDialog.value.trim();
     if (!trimmedTitle || trimmedTitle === session.title) {
+      closeRenameDialog();
       return;
     }
 
@@ -418,6 +486,7 @@ export default function ChatHistory() {
             }
           : current,
       );
+      closeRenameDialog();
     } catch (error) {
       console.error(error);
       setListError("채팅 이름을 변경하지 못했습니다.");
@@ -426,9 +495,23 @@ export default function ChatHistory() {
     }
   }
 
-  async function handleDeleteSession(session: ChatSessionSummary) {
-    const confirmed = window.confirm(`"${session.title}" 상담을 삭제할까요?`);
-    if (!confirmed) {
+  function openDeleteDialog(session: ChatSessionSummary) {
+    setDeleteDialog({
+      open: true,
+      session,
+    });
+  }
+
+  function closeDeleteDialog() {
+    setDeleteDialog({
+      open: false,
+      session: null,
+    });
+  }
+
+  async function handleDeleteSession() {
+    const session = deleteDialog.session;
+    if (!session) {
       return;
     }
 
@@ -451,6 +534,8 @@ export default function ChatHistory() {
           setDetailError("");
         }
       }
+
+      closeDeleteDialog();
     } catch (error) {
       console.error(error);
       setListError("채팅을 삭제하지 못했습니다.");
@@ -462,22 +547,22 @@ export default function ChatHistory() {
   const currentTitle = activeSession?.title ?? "NUDGEBOT";
 
   return (
-    <div className="min-h-[calc(100vh-88px)] bg-[linear-gradient(180deg,_#f4f8ff_0%,_#f9fbff_24%,_#ffffff_100%)]">
+    <div className="min-h-[calc(100vh-88px)] bg-[#f8fbff]">
       <div className="mx-auto flex max-w-[1440px] flex-col gap-6 px-4 py-6 md:px-6 lg:h-[calc(100vh-88px)] lg:flex-row lg:overflow-hidden lg:py-8">
-        <aside className="w-full overflow-hidden rounded-[28px] border border-slate-200/80 bg-[linear-gradient(180deg,_rgba(7,30,66,0.98)_0%,_rgba(14,52,110,0.98)_100%)] text-white shadow-[0_30px_80px_rgba(15,23,42,0.18)] lg:w-[320px] lg:shrink-0">
-          <div className="border-b border-white/10 px-5 py-5">
+        <aside className="w-full overflow-hidden rounded-[28px] border border-slate-200 bg-white text-slate-900 shadow-sm lg:w-[320px] lg:shrink-0">
+          <div className="border-b border-slate-200 px-5 py-5">
             <div className="flex items-center gap-3">
-              <div className="rounded-2xl bg-white/10 p-2 text-sky-100">
+              <div className="rounded-2xl bg-[#dce9f8] p-2 text-[#5f7c9d]">
                 <Bot className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-200/80">
+                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7f9bb8]">
                   {UI_TEXT.eyebrow}
                 </p>
-                <h1 className="mt-1 text-xl font-semibold">{UI_TEXT.title}</h1>
+                <h1 className="mt-1 text-xl font-semibold text-slate-900">{UI_TEXT.title}</h1>
               </div>
             </div>
-            <p className="mt-4 text-sm leading-6 text-slate-200/80">
+            <p className="mt-4 text-sm leading-6 text-slate-600">
               {UI_TEXT.subtitle}
             </p>
             <button
@@ -487,7 +572,7 @@ export default function ChatHistory() {
                 setActiveSession(null);
                 setDetailError("");
               }}
-              className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
+              className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#dce9f8] px-4 py-3 text-sm font-semibold text-[#2a4b78] transition hover:bg-[#cddff4]"
             >
               <MessageSquarePlus className="h-4 w-4" />
               {UI_TEXT.newChat}
@@ -496,13 +581,13 @@ export default function ChatHistory() {
 
           <div className="max-h-[48vh] overflow-y-auto px-3 py-3 lg:h-[calc(100%-210px)] lg:max-h-none">
             {listLoading ? (
-              <p className="px-3 py-4 text-sm text-slate-300">
+              <p className="px-3 py-4 text-sm text-slate-500">
                 {UI_TEXT.loadingList}
               </p>
             ) : listError ? (
-              <p className="px-3 py-4 text-sm text-rose-200">{listError}</p>
+              <p className="px-3 py-4 text-sm text-rose-500">{listError}</p>
             ) : sessions.length === 0 ? (
-              <p className="px-3 py-4 text-sm text-slate-300">
+              <p className="px-3 py-4 text-sm text-slate-500">
                 {UI_TEXT.emptyList}
               </p>
             ) : (
@@ -515,8 +600,8 @@ export default function ChatHistory() {
                       key={session.session_id}
                       className={`w-full rounded-2xl border px-4 py-3 transition ${
                         isActive
-                          ? "border-sky-300/50 bg-white/14 shadow-[0_16px_30px_rgba(15,23,42,0.2)]"
-                          : "border-white/8 bg-white/[0.06] hover:bg-white/[0.1]"
+                          ? "border-slate-300 bg-slate-50"
+                          : "border-transparent bg-white hover:border-slate-200 hover:bg-slate-50"
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -525,10 +610,10 @@ export default function ChatHistory() {
                           onClick={() => setActiveSessionId(session.session_id)}
                           className="flex-1 text-left"
                         >
-                          <p className="line-clamp-2 text-sm font-semibold leading-5 text-white">
+                          <p className="line-clamp-2 text-sm font-semibold leading-5 text-slate-900">
                             {session.title}
                           </p>
-                          <p className="mt-2 text-xs text-slate-300/80">
+                          <p className="mt-2 text-xs text-slate-500">
                             {formatRelativeLabel(
                               session.updated_at ?? session.created_at,
                             )}
@@ -542,9 +627,9 @@ export default function ChatHistory() {
                               pendingActionSessionId === session.session_id
                             }
                             onClick={() => {
-                              void handleRenameSession(session);
+                              openRenameDialog(session);
                             }}
-                            className="rounded-lg p-1.5 text-slate-300/80 transition hover:bg-white/10 hover:text-white disabled:opacity-40"
+                            className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-[#2a4b78] disabled:opacity-40"
                           >
                             <Pencil className="h-3.5 w-3.5" />
                           </button>
@@ -555,13 +640,12 @@ export default function ChatHistory() {
                               pendingActionSessionId === session.session_id
                             }
                             onClick={() => {
-                              void handleDeleteSession(session);
+                              openDeleteDialog(session);
                             }}
-                            className="rounded-lg p-1.5 text-slate-300/80 transition hover:bg-rose-400/20 hover:text-rose-100 disabled:opacity-40"
+                            className="rounded-lg p-1.5 text-slate-400 transition hover:bg-rose-50 hover:text-rose-500 disabled:opacity-40"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
-                          <PanelLeft className="mt-0.5 h-4 w-4 shrink-0 text-slate-300/70" />
                         </div>
                       </div>
                     </div>
@@ -572,28 +656,18 @@ export default function ChatHistory() {
           </div>
         </aside>
 
-        <section className="flex min-h-[70vh] flex-1 flex-col overflow-hidden rounded-[32px] border border-slate-200/80 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.08)]">
-          <div className="border-b border-slate-100 bg-[radial-gradient(circle_at_top_right,_rgba(56,189,248,0.18),_transparent_28%),linear-gradient(135deg,_#f7fbff_0%,_#ffffff_52%,_#f8fafc_100%)] px-6 py-5 md:px-8">
-            <div className="flex items-center justify-between gap-4">
+        <section className="flex min-h-[70vh] flex-1 flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-200 bg-white px-6 py-5 md:px-8">
+            <div className="flex items-center gap-4">
               <div>
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-blue-500">
-                  <Sparkles className="h-4 w-4" />
-                  Personal Chat Archive
-                </div>
-                <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
+                <h2 className="text-2xl font-bold tracking-tight text-slate-900">
                   {currentTitle}
                 </h2>
               </div>
-              <Link
-                to="/"
-                className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
-              >
-                홈으로
-              </Link>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto bg-[linear-gradient(180deg,_rgba(248,250,252,0.72)_0%,_rgba(255,255,255,1)_18%,_rgba(248,250,252,0.9)_100%)] px-4 py-6 md:px-8">
+          <div className="flex-1 overflow-y-auto bg-[#fafcff] px-4 py-6 md:px-8">
             {detailLoading ? (
               <div className="flex h-full items-center justify-center text-sm text-slate-500">
                 {UI_TEXT.loadingDetail}
@@ -607,7 +681,7 @@ export default function ChatHistory() {
             ) : visibleMessages.length === 0 ? (
               <div className="flex h-full items-center justify-center">
                 <div className="max-w-md text-center">
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[22px] bg-[linear-gradient(135deg,_#dbeafe_0%,_#eff6ff_100%)] text-blue-600 shadow-[0_20px_35px_rgba(59,130,246,0.18)]">
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[22px] bg-slate-100 text-[#2a4b78]">
                     <Bot className="h-8 w-8" />
                   </div>
                   <h3 className="mt-6 text-2xl font-semibold text-slate-900">
@@ -628,26 +702,31 @@ export default function ChatHistory() {
                     }`}
                   >
                     <div
-                      className={`max-w-[85%] rounded-[26px] px-5 py-4 shadow-sm ${
+                      className={`max-w-[85%] px-5 py-4 md:max-w-[78%] ${
                         message.sender === "user"
-                          ? "bg-[linear-gradient(135deg,_#1d4ed8_0%,_#2563eb_55%,_#38bdf8_100%)] text-white"
-                          : "border border-slate-200 bg-white text-slate-800"
+                          ? "min-w-[240px] rounded-[22px] rounded-tr-[8px] bg-[#eaf2fb] text-[#1f3654]"
+                          : "rounded-[24px] border border-slate-200 bg-white text-slate-800"
                       }`}
                     >
                       {message.text ? (
                         <MessageMarkdown
                           content={message.text}
                           invert={message.sender === "user"}
+                          className={
+                            message.sender === "user"
+                              ? "[&_a]:text-[#2a4b78] [&_a]:decoration-[#2a4b78]/40 [&_blockquote]:border-[#bfd3eb] [&_blockquote]:text-[#36506f] [&_code]:bg-white/80 [&_code]:text-[#1f3654]"
+                              : "[&_a]:text-[#2a4b78] [&_a]:decoration-[#2a4b78]/40 [&_blockquote]:border-slate-200 [&_blockquote]:text-slate-600 [&_code]:bg-slate-100 [&_code]:text-slate-800"
+                          }
                         />
                       ) : composer.isStreaming && message.sender === "bot" ? (
-                        <p className="text-sm leading-7">답변을 작성하는 중입니다...</p>
+                        <p className="text-sm leading-7 text-slate-600">답변을 작성하는 중입니다...</p>
                       ) : null}
                       {message.createdAt ? (
                         <p
                           className={`mt-2 text-[11px] ${
                             message.sender === "user"
-                              ? "text-white/75"
-                              : "text-slate-400"
+                              ? "text-[#6b85a5]"
+                              : "text-slate-500"
                           }`}
                         >
                           {formatRelativeLabel(message.createdAt)}
@@ -666,7 +745,7 @@ export default function ChatHistory() {
                               type="button"
                               variant="outline"
                               size="sm"
-                              className="rounded-full border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                              className="rounded-full border-[#d6e2f0] bg-[#f8fbff] text-[#48627f] hover:bg-[#eef4fb] hover:text-[#2a4b78]"
                               onClick={() => void handleQuickReplyClick(reply)}
                               disabled={composer.isStreaming}
                             >
@@ -682,10 +761,10 @@ export default function ChatHistory() {
             )}
           </div>
 
-          <div className="border-t border-slate-100 bg-white px-4 py-4 md:px-8">
+          <div className="border-t border-slate-200 bg-white px-4 py-4 md:px-8">
             <form
               onSubmit={handleSubmit}
-              className="mx-auto flex max-w-4xl items-end gap-3"
+              className="mx-auto flex max-w-4xl items-end gap-3 rounded-[24px] border border-slate-200 bg-white px-3 py-2.5 transition focus-within:border-[#bfd3eb] focus-within:ring-2 focus-within:ring-[#e8f1fb]"
             >
               <textarea
                 ref={inputRef}
@@ -707,12 +786,12 @@ export default function ChatHistory() {
                 rows={1}
                 disabled={composer.isStreaming}
                 placeholder={UI_TEXT.inputPlaceholder}
-                className="max-h-40 min-h-[56px] flex-1 resize-y rounded-[24px] border border-slate-200 bg-slate-50 px-5 py-4 text-sm text-slate-900 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+                className="max-h-40 min-h-[48px] flex-1 resize-none rounded-[18px] border border-transparent bg-transparent px-5 py-3 text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-transparent focus:ring-0 disabled:cursor-not-allowed disabled:bg-slate-100"
               />
               <button
                 type="submit"
                 disabled={composer.isStreaming || !composer.value.trim()}
-                className="flex h-14 w-14 items-center justify-center rounded-full bg-[linear-gradient(135deg,_#0f172a_0%,_#1d4ed8_100%)] text-white shadow-[0_20px_35px_rgba(29,78,216,0.24)] transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex h-12 w-12 items-center justify-center rounded-full bg-[#c7d7e8] text-[#5f7c9d] transition hover:bg-[#b7cade] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Send className="h-5 w-5" />
               </button>
@@ -720,6 +799,108 @@ export default function ChatHistory() {
           </div>
         </section>
       </div>
+
+      <Dialog
+        open={renameDialog.open}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeRenameDialog();
+          }
+        }}
+      >
+        <DialogContent className="max-w-md rounded-[24px] border border-slate-200 bg-white p-0 shadow-[0_24px_60px_rgba(15,23,42,0.14)]">
+          <DialogHeader className="gap-3 border-b border-slate-100 px-6 py-5 text-left">
+            <DialogTitle className="text-[18px] font-semibold text-slate-900">
+              채팅 이름 변경
+            </DialogTitle>
+            <DialogDescription className="text-sm leading-6 text-slate-500">
+              이 대화를 구분하기 쉬운 이름으로 바꿔보세요.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="px-6 py-5">
+            <Input
+              ref={renameInputRef}
+              value={renameDialog.value}
+              maxLength={60}
+              onChange={(event) =>
+                setRenameDialog((current) => ({
+                  ...current,
+                  value: event.target.value,
+                }))
+              }
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  void handleRenameSession();
+                }
+              }}
+              placeholder="채팅 이름을 입력하세요"
+              className="h-12 rounded-2xl border-slate-200 bg-white px-4 text-sm text-slate-900 focus-visible:border-[#bfd3eb] focus-visible:ring-[#e8f1fb]"
+            />
+          </div>
+
+          <DialogFooter className="border-t border-slate-100 px-6 py-4 sm:justify-between">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={closeRenameDialog}
+              className="rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50"
+            >
+              취소
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void handleRenameSession()}
+              disabled={
+                !renameDialog.session ||
+                !renameDialog.value.trim() ||
+                pendingActionSessionId === renameDialog.session.session_id
+              }
+              className="rounded-xl bg-[#dce9f8] text-[#2a4b78] hover:bg-[#cddff4]"
+            >
+              저장
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog
+        open={deleteDialog.open}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeDeleteDialog();
+          }
+        }}
+      >
+        <AlertDialogContent className="max-w-md rounded-[24px] border border-slate-200 bg-white p-0 shadow-[0_24px_60px_rgba(15,23,42,0.14)]">
+          <AlertDialogHeader className="gap-3 border-b border-slate-100 px-6 py-5 text-left">
+            <AlertDialogTitle className="text-[18px] font-semibold text-slate-900">
+              채팅 삭제
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm leading-6 text-slate-500">
+              {deleteDialog.session
+                ? `"${deleteDialog.session.title}" 대화를 삭제할까요?`
+                : "이 대화를 삭제할까요?"}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter className="border-t border-slate-100 px-6 py-4 sm:justify-between">
+            <AlertDialogCancel
+              onClick={closeDeleteDialog}
+              className="rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50"
+            >
+              취소
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => void handleDeleteSession()}
+              className="rounded-xl bg-rose-500 text-white hover:bg-rose-600"
+            >
+              삭제
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
