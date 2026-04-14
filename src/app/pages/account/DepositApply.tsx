@@ -80,15 +80,25 @@ function formatRateLabel(product: DepositProduct) {
 }
 
 function getPeriodOptions(product: DepositProduct) {
-  return product.rates
-    .flatMap((rate) => {
-      const options: number[] = [];
-      for (let month = rate.minSavingMonth; month <= rate.maxSavingMonth; month += 1) {
-        options.push(month);
-      }
-      return options;
-    })
-    .filter((month, index, months) => months.indexOf(month) === index);
+  if (product.rates.length === 0) {
+    const options: number[] = [];
+    for (let month = product.minSavingMonth; month <= product.maxSavingMonth; month += 1) {
+      options.push(month);
+    }
+    return options;
+  }
+
+  return Array.from(
+    new Set(
+      product.rates.flatMap((rate) => {
+        const options: number[] = [];
+        for (let month = rate.minSavingMonth; month <= rate.maxSavingMonth; month += 1) {
+          options.push(month);
+        }
+        return options;
+      }),
+    ),
+  ).sort((left, right) => left - right);
 }
 
 function getProductBadge(product: DepositProduct) {

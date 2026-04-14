@@ -173,6 +173,14 @@ export default function DepositManagement() {
     [accounts, selectedId],
   );
 
+  const nextUnpaidSchedule = useMemo(() => {
+    if (!detail || detail.depositProductType !== "FIXED_SAVING") {
+      return null;
+    }
+
+    return detail.schedules.find((schedule) => !schedule.isPaid) ?? null;
+  }, [detail]);
+
   useEffect(() => {
     let isMounted = true;
 
@@ -289,6 +297,17 @@ export default function DepositManagement() {
     if (amount <= 0) {
       setActionError("납입 금액을 입력해 주세요.");
       return;
+    }
+
+    if (detail.depositProductType === "FIXED_SAVING") {
+      if (!nextUnpaidSchedule) {
+        setActionError("납입 가능한 회차가 없습니다.");
+        return;
+      }
+      if (amount !== nextUnpaidSchedule.plannedAmount) {
+        setActionError(`이번 회차 납입 금액은 ${formatWon(nextUnpaidSchedule.plannedAmount)} 이어야 합니다.`);
+        return;
+      }
     }
 
     setIsPaying(true);
@@ -436,9 +455,17 @@ export default function DepositManagement() {
           </aside>
 
           <section className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-[0_20px_50px_rgba(15,23,42,0.06)]">
-            {!detail || isRefreshing ? (
+            {isRefreshing ? (
               <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-12 text-center text-sm text-slate-500">
                 선택한 예적금 정보를 불러오는 중입니다.
+              </div>
+            ) : !detail ? (
+              <div className={`rounded-3xl border p-12 text-center text-sm shadow-[0_20px_50px_rgba(15,23,42,0.06)] ${
+                actionError
+                  ? "border-red-200 bg-red-50 text-red-700"
+                  : "border-slate-200 bg-slate-50/70 text-slate-500"
+              }`}>
+                {actionError || "선택한 예적금 정보를 불러오지 못했습니다."}
               </div>
             ) : (
               <div className="space-y-6">
@@ -527,6 +554,11 @@ export default function DepositManagement() {
                             placeholder="납입 금액을 입력하세요"
                           />
                         </label>
+                        {nextUnpaidSchedule && (
+                          <p className="text-sm text-slate-500">
+                            다음 납입 회차: {nextUnpaidSchedule.installmentNo}회차 / {formatWon(nextUnpaidSchedule.plannedAmount)}
+                          </p>
+                        )}
                         <button
                           type="submit"
                           disabled={isPaying}
