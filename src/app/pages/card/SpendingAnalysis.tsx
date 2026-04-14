@@ -1,101 +1,517 @@
-import { useState } from "react";
-import { AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  AlertTriangle,
+  Brain,
+  ChevronDown,
+  ChevronUp,
+  Sparkles,
+} from "lucide-react";
 import {
   Bar,
   BarChart,
+  CartesianGrid,
   Cell,
-  Legend,
-  Pie,
-  PieChart,
+  Pie as RechartsPie,
+  PieChart as RechartsPieChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from "recharts";
 
-type CategoryDatum = {
+import { getJson, postJson } from "../../lib/api";
+
+type NumericLike = number | string | null;
+
+type ConsumptionAnalysisOverviewResponse = {
+  monthlyAnalyses: ConsumerMonthlyAnalysisResponse[];
+  latestPrediction: ConsumerPredictionResponse | null;
+};
+
+type ConsumerMonthlyAnalysisResponse = {
+  analysisYearMonth: string;
+  currentMonthSpending: NumericLike;
+};
+
+type ConsumerPredictionResponse = {
+  predictedTotalSpending: NumericLike;
+  modelVersion: string;
+};
+
+type ConsumerBaselineResponse = {
+  avgSpending: NumericLike;
+  essentialRatio: NumericLike;
+  normalRatio: NumericLike;
+  discretionaryRatio: NumericLike;
+  riskRatio: NumericLike;
+  volatility: NumericLike;
+};
+
+type CardHistoryResponse = {
+  accounts: CardHistoryAccount[];
+};
+
+type CardHistoryAccount = {
+  transactions: CardHistoryTransaction[];
+};
+
+type CardHistoryTransaction = {
+  transactionId: number;
+  marketName: string;
+  categoryName: string;
+  amount: number;
+  transactionDatetime: string;
+};
+
+type TrendTone = "increase" | "decrease" | "stable";
+type ConsumptionGroup = "essential" | "normal" | "discretionary" | "risk";
+
+type CategoryStat = {
   name: string;
   value: number;
+  ratio: number;
   color: string;
 };
 
-type MonthlyDatum = {
-  month: string;
-  essential: number;
-  discretionary: number;
+const GROUP_COLORS: Record<ConsumptionGroup, string> = {
+  essential: "#2f7de1",
+  normal: "#22c55e",
+  discretionary: "#facc15",
+  risk: "#ec4899",
 };
 
-const asOfDate = new Date("2026-04-24T00:00:00");
-const daysInMonth = 30;
-const elapsedDays = asOfDate.getDate();
+const EXCLUDED_CATEGORY_NAMES = new Set(["넛지뱅크", "대출", "대출 실행 입금"]);
+const EXCLUDED_MARKET_NAMES = new Set(["NudgeBank 대출 실행", "넛지뱅크"]);
 
-const categoryData: CategoryDatum[] = [
-  { name: "생활비", value: 450000, color: "#2563eb" },
-  { name: "쇼핑", value: 850000, color: "#4f46e5" },
-  { name: "교통", value: 120000, color: "#0f766e" },
-  { name: "문화·여가", value: 320000, color: "#64748b" },
-  { name: "식비", value: 280000, color: "#3b82f6" },
-  { name: "기타", value: 510250, color: "#94a3b8" },
-];
+function isLoanDisbursementTransaction(transaction: CardHistoryTransaction) {
+  return (
+    transaction.marketName === "NudgeBank 대출 실행" ||
+    transaction.categoryName === "대출 실행 입금"
+  );
+}
 
-const monthlyData: MonthlyDatum[] = [
-  { month: "10월", essential: 800000, discretionary: 500000 },
-  { month: "11월", essential: 850000, discretionary: 650000 },
-  { month: "12월", essential: 900000, discretionary: 1200000 },
-  { month: "1월", essential: 750000, discretionary: 400000 },
-  { month: "2월", essential: 820000, discretionary: 550000 },
-  { month: "3월", essential: 881250, discretionary: 1649000 },
-];
+function isExcludedConsumptionTransaction(transaction: CardHistoryTransaction) {
+  return (
+    transaction.amount <= 0 ||
+    isLoanDisbursementTransaction(transaction) ||
+    EXCLUDED_CATEGORY_NAMES.has(transaction.categoryName) ||
+    EXCLUDED_MARKET_NAMES.has(transaction.marketName)
+  );
+}
 
-function formatAmount(value: number) {
-  return `${value.toLocaleString("ko-KR")}원`;
+function classifyConsumptionGroup(categoryName: string): ConsumptionGroup {
+  switch (categoryName) {
+    case "주점":
+    case "노래방":
+      return "risk";
+    case "택시":
+    case "대중교통":
+    case "편의점":
+    case "마트":
+    case "병원":
+    case "약국":
+    case "공과금":
+    case "통신비":
+      return "essential";
+    case "영화관":
+    case "문화취미(pc방, 헬스장 등)":
+    case "백화점":
+    case "의류":
+    case "서점":
+    case "미용실":
+    case "카페":
+      return "discretionary";
+    default:
+      return "normal";
+  }
+}
+
+function formatMonthKey(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value.slice(0, 7);
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
+}
+
+function toNumber(value: NumericLike): number {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : 0;
+  }
+
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  return 0;
+}
+
+function formatAmount(value: NumericLike) {
+  return `${Math.round(toNumber(value)).toLocaleString("ko-KR")}원`;
+}
+
+function formatRatio(value: NumericLike) {
+  return `${(toNumber(value) * 100).toFixed(1)}%`;
+}
+
+function formatSignedPercent(value: number) {
+  if (Math.abs(value) < 0.05) {
+    return "0.0%";
+  }
+
+  return `${value > 0 ? "+" : ""}${value.toFixed(1)}%`;
+}
+
+function formatMonthLabel(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return `${date.getMonth() + 1}월`;
+}
+
+function resolveTrendTone(rate: number): TrendTone {
+  if (rate > 3) {
+    return "increase";
+  }
+
+  if (rate < -3) {
+    return "decrease";
+  }
+
+  return "stable";
+}
+
+function buildInsightLines(params: {
+  tone: TrendTone;
+  discretionaryRatio: number;
+  riskRatio: number;
+  volatility: number;
+}) {
+  const lines: string[] = [];
+
+  lines.push(
+    params.tone === "increase"
+      ? "다음 달 소비는 이번 달보다 커질 가능성이 있습니다."
+      : params.tone === "decrease"
+        ? "다음 달 소비는 이번 달보다 낮아질 가능성이 있습니다."
+        : "다음 달 소비는 이번 달 흐름과 비슷하게 유지될 가능성이 있습니다.",
+  );
+
+  lines.push(
+    params.discretionaryRatio >= 0.35
+      ? "선택 소비 비중이 높아 소비 확대 가능성이 있습니다."
+      : "선택 소비 비중은 비교적 안정적인 수준입니다.",
+  );
+
+  lines.push(
+    params.riskRatio >= 0.2
+      ? "위험 소비 비율이 높아 일시적 과소비 가능성을 점검할 필요가 있습니다."
+      : "위험 소비 비율은 낮은 편이라 급격한 과소비 신호는 크지 않습니다.",
+  );
+
+  lines.push(
+    params.volatility >= 0.3
+      ? "최근 소비 변동성이 높아 지출 관리가 필요합니다."
+      : "최근 소비 변동성은 비교적 안정적인 편입니다.",
+  );
+
+  return lines;
 }
 
 export default function SpendingAnalysis() {
-  const [isMonthlyInsightOpen, setIsMonthlyInsightOpen] = useState(false);
-  const [isAnalysisInsightOpen, setIsAnalysisInsightOpen] = useState(false);
-  const [isWarningOpen, setIsWarningOpen] = useState(false);
-  const [isCategoryStatsOpen, setIsCategoryStatsOpen] = useState(false);
-  const [isMonthlyFlowOpen, setIsMonthlyFlowOpen] = useState(false);
+  const [overview, setOverview] = useState<ConsumptionAnalysisOverviewResponse | null>(null);
+  const [baseline, setBaseline] = useState<ConsumerBaselineResponse | null>(null);
+  const [cardTransactions, setCardTransactions] = useState<CardHistoryTransaction[]>([]);
+  const [hasTransactions, setHasTransactions] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isPredicting, setIsPredicting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [predictionMessage, setPredictionMessage] = useState("");
+  const [isAiInsightOpen, setIsAiInsightOpen] = useState(true);
+  const [isMonthlyInsightOpen, setIsMonthlyInsightOpen] = useState(true);
+  const [isCategoryStatsOpen, setIsCategoryStatsOpen] = useState(true);
+  const [isMonthlyFlowOpen, setIsMonthlyFlowOpen] = useState(true);
 
-  const totalSpending = categoryData.reduce((sum, item) => sum + item.value, 0);
-  const sortedCategoryData = [...categoryData].sort((left, right) => right.value - left.value);
-  const topCategory = sortedCategoryData[0];
+  useEffect(() => {
+    let isMounted = true;
 
-  const monthlyTotals = monthlyData.map((item) => ({
-    ...item,
-    total: item.essential + item.discretionary,
-  }));
+    async function loadAnalysis() {
+      setIsLoading(true);
 
-  if (monthlyTotals.length < 2) {
-    return <div>데이터가 부족합니다.</div>;
+      try {
+        const overviewResponse = await getJson<ConsumptionAnalysisOverviewResponse>(
+          "/api/consumption-analysis/me/overview",
+        );
+
+        let baselineResponse: ConsumerBaselineResponse | null = null;
+        let foundTransactions = false;
+
+        try {
+          const historyResponse = await getJson<CardHistoryResponse>("/api/cards/history");
+          const allTransactions = historyResponse.accounts.flatMap((account) => account.transactions);
+          foundTransactions = allTransactions.length > 0;
+          baselineResponse = await getJson<ConsumerBaselineResponse>("/api/baselines/consumer/me")
+            .catch(() => null);
+
+          if (isMounted) {
+            setCardTransactions(allTransactions);
+          }
+        } catch {
+          baselineResponse = await getJson<ConsumerBaselineResponse>("/api/baselines/consumer/me")
+            .catch(() => null);
+        }
+
+        if (!isMounted) {
+          return;
+        }
+
+        setOverview(overviewResponse);
+        setBaseline(baselineResponse);
+        setHasTransactions(foundTransactions);
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        const message = error instanceof Error ? error.message : "REQUEST_FAILED";
+        setErrorMessage(
+          message === "UNAUTHORIZED"
+            ? "로그인 후 소비 분석을 확인할 수 있습니다."
+            : "소비 분석 정보를 불러오지 못했습니다.",
+        );
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadAnalysis();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  async function handleRunPrediction() {
+    if (!hasTransactions || isPredicting) {
+      return;
+    }
+
+    setIsPredicting(true);
+    setPredictionMessage("");
+    setErrorMessage("");
+
+    try {
+      await postJson<ConsumerPredictionResponse>("/api/consumption-analysis/me/prediction/run", {});
+      const refreshedOverview = await getJson<ConsumptionAnalysisOverviewResponse>(
+        "/api/consumption-analysis/me/overview",
+      );
+      setOverview(refreshedOverview);
+      setPredictionMessage("최신 카드 결제 내역 기준으로 AI 소비 예측을 다시 계산했습니다.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "REQUEST_FAILED";
+      setErrorMessage(
+        message === "UNAUTHORIZED"
+          ? "로그인 후 AI 소비 예측을 실행할 수 있습니다."
+          : "AI 소비 예측을 다시 계산하지 못했습니다.",
+      );
+    } finally {
+      setIsPredicting(false);
+    }
   }
 
-  const currentMonth = monthlyTotals[monthlyTotals.length - 1];
-  const previousMonth = monthlyTotals[monthlyTotals.length - 2];
-  const currentMonthSpending = currentMonth.total;
-  const previousMonthSpending = previousMonth.total;
-  const recentThreeMonthAverage = Math.round(
-    monthlyTotals.slice(-3).reduce((sum, item) => sum + item.total, 0) / 3,
-  );
-  const sixMonthAverage = Math.round(
-    monthlyTotals.reduce((sum, item) => sum + item.total, 0) / monthlyTotals.length,
-  );
+  const viewModel = useMemo(() => {
+    const monthlyAnalyses = overview?.monthlyAnalyses ?? [];
+    const latestPrediction = overview?.latestPrediction ?? null;
 
-  const monthOverMonthDiff = currentMonthSpending - previousMonthSpending;
-  const monthOverMonthRate =
-    previousMonthSpending === 0 ? 0 : (monthOverMonthDiff / previousMonthSpending) * 100;
-  const averageDiff = currentMonthSpending - sixMonthAverage;
-  const averageDiffRate = sixMonthAverage === 0 ? 0 : (averageDiff / sixMonthAverage) * 100;
-  const projectedMonthEndSpending = Math.round((currentMonthSpending / elapsedDays) * daysInMonth);
-  const fixedSpendingRatio = currentMonthSpending === 0
-      ? 0
-      : Math.round((currentMonth.essential / currentMonthSpending) * 100);
-  const variableSpendingRatio = 100 - fixedSpendingRatio;
-  const recommendedCutAmount = Math.round(topCategory.value * 0.18);
-  const isAboveAverage = averageDiff > 0;
+    if (monthlyAnalyses.length === 0) {
+      return null;
+    }
+
+    const currentMonth = monthlyAnalyses[monthlyAnalyses.length - 1];
+    const previousMonth = monthlyAnalyses[monthlyAnalyses.length - 2] ?? null;
+
+    const currentMonthSpending = toNumber(currentMonth.currentMonthSpending);
+    const previousMonthSpending = toNumber(previousMonth?.currentMonthSpending ?? 0);
+    const predictedNextMonthSpending = toNumber(latestPrediction?.predictedTotalSpending ?? 0);
+    const monthOverMonthRate =
+      previousMonthSpending === 0 ? 0 : ((currentMonthSpending - previousMonthSpending) / previousMonthSpending) * 100;
+    const tone = resolveTrendTone(
+      currentMonthSpending === 0
+        ? 0
+        : ((predictedNextMonthSpending - currentMonthSpending) / currentMonthSpending) * 100,
+    );
+
+    const essentialRatio = toNumber(baseline?.essentialRatio);
+    const normalRatio = toNumber(baseline?.normalRatio);
+    const discretionaryRatio = toNumber(baseline?.discretionaryRatio);
+    const riskRatio = toNumber(baseline?.riskRatio);
+    const volatility = toNumber(baseline?.volatility);
+    const averageSpending = toNumber(baseline?.avgSpending);
+    const sixMonthAverage = Math.round(
+      monthlyAnalyses.reduce((sum, item) => sum + toNumber(item.currentMonthSpending), 0) / monthlyAnalyses.length,
+    );
+
+    return {
+      currentMonthAnalysisYearMonth: currentMonth.analysisYearMonth,
+      hasPreviousMonth: previousMonth !== null,
+      latestPrediction,
+      currentMonthSpending,
+      predictedNextMonthSpending,
+      monthOverMonthRate,
+      essentialRatio,
+      normalRatio,
+      discretionaryRatio,
+      riskRatio,
+      volatility,
+      averageSpending,
+      sixMonthAverage,
+      insightLines: buildInsightLines({
+        tone,
+        discretionaryRatio,
+        riskRatio,
+        volatility,
+      }),
+    };
+  }, [baseline, overview]);
+
+  const categoryStats = useMemo(() => {
+    const totalsByCategory = new Map<string, number>();
+
+    for (const transaction of cardTransactions) {
+      if (isExcludedConsumptionTransaction(transaction)) {
+        continue;
+      }
+
+      const amount = transaction.amount;
+      totalsByCategory.set(
+        transaction.categoryName,
+        (totalsByCategory.get(transaction.categoryName) ?? 0) + amount,
+      );
+    }
+
+    const total = Array.from(totalsByCategory.values()).reduce((sum, value) => sum + value, 0);
+    return Array.from(totalsByCategory.entries())
+      .sort((left, right) => right[1] - left[1])
+      .map(([name, value]) => ({
+        name,
+        value,
+        ratio: total === 0 ? 0 : value / total,
+        color: GROUP_COLORS[classifyConsumptionGroup(name)],
+      })) satisfies CategoryStat[];
+  }, [cardTransactions]);
+
+  const monthlyConsumptionFlow = useMemo(() => {
+    const totalsByMonth = new Map<
+      string,
+      { essential: number; normal: number; discretionary: number; risk: number }
+    >();
+
+    for (const transaction of cardTransactions) {
+      if (isExcludedConsumptionTransaction(transaction)) {
+        continue;
+      }
+
+      const monthKey = formatMonthKey(transaction.transactionDatetime);
+      const bucket = totalsByMonth.get(monthKey) ?? {
+        essential: 0,
+        normal: 0,
+        discretionary: 0,
+        risk: 0,
+      };
+      const group = classifyConsumptionGroup(transaction.categoryName);
+      bucket[group] += transaction.amount;
+      totalsByMonth.set(monthKey, bucket);
+    }
+
+    return Array.from(totalsByMonth.entries())
+      .sort((left, right) => left[0].localeCompare(right[0]))
+      .map(([month, values]) => ({
+        month: formatMonthLabel(`${month}-01`),
+        essential: values.essential,
+        normal: values.normal,
+        discretionary: values.discretionary,
+        risk: values.risk,
+      }));
+  }, [cardTransactions]);
+
+  const currentMonthRiskStats = useMemo(() => {
+    if (!viewModel) {
+      return null;
+    }
+
+    const currentMonthKey = formatMonthKey(viewModel.currentMonthAnalysisYearMonth);
+
+    let totalCount = 0;
+    let totalAmount = 0;
+    let riskCount = 0;
+    let riskAmount = 0;
+
+    for (const transaction of cardTransactions) {
+      if (
+        formatMonthKey(transaction.transactionDatetime) !== currentMonthKey ||
+        isExcludedConsumptionTransaction(transaction)
+      ) {
+        continue;
+      }
+
+      totalCount += 1;
+      totalAmount += transaction.amount;
+
+      if (classifyConsumptionGroup(transaction.categoryName) === "risk") {
+        riskCount += 1;
+        riskAmount += transaction.amount;
+      }
+    }
+
+    return {
+      riskCount,
+      totalCount,
+      riskAmount,
+      riskCountRatio: totalCount === 0 ? 0 : riskCount / totalCount,
+      riskAmountRatio: totalAmount === 0 ? 0 : riskAmount / totalAmount,
+    };
+  }, [cardTransactions, viewModel]);
+
   const toggleIconClass =
     "flex items-center justify-center p-0 text-slate-400 transition hover:text-slate-600";
+
+  if (isLoading) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-10 md:px-6">
+        <div className="rounded-[32px] border border-slate-200/80 bg-white px-6 py-12 text-center text-sm text-slate-500 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
+          소비 분석 정보를 불러오는 중입니다.
+        </div>
+      </div>
+    );
+  }
+
+  if (errorMessage && !viewModel) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-10 md:px-6">
+        <div className="rounded-[32px] border border-rose-200 bg-rose-50 px-6 py-12 text-center text-sm text-rose-700">
+          {errorMessage}
+        </div>
+      </div>
+    );
+  }
+
+  if (!viewModel) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-10 md:px-6">
+        <div className="rounded-[32px] border border-slate-200/80 bg-white px-6 py-12 text-center text-sm text-slate-500 shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
+          표시할 소비 분석 데이터가 없습니다.
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 md:px-6">
@@ -106,181 +522,259 @@ export default function SpendingAnalysis() {
           </p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">소비 분석</h1>
           <p className="mt-2 text-sm text-slate-500">
-            월별 소비 흐름과 카테고리 비중을 바탕으로 현재 소비 상태를 해석합니다.
+            월별 소비 흐름과 AI 소비 예측을 함께 확인할 수 있습니다.
           </p>
 
           <div className="mt-6 grid gap-4 md:grid-cols-4">
-            <div className="rounded-3xl border border-sky-100 bg-[linear-gradient(135deg,_rgba(219,234,254,0.95)_0%,_rgba(239,246,255,0.98)_48%,_rgba(248,250,252,1)_100%)] px-5 py-5 text-slate-900 shadow-[0_20px_45px_rgba(148,163,184,0.18)]">
-              <p className="text-xs tracking-[0.12em] text-sky-700/70">이번 달 총소비</p>
-              <p className="mt-3 text-3xl font-semibold">{formatAmount(totalSpending)}</p>
+            <div className="rounded-[24px] border border-sky-100 bg-[linear-gradient(180deg,_#f8fbff_0%,_#f2f7ff_100%)] px-6 py-5 text-slate-900">
+              <p className="text-sm font-medium text-sky-600">이번 달 총소비</p>
+              <p className="mt-3 text-[2.1rem] font-bold tracking-tight">{formatAmount(viewModel.currentMonthSpending)}</p>
             </div>
 
-            <div className="rounded-3xl border border-blue-100 bg-blue-50/70 px-5 py-5">
+            <div className="rounded-[24px] border border-slate-200 bg-[linear-gradient(180deg,_#f8fbff_0%,_#f3f7fd_100%)] px-6 py-5">
               <p className="text-sm font-medium text-slate-500">6개월 평균 소비</p>
-              <p className="mt-4 text-2xl font-bold text-slate-900">
-                {formatAmount(sixMonthAverage)}
+              <p className="mt-3 text-[2rem] font-bold tracking-tight text-slate-900">{formatAmount(viewModel.sixMonthAverage)}</p>
+            </div>
+
+            <div className="rounded-[24px] border border-slate-200 bg-[linear-gradient(180deg,_#fafcff_0%,_#f5f7fb_100%)] px-6 py-5">
+              <p className="text-sm font-medium text-slate-500">전월 대비</p>
+              <p className="mt-3 text-[2rem] font-bold tracking-tight text-slate-900">
+                {viewModel.hasPreviousMonth ? formatSignedPercent(viewModel.monthOverMonthRate) : "없음"}
               </p>
             </div>
 
-            <div className="rounded-3xl border border-slate-200 bg-slate-50/90 px-5 py-5">
-              <p className="text-sm font-medium text-slate-500">전월 대비</p>
-              <div className="mt-4">
-                <p className="text-2xl font-bold text-slate-900">
-                  {monthOverMonthRate > 0 ? "+" : ""}
-                  {monthOverMonthRate.toFixed(1)}%
-                </p>
-              </div>
-            </div>
-
-            <div className="rounded-3xl border border-indigo-100 bg-indigo-50/80 px-5 py-5">
+            <div className="rounded-[24px] border border-indigo-100 bg-[linear-gradient(180deg,_#f8fbff_0%,_#f2f5ff_100%)] px-6 py-5">
               <p className="text-sm font-medium text-slate-500">가장 큰 소비 항목</p>
-              <p className="mt-4 text-2xl font-bold text-slate-900">{topCategory.name}</p>
+              <p className="mt-3 text-[2rem] font-bold tracking-tight text-slate-900">
+                {categoryStats[0]?.name ?? "-"}
+              </p>
             </div>
           </div>
         </div>
 
         <div className="space-y-8 px-6 py-8 md:px-8 lg:px-10">
-          <section className="space-y-5">
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-              <button
-                type="button"
-                onClick={() => setIsMonthlyInsightOpen((prev) => !prev)}
-                className="flex w-full items-center justify-between gap-4 text-left"
-              >
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900">이번 달 소비 해석</h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    단순 합계가 아니라 전월과 평균 기준에서 현재 흐름을 해석합니다.
-                  </p>
-                </div>
-                <span className={toggleIconClass}>
-                  {isMonthlyInsightOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-                </span>
-              </button>
-
-              {isMonthlyInsightOpen && (
-                <div className="mt-5 grid gap-4 md:grid-cols-3">
-                  <article className="flex min-h-[168px] flex-col rounded-2xl border border-blue-100 bg-blue-50/80 p-5">
-                    <p className="text-sm font-medium text-slate-500">전월 대비 변화</p>
-                    <p className="mt-3 text-2xl font-bold text-slate-900">
-                      {monthOverMonthDiff > 0 ? "+" : "-"}
-                      {formatAmount(Math.abs(monthOverMonthDiff))}
-                    </p>
-                    <p className="mt-auto pt-4 text-sm leading-6 text-slate-600">
-                      지난달보다{" "}
-                      <span className="font-semibold text-slate-800">
-                        {monthOverMonthDiff > 0 ? "지출이 늘었습니다." : "지출이 줄었습니다."}
-                      </span>
-                    </p>
-                  </article>
-
-                  <article className="flex min-h-[168px] flex-col rounded-2xl border border-indigo-100 bg-indigo-50/80 p-5">
-                    <p className="text-sm font-medium text-slate-500">예상 월말 소비</p>
-                    <p className="mt-3 text-2xl font-bold text-slate-900">
-                      {formatAmount(projectedMonthEndSpending)}
-                    </p>
-                    <p className="mt-auto pt-4 text-sm leading-6 text-slate-600">
-                      이번 달 {elapsedDays}일 기준 일평균 소비를 월말까지 단순 환산한 값입니다.
-                    </p>
-                  </article>
-
-                  <article className="flex min-h-[168px] flex-col rounded-2xl border border-slate-200 bg-slate-50/90 p-5">
-                    <p className="text-sm font-medium text-slate-500">평균 대비 변화</p>
-                    <p className="mt-3 text-2xl font-bold text-slate-900">
-                      {averageDiffRate > 0 ? "+" : ""}
-                      {averageDiffRate.toFixed(1)}%
-                    </p>
-                    <p className="mt-auto pt-4 text-sm leading-6 text-slate-600">
-                      최근 6개월 평균과 비교하면{" "}
-                      <span className="font-semibold text-slate-800">
-                        {isAboveAverage ? "소비가 높은 편입니다." : "소비가 안정적인 편입니다."}
-                      </span>
-                    </p>
-                  </article>
-                </div>
-              )}
-            </div>
-
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-              <button
-                type="button"
-                onClick={() => setIsAnalysisInsightOpen((prev) => !prev)}
-                className="flex w-full items-center justify-between gap-4 text-left"
-              >
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900">분석 인사이트</h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    카테고리 집계와 월별 분석 결과를 바탕으로 핵심 포인트를 요약합니다.
-                  </p>
-                </div>
-                <span className={toggleIconClass}>
-                  {isAnalysisInsightOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-                </span>
-              </button>
-
-              {isAnalysisInsightOpen && (
-                <div className="mt-5 grid gap-4 md:grid-cols-3">
-                  <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4">
-                    <p className="text-sm text-slate-500">가장 큰 지출 항목</p>
-                    <p className="mt-2 text-lg font-semibold text-slate-900">
-                      {topCategory.name} {formatAmount(topCategory.value)}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4">
-                    <p className="text-sm text-slate-500">고정/변동 지출 비율</p>
-                    <p className="mt-2 text-lg font-semibold text-slate-900">
-                      생활비 {fixedSpendingRatio}% / 선택 지출 {variableSpendingRatio}%
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl border border-amber-100 bg-amber-50/80 px-4 py-4">
-                    <p className="text-sm text-slate-500">절약 가능 금액</p>
-                    <p className="mt-2 text-lg font-semibold text-slate-900">
-                      약 {formatAmount(recommendedCutAmount)}
-                    </p>
-                    <p className="mt-2 text-sm text-slate-600">
-                      {topCategory.name} 항목을 일부 줄이면 이번 달 부담을 완화할 수 있습니다.
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </section>
-
-          {isAboveAverage && (
-            <section className="rounded-3xl border border-amber-200 bg-amber-50/90 px-6 py-5">
-              <button
-                type="button"
-                onClick={() => setIsWarningOpen((prev) => !prev)}
-                className="flex w-full items-center justify-between gap-4 text-left"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="rounded-2xl bg-amber-100 p-3 text-amber-600">
-                    <AlertTriangle className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-slate-900">소비 주의 신호</h2>
-                    <p className="mt-1 text-sm leading-6 text-slate-600">
-                      최근 평균보다 소비가 높을 때 확인할 경고 요약입니다.
-                    </p>
-                  </div>
-                </div>
-                <span className={toggleIconClass}>
-                  {isWarningOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-                </span>
-              </button>
-
-              {isWarningOpen && (
-                <div className="mt-4 pl-[68px]">
-                  <p className="text-sm leading-6 text-slate-600">
-                    이번 달 소비가 최근 평균보다 {formatAmount(Math.abs(Math.round(averageDiff)))} 많습니다.
-                    쇼핑과 선택 지출 비중이 커져 있어 다음 결제 전까지 추가 지출을 점검하는 편이 좋습니다.
-                  </p>
-                </div>
-              )}
+          {errorMessage && (
+            <section className="rounded-3xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm text-rose-700">
+              {errorMessage}
             </section>
           )}
+
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
+            <button
+              type="button"
+              onClick={() => setIsAiInsightOpen((prev) => !prev)}
+              className="flex w-full items-center justify-between gap-4 text-left"
+            >
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">AI 소비예측</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  다음 달 예상 소비금액과 설명용 feature를 바탕으로 AI 인사이트를 제공합니다.
+                </p>
+              </div>
+              <span className={toggleIconClass}>
+                {isAiInsightOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+              </span>
+            </button>
+
+            {isAiInsightOpen && (
+              <div className="mt-5 space-y-5">
+                <div className="flex flex-col gap-3 rounded-3xl border border-blue-100 bg-[linear-gradient(135deg,_rgba(239,246,255,0.95)_0%,_rgba(255,255,255,1)_100%)] p-5 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-500">예측 결과</p>
+                    <p className="mt-2 text-3xl font-bold tracking-tight text-slate-950">
+                      {formatAmount(viewModel.predictedNextMonthSpending)}
+                    </p>
+                    <p className="mt-2 text-sm font-medium text-blue-700">
+                      예측 모델: {viewModel.latestPrediction?.modelVersion || "XGBoost"}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-start gap-3 md:items-end">
+                    <button
+                      type="button"
+                      onClick={() => void handleRunPrediction()}
+                      disabled={!hasTransactions || isPredicting}
+                      className="inline-flex h-10 items-center justify-center rounded-[16px] border border-slate-200 bg-slate-50 px-5 text-sm font-medium text-slate-700 transition hover:border-slate-300 hover:bg-white hover:text-slate-900 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
+                    >
+                      {isPredicting ? "AI 소비 예측 계산 중..." : "AI 소비 예측 하기"}
+                    </button>
+                    <p className="text-sm text-slate-500">
+                      {hasTransactions
+                        ? "카드 결제 내역 기준으로 예측을 다시 계산합니다."
+                        : "카드 결제 내역이 있어야 예측을 실행할 수 있습니다."}
+                    </p>
+                  </div>
+                </div>
+
+                {predictionMessage && (
+                  <p className="text-sm font-medium text-emerald-700">{predictionMessage}</p>
+                )}
+
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+                  <article className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4">
+                    <p className="text-sm text-slate-500">개인 필수소비 비율</p>
+                    <p className="mt-2 text-2xl font-bold text-slate-900">{formatRatio(viewModel.essentialRatio)}</p>
+                  </article>
+
+                  <article className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4">
+                    <p className="text-sm text-slate-500">개인 일반소비 비율</p>
+                    <p className="mt-2 text-2xl font-bold text-slate-900">{formatRatio(viewModel.normalRatio)}</p>
+                  </article>
+
+                  <article className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4">
+                    <p className="text-sm text-slate-500">개인 선택소비 비율</p>
+                    <p className="mt-2 text-2xl font-bold text-slate-900">{formatRatio(viewModel.discretionaryRatio)}</p>
+                  </article>
+
+                  <article className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4">
+                    <p className="text-sm text-slate-500">개인 위험소비 비율</p>
+                    <p className="mt-2 text-2xl font-bold text-slate-900">{formatRatio(viewModel.riskRatio)}</p>
+                  </article>
+
+                  <article className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4">
+                    <p className="text-sm text-slate-500">평균 거래 소비</p>
+                    <p className="mt-2 text-2xl font-bold text-slate-900">{formatAmount(viewModel.averageSpending)}</p>
+                  </article>
+                </div>
+
+                <div className="rounded-3xl border border-slate-200 bg-slate-50/70 p-5">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-white text-slate-700 shadow-sm">
+                      <Brain className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-900">예측 근거</h3>
+                      <p className="mt-1 text-sm leading-6 text-slate-500">
+                        다음 달 예상 소비금액은 이번 달 실제 소비와 소비 성향 feature를 함께 반영해 계산한 결과입니다.
+                      </p>
+                      <p className="mt-1 text-sm font-medium text-blue-700">
+                        XGBoost 기반 예측 모델이 최신 소비 패턴을 반영해 결과를 계산합니다.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 grid gap-4 md:grid-cols-2">
+                    <div className="rounded-2xl border border-white bg-white px-4 py-4">
+                      <p className="text-sm font-medium text-slate-500">1. 이번 달 실제 소비</p>
+                      <p className="mt-2 text-xl font-bold text-slate-900">
+                        {formatAmount(viewModel.currentMonthSpending)}
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        가장 최근 월의 실제 카드 소비 금액이 예측의 기본 기준값으로 사용됩니다.
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl border border-white bg-white px-4 py-4">
+                      <p className="text-sm font-medium text-slate-500">2. 최근 소비 추세</p>
+                      <p className="mt-2 text-xl font-bold text-slate-900">
+                        {viewModel.hasPreviousMonth
+                          ? `전월 대비 ${formatSignedPercent(viewModel.monthOverMonthRate)}`
+                          : "전월 데이터 없음"}
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        {viewModel.hasPreviousMonth
+                          ? "최근 소비가 증가 흐름인지 감소 흐름인지에 따라 다음 달 예측치가 조정됩니다."
+                          : "비교할 전월 데이터가 아직 없어 최근 추세 비교는 반영되지 않았습니다."}
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl border border-white bg-white px-4 py-4">
+                      <p className="text-sm font-medium text-slate-500">3. 개인 소비 성향 비율</p>
+                      <p className="mt-2 text-xl font-bold text-slate-900">
+                        필수 {formatRatio(viewModel.essentialRatio)} · 일반 {formatRatio(viewModel.normalRatio)} · 선택 {formatRatio(viewModel.discretionaryRatio)} · 위험 {formatRatio(viewModel.riskRatio)}
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        필수, 일반, 선택, 위험 소비 비중을 함께 보고 다음 달 지출 확대 가능성을 반영합니다.
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl border border-white bg-white px-4 py-4">
+                      <p className="text-sm font-medium text-slate-500">4. 소비 변동성</p>
+                      <p className="mt-2 text-xl font-bold text-slate-900">
+                        {viewModel.volatility.toFixed(2)}
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">
+                        최근 소비 패턴이 들쭉날쭉할수록 예측 범위도 커질 수 있어 추가 보정값으로 반영됩니다.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  {viewModel.insightLines.map((line) => (
+                    <div
+                      key={line}
+                      className="flex items-center gap-3 rounded-[18px] border border-slate-200 bg-white px-4 py-5"
+                    >
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                        <Sparkles className="h-4 w-4" />
+                      </div>
+                      <p className="text-sm font-medium text-slate-700">{line}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {!baseline && (
+                  <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                    최근 거래 기준 feature 데이터가 아직 없어 일부 비율은 0으로 표시됩니다.
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
+            <button
+              type="button"
+              onClick={() => setIsMonthlyInsightOpen((prev) => !prev)}
+              className="flex w-full items-center justify-between gap-4 text-left"
+            >
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">이번 달 소비 해석</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  단순 합계가 아니라 전월과 평균 기준에서 현재 소비 흐름을 해석합니다.
+                </p>
+              </div>
+              <span className={toggleIconClass}>
+                {isMonthlyInsightOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+              </span>
+            </button>
+
+            {isMonthlyInsightOpen && (
+              <div className="mt-5 grid gap-4 md:grid-cols-3">
+                <article className="flex min-h-[168px] flex-col rounded-2xl border border-rose-100 bg-rose-50/80 p-5">
+                  <p className="text-sm font-medium text-slate-500">위험소비 건수</p>
+                  <p className="mt-3 text-2xl font-bold text-slate-900">
+                    {currentMonthRiskStats?.riskCount.toLocaleString("ko-KR") ?? 0}건
+                  </p>
+                  <p className="mt-auto pt-4 text-sm leading-6 text-slate-600">
+                    이번 달 전체 소비 거래 {currentMonthRiskStats?.totalCount.toLocaleString("ko-KR") ?? 0}건 중
+                    위험소비로 분류된 거래 수입니다.
+                  </p>
+                </article>
+
+                <article className="flex min-h-[168px] flex-col rounded-2xl border border-pink-100 bg-pink-50/80 p-5">
+                  <p className="text-sm font-medium text-slate-500">이번 달 위험소비 비율</p>
+                  <p className="mt-3 text-2xl font-bold text-slate-900">
+                    {formatRatio(currentMonthRiskStats?.riskAmountRatio ?? 0)}
+                  </p>
+                  <p className="mt-auto pt-4 text-sm leading-6 text-slate-600">
+                    이번 달 실제 소비금액 중 위험소비가 차지하는 비중입니다.
+                  </p>
+                </article>
+
+                <article className="flex min-h-[168px] flex-col rounded-2xl border border-amber-100 bg-amber-50/90 p-5">
+                  <p className="text-sm font-medium text-slate-500">위험소비 금액</p>
+                  <p className="mt-3 text-2xl font-bold text-slate-900">
+                    {formatAmount(currentMonthRiskStats?.riskAmount ?? 0)}
+                  </p>
+                  <p className="mt-auto pt-4 text-sm leading-6 text-slate-600">
+                    주점, 노래방 등 위험소비로 분류된 이번 달 총 지출입니다.
+                  </p>
+                </article>
+              </div>
+            )}
+          </section>
 
           <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
             <button
@@ -291,7 +785,7 @@ export default function SpendingAnalysis() {
               <div>
                 <h2 className="text-xl font-bold text-slate-900">카테고리별 소비 통계</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  소비 항목별 금액과 비중을 큰 순서대로 보여줍니다.
+                  카드 결제내역 기준으로 소비 항목별 금액과 비율을 큰 순서대로 보여줍니다.
                 </p>
               </div>
               <span className={toggleIconClass}>
@@ -299,51 +793,78 @@ export default function SpendingAnalysis() {
               </span>
             </button>
 
-            {isCategoryStatsOpen && (
-              <div className="mt-6 grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
-                <div className="rounded-3xl border border-slate-100 bg-slate-50/70 p-4">
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={categoryData}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={100}
-                        innerRadius={56}
+            {isCategoryStatsOpen && (categoryStats.length > 0 ? (
+              <div className="mt-6">
+                <div className="mb-5 flex flex-wrap items-center gap-x-6 gap-y-3">
+                  <div className="flex items-center gap-2.5 text-base font-semibold text-slate-700">
+                    <span className="h-3.5 w-3.5 rounded-full bg-[#2f7de1]" />
+                    필수 소비
+                  </div>
+                  <div className="flex items-center gap-2.5 text-base font-semibold text-slate-700">
+                    <span className="h-3.5 w-3.5 rounded-full bg-[#22c55e]" />
+                    일반 소비
+                  </div>
+                  <div className="flex items-center gap-2.5 text-base font-semibold text-slate-700">
+                    <span className="h-3.5 w-3.5 rounded-full bg-[#facc15]" />
+                    선택 소비
+                  </div>
+                  <div className="flex items-center gap-2.5 text-base font-semibold text-slate-700">
+                    <span className="h-3.5 w-3.5 rounded-full bg-[#ec4899]" />
+                    위험 소비
+                  </div>
+                </div>
+
+                <div className="grid gap-6 lg:grid-cols-[1.34fr_0.66fr]">
+                <div className="flex min-h-[500px] items-center justify-center rounded-3xl border border-slate-100 bg-slate-50/70 p-1.5">
+                  <div className="w-full">
+                    <ResponsiveContainer width="100%" height={472}>
+                    <RechartsPieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+                      <RechartsPie
+                        data={categoryStats}
                         dataKey="value"
-                        labelLine={false}
+                        nameKey="name"
+                        cx="50%"
+                        cy="52%"
+                        innerRadius={118}
+                        outerRadius={186}
+                        paddingAngle={2}
                         label={({ percent }) => `${((percent ?? 0) * 100).toFixed(0)}%`}
+                        labelLine={false}
                       >
-                        {categoryData.map((entry) => (
-                          <Cell key={entry.name} fill={entry.color} />
+                        {categoryStats.map((item) => (
+                          <Cell key={item.name} fill={item.color} />
                         ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => formatAmount(Number(value))} />
-                    </PieChart>
-                  </ResponsiveContainer>
+                      </RechartsPie>
+                      <Tooltip formatter={(value: number) => formatAmount(value)} />
+                    </RechartsPieChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
 
                 <div className="space-y-3">
-                  {sortedCategoryData.map((category) => (
+                  {categoryStats.map((item) => (
                     <div
-                      key={category.name}
-                      className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-4"
+                      key={item.name}
+                      className="flex items-center justify-between rounded-2xl border border-slate-100 bg-white px-5 py-4"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="h-3.5 w-3.5 rounded-full" style={{ backgroundColor: category.color }} />
-                        <span className="font-medium text-slate-800">{category.name}</span>
+                        <div className="h-3.5 w-3.5 rounded-full" style={{ backgroundColor: item.color }} />
+                        <span className="text-[1.02rem] font-semibold text-slate-800">{item.name}</span>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-slate-900">{formatAmount(category.value)}</p>
-                        <p className="text-sm text-slate-500">
-                          {((category.value / totalSpending) * 100).toFixed(1)}%
-                        </p>
+                        <p className="text-[1.02rem] font-bold text-slate-900">{formatAmount(item.value)}</p>
+                        <p className="text-[0.95rem] font-medium text-slate-500">{(item.ratio * 100).toFixed(1)}%</p>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
-            )}
+              </div>
+            ) : (
+              <div className="mt-6 rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-8 text-center text-sm text-slate-500">
+                집계할 소비 카테고리 데이터가 없습니다.
+              </div>
+            ))}
           </section>
 
           <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
@@ -355,7 +876,7 @@ export default function SpendingAnalysis() {
               <div>
                 <h2 className="text-xl font-bold text-slate-900">월별 소비 흐름</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  생활비와 선택 지출을 나눠서 월별 변화를 비교합니다.
+                  카드 결제내역을 기준으로 필수, 일반, 선택, 위험 소비를 나눠 월별 변화를 비교합니다.
                 </p>
               </div>
               <span className={toggleIconClass}>
@@ -364,21 +885,43 @@ export default function SpendingAnalysis() {
             </button>
 
             {isMonthlyFlowOpen && (
-              <div className="mt-6 rounded-3xl border border-slate-100 bg-slate-50/70 p-4">
+              <div className="mt-6">
+                <div className="mb-5 flex flex-wrap items-center gap-x-6 gap-y-3">
+                  <div className="flex items-center gap-2.5 text-base font-semibold text-slate-700">
+                    <span className="h-3.5 w-3.5 rounded-full bg-[#2f7de1]" />
+                    필수 소비
+                  </div>
+                  <div className="flex items-center gap-2.5 text-base font-semibold text-slate-700">
+                    <span className="h-3.5 w-3.5 rounded-full bg-[#22c55e]" />
+                    일반 소비
+                  </div>
+                  <div className="flex items-center gap-2.5 text-base font-semibold text-slate-700">
+                    <span className="h-3.5 w-3.5 rounded-full bg-[#facc15]" />
+                    선택 소비
+                  </div>
+                  <div className="flex items-center gap-2.5 text-base font-semibold text-slate-700">
+                    <span className="h-3.5 w-3.5 rounded-full bg-[#ec4899]" />
+                    위험 소비
+                  </div>
+                </div>
+
+                <div className="rounded-3xl border border-slate-100 bg-slate-50/70 p-4">
                 <ResponsiveContainer width="100%" height={320}>
-                  <BarChart data={monthlyData}>
+                  <BarChart data={monthlyConsumptionFlow} barGap={8} barCategoryGap="22%">
+                    <CartesianGrid vertical={false} stroke="#e2e8f0" strokeDasharray="3 3" />
                     <XAxis dataKey="month" tickLine={false} axisLine={false} />
                     <YAxis tickLine={false} axisLine={false} />
                     <Tooltip formatter={(value: number) => formatAmount(value)} />
-                    <Legend />
-                    <Bar dataKey="essential" name="생활비" radius={[10, 10, 0, 0]} fill="#2563eb" />
-                    <Bar dataKey="discretionary" name="선택 지출" radius={[10, 10, 0, 0]} fill="#93c5fd" />
+                    <Bar dataKey="essential" name="필수 소비" fill="#2f7de1" radius={[10, 10, 0, 0]} />
+                    <Bar dataKey="normal" name="일반 소비" fill="#22c55e" radius={[10, 10, 0, 0]} />
+                    <Bar dataKey="discretionary" name="선택 소비" fill="#facc15" radius={[10, 10, 0, 0]} />
+                    <Bar dataKey="risk" name="위험 소비" fill="#ec4899" radius={[10, 10, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
+                </div>
               </div>
             )}
           </section>
-
         </div>
       </div>
     </div>
