@@ -15,6 +15,7 @@ import CardHistory from "./pages/card/CardHistory";
 import SpendingAnalysis from "./pages/card/SpendingAnalysis";
 import MyPage from "./pages/account/MyPage";
 import ChatHistory from "./pages/help/ChatHistory";
+import LoanApplicationGuide from "./pages/loan/LoanApplicationGuide";
 
 
 export const router = createBrowserRouter([
@@ -28,6 +29,7 @@ export const router = createBrowserRouter([
       { path: "account/my", Component: MyAccount },
       { path: "account/ddokgae", Component: DdokgaeAccount },
       { path: "loan/products", Component: LoanProducts },
+      { path: "loan/apply-guide", Component: LoanApplicationGuide },
       { path: "loan/products/:productId", Component: LoanDetail },
       { path: "loan/products/:productId/apply", Component: LoanApply },
       { path: "loan/management", Component: MyLoanManagement },

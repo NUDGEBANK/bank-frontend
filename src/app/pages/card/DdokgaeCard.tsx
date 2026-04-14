@@ -508,7 +508,7 @@ export default function DdokgaeCard() {
                       </div>
                       <div>
                         <p className="text-slate-800">초기 정보</p>
-                        <p>잔고 0원, 보호잔액 0원으로 생성됩니다.</p>
+                        <p>잔고 0원으로 생성됩니다.</p>
                       </div>
                     </div>
                   </div>
