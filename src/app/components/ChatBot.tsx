@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { MessageCircle, X, Send } from "lucide-react";
 import { sendMessage, type ChatAction } from "../api/chat";
-import { useNavigate } from "react-router";
 import { Button } from "./ui/button";
 
 type QuickReply = ChatAction;
+import { useNavigate } from "react-router";
 
 type Message = {
   text: string;
@@ -278,9 +278,21 @@ export default function ChatBot() {
           value: "내가 받을 수 있는 대출 뭐 있어?",
         },
         { type: "navigate", label: "신청 페이지 이동", href: "/loan/apply" },
-      ]); 
+      ]);
       streamDoneRef.current = true;
     }
+  };
+
+  const handleMoveToGuide = () => {
+    // 챗봇 UI에서 대출 신청 안내 페이지로 이동
+    setIsOpen(false);
+    navigate("/loan/apply-guide");
+  };
+
+  const handleMoveToChatHistory = () => {
+    // 챗봇 UI에서 전체 상담 화면으로 이동
+    setIsOpen(false);
+    navigate("/help/chat-history");
   };
 
   const handleSend = async () => {
@@ -312,6 +324,8 @@ export default function ChatBot() {
       {isOpen && (
         <div className="fixed bottom-8 right-8 z-50 flex h-[500px] w-96 flex-col rounded-lg border border-white/20 bg-white/95 shadow-2xl backdrop-blur-md">
           <div className="flex items-center justify-between rounded-t-lg bg-gradient-to-r from-blue-600 to-blue-700 p-4 text-white">
+        <div className="fixed bottom-8 right-8 z-50 flex h-[560px] w-96 flex-col rounded-lg border border-white/20 bg-white/95 shadow-2xl backdrop-blur-md">
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-t-lg flex items-center justify-between">
             <div className="flex items-center gap-2">
               <MessageCircle className="h-5 w-5" />
               <span className="font-semibold">NUDGEBOT</span>
@@ -324,6 +338,25 @@ export default function ChatBot() {
             </button>
           </div>
 
+          {/* 버튼 3개로 변경 필요 */}
+          <div className="flex gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3">
+            <button
+              type="button"
+              onClick={handleMoveToGuide}
+              className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+            >
+              대출 신청 안내
+            </button>
+            <button
+              type="button"
+              onClick={handleMoveToChatHistory}
+              className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
+            >
+              상담 기록 보기
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
           <div className="flex-1 space-y-3 overflow-y-auto p-4">
             {messages.map((message, index) => (
               <div
@@ -331,6 +364,7 @@ export default function ChatBot() {
                 className={`flex flex-col ${
                   message.sender === "user" ? "items-end" : "items-start"
                 }`}
+                className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
                   className={`max-w-[80%] whitespace-pre-wrap rounded-lg px-4 py-2 ${
