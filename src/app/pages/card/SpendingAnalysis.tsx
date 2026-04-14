@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertTriangle, Bell, BellOff, ChevronDown, ChevronUp } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronUp } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -52,15 +52,11 @@ function formatAmount(value: number) {
 }
 
 export default function SpendingAnalysis() {
-  const [alertEnabled, setAlertEnabled] = useState(true);
-  const [alertThreshold, setAlertThreshold] = useState(2000000);
   const [isMonthlyInsightOpen, setIsMonthlyInsightOpen] = useState(false);
   const [isAnalysisInsightOpen, setIsAnalysisInsightOpen] = useState(false);
   const [isWarningOpen, setIsWarningOpen] = useState(false);
   const [isCategoryStatsOpen, setIsCategoryStatsOpen] = useState(false);
   const [isMonthlyFlowOpen, setIsMonthlyFlowOpen] = useState(false);
-  const [isMemoOpen, setIsMemoOpen] = useState(false);
-  const [isAlertSettingOpen, setIsAlertSettingOpen] = useState(false);
 
   const totalSpending = categoryData.reduce((sum, item) => sum + item.value, 0);
   const sortedCategoryData = [...categoryData].sort((left, right) => right.value - left.value);
@@ -98,7 +94,6 @@ export default function SpendingAnalysis() {
   const variableSpendingRatio = 100 - fixedSpendingRatio;
   const recommendedCutAmount = Math.round(topCategory.value * 0.18);
   const isAboveAverage = averageDiff > 0;
-  const isOverThreshold = totalSpending > alertThreshold;
   const toggleIconClass =
     "flex items-center justify-center p-0 text-slate-400 transition hover:text-slate-600";
 
@@ -384,123 +379,6 @@ export default function SpendingAnalysis() {
             )}
           </section>
 
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-            <button
-              type="button"
-              onClick={() => setIsMemoOpen((prev) => !prev)}
-              className="flex w-full items-center justify-between gap-4 text-left"
-            >
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">추가 메모</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  현재 소비 패턴을 짧은 문장으로 정리한 해석 메모입니다.
-                </p>
-              </div>
-              <span className={toggleIconClass}>
-                {isMemoOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-              </span>
-            </button>
-
-            {isMemoOpen && (
-              <div className="mt-6 grid gap-4 md:grid-cols-3">
-                <article className="rounded-3xl border border-blue-100 bg-blue-50/80 p-6">
-                  <h3 className="text-lg font-semibold text-slate-900">안정적인 고정 지출</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    생활비는 최근 여러 달 동안 큰 변동 없이 유지되고 있습니다. 고정 지출 구조는 비교적 안정적인 편입니다.
-                  </p>
-                </article>
-
-                <article className="rounded-3xl border border-amber-100 bg-amber-50/80 p-6">
-                  <h3 className="text-lg font-semibold text-slate-900">선택 지출 증가</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    쇼핑과 문화·여가 지출이 이번 달에 집중되어 있습니다. 다음 주까지 추이를 한 번 더 보는 편이 좋습니다.
-                  </p>
-                </article>
-
-                <article className="rounded-3xl border border-slate-200 bg-slate-50/90 p-6">
-                  <h3 className="text-lg font-semibold text-slate-900">상환 여력 메모</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    현재 흐름 기준으로는 생활비를 유지한 채 선택 지출만 줄여도 월간 부담을 완화할 수 있는 구조입니다.
-                  </p>
-                </article>
-              </div>
-            )}
-          </section>
-
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-            <button
-              type="button"
-              onClick={() => setIsAlertSettingOpen((prev) => !prev)}
-              className="flex w-full items-center justify-between gap-4 text-left"
-            >
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">과소비 알림 설정</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  월간 소비 누계를 기준으로 한도 알림을 관리합니다.
-                </p>
-              </div>
-              <span className={toggleIconClass}>
-                {isAlertSettingOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-              </span>
-            </button>
-
-            {isAlertSettingOpen && (
-              <div className="mt-6 space-y-4">
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                  <div />
-
-                  <button
-                    type="button"
-                    onClick={() => setAlertEnabled(!alertEnabled)}
-                    className={`inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-semibold transition ${
-                      alertEnabled
-                        ? "border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
-                        : "border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
-                    }`}
-                  >
-                    {alertEnabled ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
-                    {alertEnabled ? "알림 켜짐" : "알림 꺼짐"}
-                  </button>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-600">월간 소비 한도 설정</label>
-                  <div className="flex flex-col gap-3 md:flex-row md:items-center">
-                    <input
-                      type="range"
-                      min="1000000"
-                      max="5000000"
-                      step="100000"
-                      value={alertThreshold}
-                      onChange={(event) => setAlertThreshold(Number(event.target.value))}
-                      className="flex-1 accent-blue-600"
-                      disabled={!alertEnabled}
-                    />
-                    <input
-                      type="number"
-                      value={alertThreshold}
-                      onChange={(event) => setAlertThreshold(Number(event.target.value))}
-                      className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100 disabled:bg-slate-50 md:w-44"
-                      disabled={!alertEnabled}
-                      min={1000000}
-                      max={5000000}
-                      step={100000}
-                    />
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4">
-                  <p className="text-sm leading-6 text-slate-600">
-                    {alertEnabled
-                      ? `현재 집계 소비 금액은 ${formatAmount(totalSpending)}이고 설정한 한도는 ${formatAmount(alertThreshold)}입니다. ${
-                          isOverThreshold ? "이미 한도를 초과한 상태입니다." : "아직 설정 범위 안에 있습니다."
-                        }`
-                      : "알림이 꺼져 있습니다. 다시 켜면 한도 초과 시점에 맞춰 경고를 받을 수 있습니다."}
-                  </p>
-                </div>
-              </div>
-            )}
-          </section>
         </div>
       </div>
     </div>
