@@ -281,8 +281,8 @@ export default function ChatBot() {
           label: "대출 상품 보기",
           value: "내가 받을 수 있는 대출 뭐 있어?",
         },
-        { type: "navigate", label: "신청 페이지 이동", href: "/loan/apply" },
-        { type: "navigate", label: "신청 안내 보기", href: "/loan/apply-guide" },
+        { type: "navigate", label: "대출 상품 보기", href: "/loan/products" },
+        { type: "navigate", label: "신청 안내 보기", href: "/loan/apply-guide",},
       ]);
       streamDoneRef.current = true;
     }
