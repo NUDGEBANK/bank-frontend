@@ -1,4 +1,4 @@
-import { Calendar, Calculator, ChevronDown, ChevronUp, FileSearch, TrendingDown, Upload } from "lucide-react";
+﻿import { Calendar, Calculator, ChevronDown, ChevronUp, FileSearch, TrendingDown, Upload } from "lucide-react";
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import { getJson, postJson } from "../../lib/api";
@@ -623,6 +623,41 @@ export default function MyLoanManagement() {
         </div>
 
         <div className="space-y-8 px-6 py-8 md:px-8 lg:px-10">
+          {applications.length > 0 && (
+            <section className="rounded-3xl border border-slate-200 bg-slate-50/80 px-5 py-5">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-sky-600">
+                    Selected Product
+                  </p>
+                  <h2 className="mt-2 text-xl font-bold text-slate-900">신청 상품별 대출 관리</h2>
+                  <p className="mt-2 text-sm text-slate-500">
+                    신청한 상품을 선택하면 해당 상품 기준 대출 정보와 상환 현황을 확인할 수 있습니다.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {applications.map((application) => {
+                    const isSelected = application.productKey === selectedProductKey;
+                    return (
+                      <button
+                        key={application.loanApplicationId}
+                        type="button"
+                        onClick={() => setSelectedProductKey(application.productKey)}
+                        className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                          isSelected
+                            ? "border-sky-600 bg-sky-600 text-white"
+                            : "border-slate-200 bg-white text-slate-700 hover:border-sky-300 hover:text-sky-700"
+                        }`}
+                      >
+                        {application.productName}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
+          )}
+
           {showLoanLoadingState ? (
             <section className="rounded-3xl border border-slate-200 bg-slate-50/80 px-6 py-8 text-center text-sm text-slate-500">
               대출 관리 정보를 불러오는 중입니다.
@@ -696,273 +731,57 @@ export default function MyLoanManagement() {
           </section>
 
           {isYouthLoanSelected && (
-            <section className="grid gap-4 md:grid-cols-3">
-              <div className="rounded-3xl border border-slate-200 bg-slate-50/80 px-5 py-5">
-                <p className="text-sm text-slate-500">기준 금리</p>
-                <p className="mt-2 text-xl font-bold text-slate-900">
-                  연 {(summary?.baseInterestRate ?? 0).toFixed(1)}%
-                </p>
+            <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3 text-sm text-slate-700">
+              상환을 위해 가상계좌 번호를 확인하고 수동 상환으로 직접 납부해 주세요.
+            </div>
+          )}
+          {repaymentActionMessage && (
+            <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm text-slate-700">
+              {repaymentActionMessage}
+            </div>
+          )}
+
+          {summary && (
+            <section className="mt-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
+              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">상환 실행</h2>
+                  <p className="mt-2 text-sm text-slate-500">
+                    {isYouthLoanSelected
+                      ? "가상계좌 입금 또는 원하는 금액 입력으로 수동 상환을 진행할 수 있습니다."
+                      : "가상계좌 입금 또는 원하는 금액 입력으로 수동 상환을 진행할 수 있습니다."}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-sky-100 bg-sky-50/70 px-4 py-3 text-sm text-slate-600">
+                  <p>상환 가상계좌</p>
+                  <p className="mt-1 font-semibold text-slate-900">
+                    {summary.repaymentAccountNumber || "발급 예정"}
+                  </p>
+                </div>
               </div>
-              <div className="rounded-3xl border border-emerald-100 bg-emerald-50/70 px-5 py-5">
-                <p className="text-sm text-slate-500">누적 우대금리</p>
-                <p className="mt-2 text-xl font-bold text-slate-900">
-                  -{(summary?.preferentialRateDiscount ?? 0).toFixed(1)}%p
-                </p>
-              </div>
-              <div className="rounded-3xl border border-amber-100 bg-amber-50/70 px-5 py-5">
-                <p className="text-sm text-slate-500">최저 금리</p>
-                <p className="mt-2 text-xl font-bold text-slate-900">
-                  연 {(summary?.minimumInterestRate ?? 0).toFixed(1)}%
-                </p>
+              <div className="mt-5 grid gap-4 md:grid-cols-[minmax(0,1fr)_auto]">
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={repaymentAmountInput}
+                  onChange={(event) => setRepaymentAmountInput(event.target.value)}
+                  className="h-12 rounded-2xl border border-slate-200 px-4 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                  placeholder="상환 금액 입력"
+                />
+                <button
+                  type="button"
+                  onClick={handleManualRepayment}
+                  disabled={isRepaymentSubmitting}
+                  className="rounded-2xl bg-sky-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                >
+                  수동 상환
+                </button>
               </div>
             </section>
           )}
 
-          <section className="grid gap-5 lg:grid-cols-[minmax(0,1.18fr)_minmax(340px,0.82fr)]">
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-              <div className="mb-6 flex items-center gap-3">
-                <div className="rounded-2xl bg-sky-50 p-3 text-sky-600">
-                  <Calculator className="h-5 w-5" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900">조기 상환 시뮬레이션</h2>
-                  <p className="mt-1 text-sm text-slate-500">
-                    추가 상환 원금을 입력하면 예상 종료 시점과 절감 이자를 계산합니다.
-                  </p>
-                </div>
-              </div>
-
-              <input
-                type="range"
-                min="0"
-                max={summary?.remainingPrincipal ?? 0}
-                step="100000"
-                value={normalizedSimulationAmount}
-                onChange={(event) =>
-                  setSimulationAmount(
-                    normalizeSimulationAmount(
-                      Number(event.target.value),
-                      summary?.remainingPrincipal ?? 0,
-                    ),
-                  )
-                }
-                className="w-full accent-sky-600"
-              />
-              <input
-                type="number"
-                value={normalizedSimulationAmount}
-                onChange={(event) =>
-                  setSimulationAmount(
-                    normalizeSimulationAmount(
-                      Number(event.target.value),
-                      summary?.remainingPrincipal ?? 0,
-                    ),
-                  )
-                }
-                className="mt-4 h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-700 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-              />
-
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
-                <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-5">
-                  <p className="text-sm text-slate-500">추가 상환 후 잔액</p>
-                  <p className="mt-2 text-2xl font-bold text-slate-900">
-                    {formatAmount(remainingAfterSimulation)}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-sky-100 bg-sky-50/60 px-5 py-5">
-                  <p className="text-sm text-slate-500">예상 단축 기간</p>
-                  <p className="mt-2 text-2xl font-bold text-slate-900">
-                    약 {estimatedSavedMonths}개월
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-4 rounded-2xl border border-sky-100 bg-sky-50/60 px-5 py-5">
-                <p className="text-sm text-slate-500">예상 절감 이자</p>
-                <p className="mt-2 text-xl font-semibold text-slate-900">
-                  {formatAmount(estimatedInterestSavings)}
-                </p>
-              </div>
-            </div>
-
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-              <div className="mb-5">
-                <h2 className="text-xl font-bold text-slate-900">내 대출 신청</h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  신청한 상품이 있으면 진행 상태를, 없으면 신청 가능한 상품을 안내합니다.
-                </p>
-              </div>
-
-              {applications.length > 0 && (
-                <div className="mb-4 flex flex-wrap gap-2">
-                  {applications.map((application) => {
-                    const isSelected = application.productKey === selectedProductKey;
-                    return (
-                      <button
-                        key={`selector-${application.loanApplicationId}`}
-                        type="button"
-                        onClick={() => setSelectedProductKey(application.productKey)}
-                        className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                          isSelected
-                            ? "bg-sky-600 text-white shadow-sm"
-                            : "border border-slate-200 bg-white text-slate-600 hover:border-sky-200 hover:text-sky-700"
-                        }`}
-                      >
-                        {application.productName}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {applications.length > 0 ? (
-                <div className="space-y-4">
-                  {applications.map((application) => (
-                    <div
-                      key={application.loanApplicationId}
-                      className={`rounded-2xl px-4 py-4 ${
-                        application.productKey === selectedProductKey
-                          ? "border border-sky-200 bg-sky-50/80"
-                          : "border border-slate-100 bg-slate-50/80"
-                      }`}
-                    >
-                      <p className="text-sm text-slate-500">{application.productName}</p>
-                      <p className="mt-1 text-sm text-slate-600">
-                        상태 <span className="font-semibold text-sky-700">{getReviewStatusLabel(application)}</span>
-                      </p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        신청일 {application.appliedAt.slice(0, 10)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-5 py-6">
-                  <p className="text-sm text-slate-500">현재 신청한 대출 상품이 없습니다.</p>
-                  <Link
-                    to="/loan/products"
-                    className="mt-4 inline-block rounded-xl bg-[#6d8ca6] px-4 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-[#5c7c97]"
-                  >
-                    대출 상품 보러가기
-                  </Link>
-                </div>
-              )}
-
-              <div className="mt-4 rounded-2xl border border-sky-100 bg-sky-50/60 px-4 py-4">
-                <p className="text-sm text-slate-500">다음 납입 예정일</p>
-                <p className="mt-2 text-lg font-semibold text-slate-900">
-                  {(summary?.nextPaymentDate ?? "-")} / {formatAmount(summary?.nextPaymentAmount ?? 0)}
-                </p>
-                {summary && (
-                  <div className="mt-3 grid gap-2 text-sm text-slate-600 md:grid-cols-2">
-                    <p>
-                      예정 원금{" "}
-                      <span className="font-semibold text-slate-900">
-                        {formatAmount(summary.nextPaymentPrincipal)}
-                      </span>
-                    </p>
-                    <p>
-                      예정 이자{" "}
-                      <span className="font-semibold text-slate-900">
-                        {formatAmount(summary.nextPaymentInterest)}
-                      </span>
-                    </p>
-                  </div>
-                )}
-                <p className="mt-2 text-sm text-slate-600">
-                  오늘 기준 {daysUntilNextPayment}일 남았습니다.
-                </p>
-                {isMaturityLumpSum && (
-                  <p className="mt-2 text-xs text-sky-700">
-                    만기일시상환 상품은 매달 이자를 납부하고 만기 회차에 원금을 일괄 상환합니다.
-                  </p>
-                )}
-              </div>
-              <div
-                className={`mt-4 rounded-2xl px-4 py-4 ${
-                  overdueSchedules.length > 0
-                    ? "border border-rose-200 bg-rose-50/80"
-                    : "border border-emerald-100 bg-emerald-50/70"
-                }`}
-              >
-                <p className="text-sm text-slate-500">연체 상태</p>
-                <p className="mt-2 text-lg font-semibold text-slate-900">
-                  {overdueSchedules.length > 0 ? `연체 중 · ${maxOverdueDays}일` : "정상"}
-                </p>
-                <p className="hidden">
-                  {overdueSchedules.length > 0
-                    ? `연체이자는 연 ${overdueRate.toFixed(1)}% 기준으로 계산되며, 현재 예상 연체이자는 ${formatAmount(Math.round(overdueInterestAmount))}입니다.`
-                    : "납기일까지 가상계좌 입금이 없으면 연결 계좌에서 자동이체가 진행됩니다."}
-                </p>
-                <p className="mt-2 text-sm text-slate-600">
-                  {overdueSchedules.length > 0
-                    ? isYouthLoanSelected
-                      ? `연체이자는 연 ${overdueRate.toFixed(1)}% 기준으로 계산되며, 현재 예상 연체이자는 ${formatAmount(overdueInterestAmount)}입니다.`
-                      : "미납 회차가 있어 연체 상태로 반영되고 있습니다."
-                    : isYouthLoanSelected
-                      ? "납기일까지 가상계좌 입금이 없으면 연결 계좌에서 자동이체가 진행됩니다."
-                      : "현재 연체 중인 회차는 없습니다."}
-                </p>
-              </div>
-            </div>
-          </section>
-
-          <section className="grid gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(300px,0.9fr)]">
-            {summary && (
-              <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)] lg:col-span-2">
-                <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                  <div>
-                    <h2 className="text-xl font-bold text-slate-900">상환 실행</h2>
-                    <p className="mt-2 text-sm text-slate-500">
-                      {isYouthLoanSelected
-                        ? "가상계좌 입금 상환을 기본으로 하며, 미입금 시 연결 계좌 기준 자동이체를 실행할 수 있습니다."
-                        : "가상계좌 입금 또는 원하는 금액 입력으로 수동 상환을 진행할 수 있습니다."}
-                    </p>
-                    {isConsumptionLoanSelected && (
-                      <p className="mt-2 text-sm text-sky-700">
-                        수동상환은 도래한 회차를 우선 처리하며, 도래분이 없으면 다음 달 1회차까지만 선납할 수 있습니다.
-                      </p>
-                    )}
-                  </div>
-                  <div className="rounded-2xl border border-sky-100 bg-sky-50/70 px-4 py-3 text-sm text-slate-600">
-                    <p>상환 가상계좌</p>
-                    <p className="mt-1 font-semibold text-slate-900">
-                      {summary.repaymentAccountNumber || "발급 예정"}
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-5 grid gap-4 md:grid-cols-[minmax(0,1fr)_auto]">
-                  <input
-                    type="number"
-                    min="0"
-                    step="1"
-                    value={repaymentAmountInput}
-                    onChange={(event) => setRepaymentAmountInput(event.target.value)}
-                    className="h-12 rounded-2xl border border-slate-200 px-4 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-                    placeholder="상환 금액 입력"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleManualRepayment}
-                    disabled={isRepaymentSubmitting}
-                    className="rounded-2xl bg-sky-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-                  >
-                    수동 상환
-                  </button>
-                </div>
-                {isYouthLoanSelected && (
-                  <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3 text-sm text-slate-700">
-                    납기일까지 가상계좌 입금이 없으면, 신청 시 선택한 카드의 연결 계좌에서 해당 회차 금액이 자동이체됩니다.
-                  </div>
-                )}
-                {repaymentActionMessage && (
-                  <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm text-slate-700">
-                    {repaymentActionMessage}
-                  </div>
-                )}
-              </div>
-            )}
-
+          <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.9fr)]">
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
               <div className="flex items-center justify-between gap-3">
                 <h2 className="text-xl font-bold text-slate-900">최근 상환 내역</h2>
