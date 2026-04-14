@@ -244,6 +244,7 @@ export default function DepositApply() {
   const isSavingProduct = product.depositProductType === "FIXED_SAVING";
   const periodOptions = getPeriodOptions(product);
   const guideTexts = getGuideTexts(product);
+  const hasAccounts = accounts.length > 0;
 
   const validateInputStep = () => {
     setError("");
@@ -518,26 +519,38 @@ export default function DepositApply() {
                     <label htmlFor="source-account" className="mb-2 block text-sm font-medium text-slate-600">
                       출금 계좌
                     </label>
-                    <select
-                      id="source-account"
-                      value={sourceAccountId}
-                      onChange={(event) => setSourceAccountId(event.target.value)}
-                      className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-                    >
-                      {accounts.map((account) => (
-                        <option key={account.accountId} value={account.accountId}>
-                          {account.accountName} {account.accountNumber}
-                        </option>
-                      ))}
-                    </select>
-                    <p className="mt-2 text-sm text-slate-500">
-                      선택 계좌 잔액 {selectedAccount ? formatWon(selectedAccount.balance) : "-"}
-                    </p>
+                    {hasAccounts ? (
+                      <>
+                        <select
+                          id="source-account"
+                          value={sourceAccountId}
+                          onChange={(event) => setSourceAccountId(event.target.value)}
+                          className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm text-slate-700 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+                        >
+                          {accounts.map((account) => (
+                            <option key={account.accountId} value={account.accountId}>
+                              {account.accountName} {account.accountNumber}
+                            </option>
+                          ))}
+                        </select>
+                        <p className="mt-2 text-sm text-slate-500">
+                          선택 계좌 잔액 {selectedAccount ? formatWon(selectedAccount.balance) : "-"}
+                        </p>
+                      </>
+                    ) : (
+                      <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-4 text-sm text-slate-500">
+                        연결된 출금 계좌가 없습니다. 먼저 계좌를 개설한 뒤 다시 시도해 주세요.
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 {error && (
-                  <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                  <div
+                    role="alert"
+                    aria-live="assertive"
+                    className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                  >
                     {error}
                   </div>
                 )}
@@ -557,11 +570,12 @@ export default function DepositApply() {
                   <button
                     type="button"
                     onClick={() => {
-                      if (validateInputStep()) {
+                      if (hasAccounts && validateInputStep()) {
                         setCurrentStep("confirm");
                       }
                     }}
-                    className="inline-flex items-center gap-2 rounded-2xl bg-[#2a4b78] px-5 py-4 text-sm font-semibold text-white transition hover:bg-[#223f64]"
+                    disabled={!hasAccounts}
+                    className="inline-flex items-center gap-2 rounded-2xl bg-[#2a4b78] px-5 py-4 text-sm font-semibold text-white transition hover:bg-[#223f64] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <span>다음</span>
                     <ChevronRight className="h-4 w-4" />
