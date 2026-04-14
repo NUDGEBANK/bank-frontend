@@ -59,9 +59,9 @@ function formatAmount(value: number) {
 
 const requiredChecks = [
   {
-    title: "자산 정보",
+    title: "순자산 정보",
     status: "반영 항목",
-    description: "회원 전체 계좌의 현재 잔액 합계를 참고값으로 반영합니다.",
+    description: "입출금 계좌와 예적금 잔액에서 대출 잔여원금을 차감한 순자산을 반영합니다.",
   },
   {
     title: "최근 3개월 거래",
@@ -69,29 +69,29 @@ const requiredChecks = [
     description: "최근 3개월 카드 거래 건수와 활성 월 수를 함께 반영합니다.",
   },
   {
-    title: "소비 부담",
+    title: "대출 상환 상태",
     status: "반영 항목",
-    description: "최근 3개월 월평균 소비액을 현재 잔액과 비교해 부담 수준을 계산합니다.",
+    description: "대출 잔여원금 규모와 상환 일정의 연체 여부를 함께 반영합니다.",
   },
   {
-    title: "거래 안정성",
+    title: "예적금 유지 흐름",
     status: "반영 항목",
-    description: "월별 소비 편차와 최근 거래일을 기준으로 최근 사용 흐름을 판단합니다.",
+    description: "예적금 보유, 만기 유지, 적금 납입 이력을 저축 습관 지표로 반영합니다.",
   },
 ];
 
 const evaluationSteps = [
-  "회원 계좌와 카드 거래 데이터를 조회합니다.",
-  "최근 3개월 거래 건수와 월별 활성 여부를 계산합니다.",
-  "현재 잔액 대비 소비 부담과 월별 소비 변동성을 계산합니다.",
+  "회원 계좌, 카드, 대출, 예적금 데이터를 함께 조회합니다.",
+  "계좌와 예적금 잔액에서 대출 잔여원금을 차감해 순자산을 계산합니다.",
+  "최근 3개월 소비 흐름, 대출 상환 상태, 예적금 유지 성실도를 함께 평가합니다.",
   "내부 평가 점수와 등급을 산출하고 결과를 저장합니다.",
 ];
 
 const evaluationCriteria = [
-  "자산 점수는 전체 계좌의 현재 잔액을 기준으로 계산되며, 최근 활동성이 낮으면 일부만 반영됩니다.",
+  "자산 점수는 전체 계좌와 예적금 잔액에서 대출 잔여원금을 차감한 순자산 기준으로 계산합니다.",
   "활성 월은 최근 3개월 중 해당 월 카드 거래가 2건 이상일 때만 인정됩니다.",
-  "월평균 소비액이 현재 잔액 대비 과도하면 감점되고, 부담이 낮으면 가산됩니다.",
-  "최근 거래일이 오래됐거나 최근 3개월 거래 데이터가 부족하면 보수적으로 평가합니다.",
+  "월평균 소비액이 순자산 대비 과도하면 감점되고, 부담이 낮으면 가산됩니다.",
+  "대출 연체 여부와 예적금 유지·납입 이력도 함께 반영하며, 최근 거래 데이터가 부족하면 보수적으로 평가합니다.",
 ];
 
 export default function MyCreditScore() {
@@ -130,24 +130,24 @@ export default function MyCreditScore() {
 
   const scorePercentage = data ? Math.min((data.creditScore / 950) * 100, 100) : 0;
   const scoreReasons = [
-    "최근 3개월 거래량과 활성 월 수를 기준으로 최근 활동성을 반영합니다.",
-    "현재 계좌 잔액 대비 월평균 소비 부담을 계산해 과도한 사용 여부를 확인합니다.",
-    "월별 소비 편차와 최근 거래일을 함께 반영해 거래 안정성을 평가합니다.",
+    "입출금 계좌와 예적금 잔액에서 대출 잔여원금을 차감한 순자산을 반영합니다.",
+    "최근 3개월 카드 거래량과 소비 변동성, 최근 거래일을 기준으로 활동성을 평가합니다.",
+    "대출 상환 일정의 연체 여부와 예적금 유지·납입 이력을 금융 습관 지표로 함께 반영합니다.",
   ];
 
   const riskInsights = data
     ? [
-        "현재 평가는 최근 카드 거래와 계좌 현재 잔액을 중심으로 산정한 내부 참고용 결과입니다.",
+        "현재 평가는 순자산, 최근 카드 거래, 대출 상환 상태, 예적금 유지 흐름을 기준으로 산정한 내부 참고용 결과입니다.",
         data.creditScore >= 800
-          ? "최근 거래 흐름이 비교적 안정적으로 유지되어 내부 등급에 긍정적으로 반영되었습니다."
-          : "최근 거래량 또는 소비 부담 지표가 보수적으로 반영되어 상위 구간 진입이 제한되었습니다.",
+          ? "순자산과 상환 안정성, 저축 습관이 비교적 안정적으로 반영되어 내부 등급에 긍정적으로 작용했습니다."
+          : "순자산, 대출 부담, 소비 흐름 중 일부 지표가 보수적으로 반영되어 상위 구간 진입이 제한되었습니다.",
         data.scoreChange !== null && data.scoreChange < 0
-          ? "직전 평가 대비 점수가 하락해 최근 거래 흐름 변화를 함께 확인하는 것이 좋습니다."
+          ? "직전 평가 대비 점수가 하락해 최근 거래 흐름과 대출·예적금 상태 변화를 함께 확인하는 것이 좋습니다."
           : "실제 대출 심사 시에는 상품 조건과 추가 심사 정보가 함께 반영될 수 있습니다.",
       ]
     : [
         "아직 저장된 평가 결과가 없거나 결과를 불러오지 못했습니다.",
-        "페이지 진입 시 현재 로그인한 회원의 최신 계좌와 거래 데이터를 기준으로 자동 평가를 진행합니다.",
+        "페이지 진입 시 현재 로그인한 회원의 계좌, 카드, 대출, 예적금 데이터를 기준으로 자동 평가를 진행합니다.",
         "첫 평가 이후에는 점수, 내부 등급, 참고 한도와 이전 평가 이력을 이 페이지에서 바로 확인할 수 있습니다.",
       ];
 
@@ -162,9 +162,9 @@ export default function MyCreditScore() {
         <div className="border-b border-slate-100 bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.14),_transparent_38%),linear-gradient(135deg,_#f8fbff_0%,_#ffffff_52%,_#f8fafc_100%)] px-6 py-6 md:px-8">
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">내부 신용 평가 점수</h1>
           <p className="mt-2 text-sm text-slate-500">
-            본 점수는 현재 계좌 잔액과 최근 카드 거래 데이터를 기준으로 산정한 내부 참고용
-            지표입니다. NICE·KCB 등 외부 신용평점과는 별개이며 대외 제출용으로 사용할 수
-            없습니다.
+            본 점수는 순자산, 최근 카드 거래, 대출 상환 상태, 예적금 유지 흐름을 기준으로
+            산정한 내부 참고용 지표입니다. NICE·KCB 등 외부 신용평점과는 별개이며 대외
+            제출용으로 사용할 수 없습니다.
           </p>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
@@ -183,7 +183,7 @@ export default function MyCreditScore() {
               <p className="mt-4 break-keep text-xl font-bold text-slate-900 sm:text-2xl">
                 {isLoading ? "불러오는 중" : data?.creditGrade ?? "평가 대기"}
               </p>
-              <p className="mt-2 text-sm text-slate-500">자금 여력과 거래 안정성을 종합해 산정한 내부 등급입니다.</p>
+              <p className="mt-2 text-sm text-slate-500">순자산, 상환 안정성, 저축 습관을 종합해 산정한 내부 등급입니다.</p>
             </div>
 
             <div className="rounded-3xl border border-slate-200 bg-slate-50/90 px-5 py-5">
@@ -286,7 +286,7 @@ export default function MyCreditScore() {
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-slate-900">평가 결과 요약</h2>
-                  <p className="mt-1 text-sm text-slate-500">자금 상태, 최근 활동성, 소비 부담, 거래 안정성을 기준으로 계산한 결과입니다.</p>
+                  <p className="mt-1 text-sm text-slate-500">순자산, 최근 활동성, 대출 상환 상태, 예적금 습관을 함께 반영한 결과입니다.</p>
                 </div>
               </div>
               <span className={sectionToggleClass}>
@@ -392,7 +392,7 @@ export default function MyCreditScore() {
                 </div>
 
                 <div className="mt-5 rounded-2xl bg-amber-50/70 px-4 py-4 text-sm leading-6 text-amber-900">
-                  본 평가는 현재 계좌 잔액과 최근 카드 거래 데이터를 기준으로 산정한 내부 참고용 지표입니다. 외부 신용평점과는 다른 기준으로 계산되며, 대외 제출용 또는 공식 증빙용으로 사용할 수 없습니다.
+                  본 평가는 순자산, 최근 카드 거래, 대출 상환 상태, 예적금 유지 이력을 기준으로 산정한 내부 참고용 지표입니다. 외부 신용평점과는 다른 기준으로 계산되며, 대외 제출용 또는 공식 증빙용으로 사용할 수 없습니다.
                 </div>
 
                 {error && <div className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}
