@@ -149,16 +149,16 @@ export default function Home() {
               <p className="mt-3 text-base text-slate-500">자주 사용하는 기능을 한 화면에서 바로 이동할 수 있습니다.</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-              <Link
-                  to="/account/ddokgae"
-                  className="rounded-2xl border border-slate-200 bg-white p-6 text-slate-800 shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_28px_rgba(15,23,42,0.08)]"
-              >
-                <div className="mb-4 flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100">
-                  <BadgeCent className="h-3.5 w-3.5 text-slate-500" />
-                </div>
-                <h3 className="mb-2 text-xl font-bold">똑개 통장</h3>
-                <p className="text-sm leading-6 text-slate-500">체크카드와 바로 연결되는 생활형 주거래 계좌</p>
-              </Link>
+                <Link
+                    to="/deposit/products"
+                    className="rounded-2xl border border-slate-200 bg-white p-6 text-slate-800 shadow-[0_8px_24px_rgba(15,23,42,0.04)] transition hover:-translate-y-0.5 hover:shadow-[0_16px_28px_rgba(15,23,42,0.08)]"
+                >
+                  <div className="mb-4 flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100">
+                    <BadgeCent className="h-3.5 w-3.5 text-slate-500" />
+                  </div>
+                <h3 className="mb-2 text-xl font-bold">예적금 상품</h3>
+                <p className="text-sm leading-6 text-slate-500">현재 가입 가능한 예금과 적금 상품을 바로 확인</p>
+                </Link>
 
               <Link
                   to="/loan/products"
@@ -206,9 +206,9 @@ export default function Home() {
             <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
                 <div className="mb-2 text-sm font-semibold text-slate-400">신규 고객</div>
-                <h3 className="mb-2 text-xl font-bold text-slate-900">통장 개설 이벤트</h3>
-                <p className="mb-4 text-sm leading-6 text-slate-500">첫 입금 시 현금 3만원을 지급하는 신규 고객 혜택입니다.</p>
-                <Link to="/account/ddokgae" className="font-semibold text-[#478FFF] hover:text-[#2f74d6]">
+                <h3 className="mb-2 text-xl font-bold text-slate-900">예적금 둘러보기</h3>
+                <p className="mb-4 text-sm leading-6 text-slate-500">현재 가입 가능한 예금과 적금 상품을 한 번에 확인할 수 있습니다.</p>
+                <Link to="/deposit/products" className="font-semibold text-[#478FFF] hover:text-[#2f74d6]">
                   자세히 보기 →
                 </Link>
               </div>
