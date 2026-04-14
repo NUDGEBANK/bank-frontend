@@ -92,6 +92,7 @@ export default function Header() {
       // Ignore logout errors so local auth state is always cleared.
     } finally {
       window.dispatchEvent(new Event("auth-change"));
+      window.location.reload();
     }
   };
 
