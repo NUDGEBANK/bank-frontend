@@ -37,7 +37,6 @@ type AccountSummary = {
   accountName: string;
   accountNumber: string;
   balance: number;
-  protectedBalance: number;
 };
 
 type DepositAccountActionResponse = {

@@ -129,6 +129,21 @@ function formatTransactionType(type: string) {
   }
 }
 
+function formatAutoTransferStatus(status: string | null) {
+  switch (status) {
+    case "READY":
+      return "대기";
+    case "SUCCESS":
+      return "성공";
+    case "FAILED":
+      return "실패";
+    case "STOPPED":
+      return "중지";
+    default:
+      return status ?? "-";
+  }
+}
+
 function getProductLabel(type: DepositAccountSummary["depositProductType"] | DepositAccountDetail["depositProductType"]) {
   return type === "FIXED_DEPOSIT" ? "정기예금" : "정기적금";
 }
@@ -583,7 +598,7 @@ export default function DepositManagement() {
                               <p className="text-sm text-slate-600">실제 금액 {formatWon(schedule.paidAmount)}</p>
                               <p className="text-sm text-slate-600">자동이체 여부 {schedule.autoTransferYn ? "사용" : "미사용"}</p>
                               <p className="text-sm text-slate-600">
-                                자동이체 상태 {schedule.autoTransferStatus ?? "-"}
+                                자동이체 상태 {formatAutoTransferStatus(schedule.autoTransferStatus)}
                               </p>
                             </div>
                           </div>

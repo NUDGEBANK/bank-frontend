@@ -32,6 +32,30 @@ type CardHistoryTransaction = {
   quantity: number | null;
 };
 
+type DepositAccountSummary = {
+  depositAccountId: number;
+  linkedAccountId: number;
+};
+
+type DepositTransaction = {
+  depositTransactionId: number;
+  transactionType: string;
+  amount: number;
+  transactionDatetime: string;
+  status: string;
+};
+
+type DepositAccountDetail = {
+  depositAccountId: number;
+  depositProductName: string;
+  linkedAccountId: number;
+  transactions: DepositTransaction[];
+};
+
+type HistoryTransaction = CardHistoryTransaction & {
+  sourceType: "CARD" | "DEPOSIT";
+};
+
 const UI_TEXT = {
   title: "\uCE74\uB4DC \uC774\uC6A9 \uB0B4\uC5ED",
   subtitle: "\uCE74\uB4DC \uC794\uC561\uACFC \uCD5C\uADFC \uACB0\uC81C \uB0B4\uC5ED\uC744 \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
@@ -57,11 +81,58 @@ function formatAmount(amount: number) {
   return `${amount.toLocaleString("ko-KR")}\uC6D0`;
 }
 
+function isSavingsTransaction(transaction: HistoryTransaction) {
+  return transaction.categoryName === "예적금";
+}
+
 function isLoanDisbursementTransaction(transaction: CardHistoryTransaction) {
   return (
     transaction.marketName === "NudgeBank 대출 실행" ||
     transaction.categoryName === "대출"
   );
+}
+
+function isIncomingTransaction(transaction: HistoryTransaction) {
+  return transaction.amount > 0;
+}
+
+function formatDepositTransactionLabel(type: string) {
+  switch (type) {
+    case "OPEN":
+      return "예적금 가입";
+    case "PAY":
+      return "적금 납입";
+    case "MATURITY":
+      return "만기해지";
+    case "EARLY_CLOSE":
+      return "중도해지";
+    default:
+      return "예적금 거래";
+  }
+}
+
+function isDepositIncomingTransaction(type: string) {
+  return type === "MATURITY" || type === "EARLY_CLOSE";
+}
+
+function toDepositHistoryTransaction(
+  detail: DepositAccountDetail,
+  transaction: DepositTransaction,
+): HistoryTransaction {
+  const signedAmount = isDepositIncomingTransaction(transaction.transactionType)
+    ? Math.abs(transaction.amount)
+    : -Math.abs(transaction.amount);
+
+  return {
+    transactionId: -transaction.depositTransactionId,
+    marketName: detail.depositProductName,
+    categoryName: "예적금",
+    amount: signedAmount,
+    transactionDatetime: transaction.transactionDatetime,
+    menuName: formatDepositTransactionLabel(transaction.transactionType),
+    quantity: null,
+    sourceType: "DEPOSIT",
+  };
 }
 
 function maskCardNumber(cardNumber: string | null) {
@@ -79,6 +150,7 @@ function maskCardNumber(cardNumber: string | null) {
 
 export default function CardHistory() {
   const [accounts, setAccounts] = useState<CardHistoryAccount[]>([]);
+  const [depositDetails, setDepositDetails] = useState<DepositAccountDetail[]>([]);
   const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -91,12 +163,23 @@ export default function CardHistory() {
       setErrorMessage("");
 
       try {
-        const response = await getJson<CardHistoryResponse>("/api/cards/history");
+        const [response, depositAccounts] = await Promise.all([
+          getJson<CardHistoryResponse>("/api/cards/history"),
+          getJson<DepositAccountSummary[]>("/api/deposit-accounts/me").catch(() => []),
+        ]);
+
+        const details = await Promise.all(
+          depositAccounts.map((account) =>
+            getJson<DepositAccountDetail>(`/api/deposit-accounts/me/${account.depositAccountId}`).catch(() => null),
+          ),
+        );
+
         if (!isMounted) {
           return;
         }
 
         setAccounts(response.accounts);
+        setDepositDetails(details.filter((detail): detail is DepositAccountDetail => detail !== null));
         setSelectedAccountId((current) => current ?? response.accounts[0]?.accountId ?? null);
       } catch (error) {
         if (!isMounted) {
@@ -123,6 +206,28 @@ export default function CardHistory() {
     () => accounts.find((account) => account.accountId === selectedAccountId) ?? accounts[0] ?? null,
     [accounts, selectedAccountId],
   );
+
+  const mergedTransactions = useMemo(() => {
+    if (!selectedAccount) {
+      return [];
+    }
+
+    const cardTransactions: HistoryTransaction[] = selectedAccount.transactions.map((transaction) => ({
+      ...transaction,
+      sourceType: "CARD",
+    }));
+
+    const depositTransactions = depositDetails
+      .filter((detail) => detail.linkedAccountId === selectedAccount.accountId)
+      .flatMap((detail) =>
+        detail.transactions.map((transaction) => toDepositHistoryTransaction(detail, transaction)),
+      );
+
+    return [...cardTransactions, ...depositTransactions].sort(
+      (left, right) =>
+        new Date(right.transactionDatetime).getTime() - new Date(left.transactionDatetime).getTime(),
+    );
+  }, [depositDetails, selectedAccount]);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 md:px-6">
@@ -213,7 +318,7 @@ export default function CardHistory() {
           <div className="px-6 py-16 text-center md:px-8">
             <p className="text-sm font-medium text-rose-600">{errorMessage}</p>
           </div>
-        ) : !selectedAccount || selectedAccount.transactions.length === 0 ? (
+        ) : !selectedAccount || mergedTransactions.length === 0 ? (
           <div className="px-6 py-16 text-center md:px-8">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400">
               <Receipt className="h-6 w-6" />
@@ -223,7 +328,7 @@ export default function CardHistory() {
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
-            {selectedAccount.transactions.map((transaction) => (
+            {mergedTransactions.map((transaction) => (
               <div
                 key={transaction.transactionId}
                 className={`px-6 py-5 transition-colors md:px-8 ${
@@ -251,6 +356,8 @@ export default function CardHistory() {
                       <p className="mt-1 text-xs font-medium text-slate-500">
                         {isLoanDisbursementTransaction(transaction)
                           ? "대출 실행 입금"
+                          : isSavingsTransaction(transaction)
+                            ? transaction.menuName ?? "예적금 거래"
                           : transaction.categoryName}
                       </p>
                       <p className="mt-1 text-xs text-slate-400">{transaction.transactionDatetime}</p>
@@ -260,12 +367,12 @@ export default function CardHistory() {
                   <div className="shrink-0 text-right">
                     <p
                       className={`text-lg font-bold md:text-xl ${
-                        isLoanDisbursementTransaction(transaction)
+                        isIncomingTransaction(transaction)
                           ? "text-emerald-600"
                           : "text-rose-600"
                       }`}
                     >
-                      {isLoanDisbursementTransaction(transaction) ? "+" : "-"}
+                      {isIncomingTransaction(transaction) ? "+" : "-"}
                       {formatAmount(Math.abs(transaction.amount))}
                     </p>
                   </div>
