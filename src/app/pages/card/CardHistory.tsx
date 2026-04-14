@@ -364,15 +364,25 @@ export default function CardHistory() {
                     </div>
                   </div>
 
-                  <div className="shrink-0 text-right">
+  <div className="shrink-0 text-right">
                     <p
                       className={`text-lg font-bold md:text-xl ${
-                        isIncomingTransaction(transaction)
+                        transaction.sourceType === "CARD"
+                          ? isLoanDisbursementTransaction(transaction)
+                            ? "text-emerald-600"
+                            : "text-rose-600"
+                          : isIncomingTransaction(transaction)
                           ? "text-emerald-600"
                           : "text-rose-600"
                       }`}
                     >
-                      {isIncomingTransaction(transaction) ? "+" : "-"}
+                      {transaction.sourceType === "CARD"
+                        ? isLoanDisbursementTransaction(transaction)
+                          ? "+"
+                          : "-"
+                        : isIncomingTransaction(transaction)
+                          ? "+"
+                          : "-"}
                       {formatAmount(Math.abs(transaction.amount))}
                     </p>
                   </div>
