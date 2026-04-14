@@ -71,7 +71,11 @@ function buildQuickReplies(botText: string): QuickReply[] {
         value: "신청하려면 뭐가 필요해?",
       },
       { type: "ask", label: "심사 기준 보기", value: "심사 기준이 뭐야?" },
-      { type: "navigate", label: "신청 페이지 이동", href: "/loan/apply-guide" },
+      {
+        type: "navigate",
+        label: "신청 페이지 이동",
+        href: "/loan/apply-guide",
+      },
     ];
   }
 
@@ -277,8 +281,8 @@ export default function ChatBot() {
           label: "대출 상품 보기",
           value: "내가 받을 수 있는 대출 뭐 있어?",
         },
-        { type: "navigate", label: "신청 페이지 이동", href: "/loan/apply" },
-        { type: "navigate", label: "신청 안내 보기", href: "/loan/apply-guide" },
+        { type: "navigate", label: "대출 상품 보기", href: "/loan/products" },
+        { type: "navigate", label: "신청 안내 보기", href: "/loan/apply-guide",},
       ]);
       streamDoneRef.current = true;
     }
@@ -311,21 +315,10 @@ export default function ChatBot() {
     await submitMessage(reply.value);
   };
 
-  const handleMoveToGuide = () => {
-    // 챗봇 UI에서 대출 신청 안내 페이지로 이동
-    setIsOpen(false);
-    navigate("/loan/apply-guide");
-  };
-
-  const handleMoveToChatHistory = () => {
-    // 챗봇 UI에서 전체 상담 화면으로 이동
-    setIsOpen(false);
-    navigate("/help/chat-history");
-  };
-
   return (
     <>
       <button
+        type="button"
         onClick={() => setIsOpen(true)}
         className={`fixed bottom-8 right-8 rounded-full border border-white/20 bg-gradient-to-r from-blue-600 to-blue-700 p-4 text-white shadow-2xl transition-all backdrop-blur-sm hover:from-blue-700 hover:to-blue-800 ${
           isOpen ? "pointer-events-none opacity-0" : "opacity-100"
@@ -335,10 +328,6 @@ export default function ChatBot() {
       </button>
 
       {isOpen && (
-        <div className="fixed bottom-8 right-8 z-50 flex h-[500px] w-96 flex-col rounded-lg border border-white/20 bg-white/95 shadow-2xl backdrop-blur-md">
-          <div className="flex items-center justify-between rounded-t-lg bg-gradient-to-r from-blue-600 to-blue-700 p-4 text-white">
-        <div className="fixed bottom-8 right-8 z-50 flex h-[560px] w-96 flex-col rounded-lg border border-white/20 bg-white/95 shadow-2xl backdrop-blur-md">
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-t-lg flex items-center justify-between">
         <div className="fixed bottom-8 right-8 z-50 flex h-[560px] w-96 flex-col rounded-lg border border-white/20 bg-white/95 shadow-2xl backdrop-blur-md">
           <div className="flex items-center justify-between rounded-t-lg bg-gradient-to-r from-blue-600 to-blue-700 p-4 text-white">
             <div className="flex items-center gap-2">
@@ -346,6 +335,7 @@ export default function ChatBot() {
               <span className="font-semibold">NUDGEBOT</span>
             </div>
             <button
+              type="button"
               onClick={() => setIsOpen(false)}
               className="rounded-full p-1 transition-colors hover:bg-blue-800/50"
             >
@@ -371,7 +361,6 @@ export default function ChatBot() {
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
           <div className="flex-1 space-y-3 overflow-y-auto p-4">
             {messages.map((message, index) => (
               <div
@@ -379,7 +368,6 @@ export default function ChatBot() {
                 className={`flex flex-col ${
                   message.sender === "user" ? "items-end" : "items-start"
                 }`}
-                className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
               >
                 <div
                   className={`max-w-[80%] whitespace-pre-wrap rounded-lg px-4 py-2 ${
@@ -436,6 +424,7 @@ export default function ChatBot() {
                 className="flex-1 resize-none rounded-lg border border-gray-300 bg-white/90 px-3 py-2 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:bg-gray-100"
               />
               <button
+                type="button"
                 onClick={() => void handleSend()}
                 disabled={isStreaming}
                 className="rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 p-2 text-white shadow-md transition-all hover:from-blue-700 hover:to-blue-800 disabled:opacity-50"
