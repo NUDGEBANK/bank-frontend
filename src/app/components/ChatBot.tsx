@@ -71,7 +71,7 @@ function buildQuickReplies(botText: string): QuickReply[] {
         value: "신청하려면 뭐가 필요해?",
       },
       { type: "ask", label: "심사 기준 보기", value: "심사 기준이 뭐야?" },
-      { type: "navigate", label: "신청 페이지 이동", href: "/loan/apply" },
+      { type: "navigate", label: "신청 페이지 이동", href: "/loan/apply-guide" },
     ];
   }
 
@@ -271,13 +271,14 @@ export default function ChatBot() {
       bufferRef.current +=
         "챗봇 서버와 연결할 수 없습니다. 잠시 후 다시 시도해주세요.";
       attachQuickRepliesToLastBotMessage([
-        { type: "ask", label: "다시 질문하기", value: userMessage },
+        { type: "ask", label: "다시 질문하기", value: rawMessage },
         {
           type: "ask",
           label: "대출 상품 보기",
           value: "내가 받을 수 있는 대출 뭐 있어?",
         },
         { type: "navigate", label: "신청 페이지 이동", href: "/loan/apply" },
+        { type: "navigate", label: "신청 안내 보기", href: "/loan/apply-guide" },
       ]);
       streamDoneRef.current = true;
     }
@@ -310,6 +311,18 @@ export default function ChatBot() {
     await submitMessage(reply.value);
   };
 
+  const handleMoveToGuide = () => {
+    // 챗봇 UI에서 대출 신청 안내 페이지로 이동
+    setIsOpen(false);
+    navigate("/loan/apply-guide");
+  };
+
+  const handleMoveToChatHistory = () => {
+    // 챗봇 UI에서 전체 상담 화면으로 이동
+    setIsOpen(false);
+    navigate("/help/chat-history");
+  };
+
   return (
     <>
       <button
@@ -326,6 +339,8 @@ export default function ChatBot() {
           <div className="flex items-center justify-between rounded-t-lg bg-gradient-to-r from-blue-600 to-blue-700 p-4 text-white">
         <div className="fixed bottom-8 right-8 z-50 flex h-[560px] w-96 flex-col rounded-lg border border-white/20 bg-white/95 shadow-2xl backdrop-blur-md">
           <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-t-lg flex items-center justify-between">
+        <div className="fixed bottom-8 right-8 z-50 flex h-[560px] w-96 flex-col rounded-lg border border-white/20 bg-white/95 shadow-2xl backdrop-blur-md">
+          <div className="flex items-center justify-between rounded-t-lg bg-gradient-to-r from-blue-600 to-blue-700 p-4 text-white">
             <div className="flex items-center gap-2">
               <MessageCircle className="h-5 w-5" />
               <span className="font-semibold">NUDGEBOT</span>
