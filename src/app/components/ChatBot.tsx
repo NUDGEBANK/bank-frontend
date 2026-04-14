@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { MessageCircle, X, Send } from "lucide-react";
 import { sendMessage, type ChatAction } from "../api/chat";
 import { Button } from "./ui/button";
+import MessageMarkdown from "./MessageMarkdown";
 
 type QuickReply = ChatAction;
 import { useNavigate } from "react-router";
@@ -370,16 +371,22 @@ export default function ChatBot() {
                 }`}
               >
                 <div
-                  className={`max-w-[80%] whitespace-pre-wrap rounded-lg px-4 py-2 ${
+                  className={`max-w-[80%] rounded-lg px-4 py-2 ${
                     message.sender === "user"
                       ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md"
                       : "border border-gray-200 bg-white/80 text-gray-800 backdrop-blur-sm"
                   }`}
                 >
-                  {message.text ||
-                    (message.sender === "bot" && isStreaming
-                      ? "답변 작성 중..."
-                      : "")}
+                  {message.text ? (
+                    <MessageMarkdown
+                      content={message.text}
+                      invert={message.sender === "user"}
+                    />
+                  ) : message.sender === "bot" && isStreaming ? (
+                    "답변 작성 중..."
+                  ) : (
+                    ""
+                  )}
                 </div>
 
                 {message.sender === "bot" && message.quickReplies?.length ? (

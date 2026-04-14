@@ -21,6 +21,7 @@ import {
   type ChatSessionDetail,
   type ChatSessionSummary,
 } from "../../api/chat";
+import MessageMarkdown from "../../components/MessageMarkdown";
 import { Button } from "../../components/ui/button";
 
 type ComposerState = {
@@ -633,12 +634,14 @@ export default function ChatHistory() {
                           : "border border-slate-200 bg-white text-slate-800"
                       }`}
                     >
-                      <p className="whitespace-pre-wrap text-sm leading-7">
-                        {message.text ||
-                          (composer.isStreaming && message.sender === "bot"
-                            ? "답변을 작성하는 중입니다..."
-                            : "")}
-                      </p>
+                      {message.text ? (
+                        <MessageMarkdown
+                          content={message.text}
+                          invert={message.sender === "user"}
+                        />
+                      ) : composer.isStreaming && message.sender === "bot" ? (
+                        <p className="text-sm leading-7">답변을 작성하는 중입니다...</p>
+                      ) : null}
                       {message.createdAt ? (
                         <p
                           className={`mt-2 text-[11px] ${
