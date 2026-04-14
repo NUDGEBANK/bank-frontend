@@ -343,6 +343,7 @@ export default function ChatBot() {
             </button>
           </div>
 
+          {/* 버튼 3개로 변경 필요 */}
           <div className="flex gap-2 border-b border-slate-200 bg-slate-50 px-4 py-3">
             <button
               type="button"
