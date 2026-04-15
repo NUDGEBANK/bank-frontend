@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FileText, RefreshCcw, Trash2, Upload } from "lucide-react";
 
 import {
@@ -47,6 +47,7 @@ export default function RagDocsAdmin() {
   const [refreshing, setRefreshing] = useState(false);
   const [overwriteOpen, setOverwriteOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<RagDocumentSummary | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   async function loadDocuments(options?: { silent?: boolean }) {
     const silent = options?.silent ?? false;
@@ -142,7 +143,7 @@ export default function RagDocsAdmin() {
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-400">Admin RAG Docs</p>
-              <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">문서 적재 관리자</h1>
+              <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">RAG 문서 적재 관리자</h1>
               <p className="mt-2 text-sm text-slate-500">
                 PDF 업로드, 상품 ID 지정 또는 자동 배정, 덮어쓰기 확인, 삭제를 한 화면에서 처리합니다.
               </p>
@@ -150,7 +151,7 @@ export default function RagDocsAdmin() {
             <Button
               type="button"
               variant="outline"
-              className="border-slate-300 bg-white"
+              className="border-slate-300 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900"
               onClick={() => void loadDocuments({ silent: true })}
               disabled={refreshing || submitting}
             >
@@ -169,14 +170,27 @@ export default function RagDocsAdmin() {
             <CardContent className="space-y-5">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">PDF 파일</label>
-                <Input
+                <input
+                  ref={fileInputRef}
                   type="file"
                   accept=".pdf,application/pdf"
                   onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
-                  className="h-11 border-slate-300 bg-white"
+                  className="hidden"
                 />
+                <div className="flex items-center gap-3 rounded-xl border border-slate-300 bg-white px-3 py-3">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="inline-flex shrink-0 items-center justify-center rounded-md border border-slate-300 bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 transition-colors hover:bg-slate-200"
+                  >
+                    파일 선택
+                  </button>
+                  <span className="min-w-0 truncate text-sm text-slate-600">
+                    {selectedFile ? selectedFile.name : "선택된 파일 없음"}
+                  </span>
+                </div>
                 <p className="text-xs text-slate-500">
-                  현재 선택: {selectedFile ? selectedFile.name : "선택된 파일 없음"}
+                  PDF 파일만 업로드할 수 있습니다.
                 </p>
               </div>
 
@@ -200,21 +214,22 @@ export default function RagDocsAdmin() {
                 업로드 대상 상품 ID: <span className="font-semibold">{pendingProductId}</span>
               </div>
 
-              <Button
+              <button
                 type="button"
                 onClick={() => void runUpload(false)}
                 disabled={submitting}
-                className="h-11 w-full bg-slate-900 text-white hover:bg-slate-800"
+                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md border border-slate-900 bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800 disabled:pointer-events-none disabled:opacity-50"
+                style={{ color: "#ffffff", backgroundColor: "#0f172a" }}
               >
-                <Upload className="size-4" />
-                {submitting ? "처리 중..." : "문서 업로드"}
-              </Button>
+                <Upload className="size-4" style={{ color: "#ffffff" }} />
+                <span style={{ color: "#ffffff" }}>{submitting ? "처리 중..." : "문서 업로드"}</span>
+              </button>
             </CardContent>
           </Card>
 
           <Card className="border-slate-200/80 bg-[#0f172a] text-slate-50 shadow-[0_18px_50px_rgba(15,23,42,0.18)]">
             <CardHeader>
-              <CardTitle className="text-xl font-semibold text-white">작업 로그</CardTitle>
+              <CardTitle className="text-xl font-semibold text-slate-50">작업 로그</CardTitle>
               <CardDescription className="text-slate-300">
                 기존 `ingest_bank_docs.py`에서 보던 진행 로그를 관리자 화면에 표시합니다.
               </CardDescription>
@@ -257,12 +272,12 @@ export default function RagDocsAdmin() {
                     className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-4 md:flex-row md:items-center md:justify-between"
                   >
                     <div className="flex min-w-0 items-start gap-3">
-                      <div className="mt-0.5 rounded-xl bg-slate-900 p-2 text-white">
+                      <div className="mt-0.5 rounded-xl bg-slate-900 p-2 text-slate-50">
                         <FileText className="size-4" />
                       </div>
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded-full bg-slate-900 px-2.5 py-1 text-xs font-semibold text-white">
+                          <span className="rounded-full bg-slate-900 px-2.5 py-1 text-xs font-semibold text-slate-50">
                             상품 ID {document.loan_product_id}
                           </span>
                           <span className="text-xs text-slate-500">{document.chunk_count}개 청크</span>
@@ -303,7 +318,7 @@ export default function RagDocsAdmin() {
             <AlertDialogCancel disabled={submitting}>취소</AlertDialogCancel>
             <AlertDialogAction
               disabled={submitting}
-              className="bg-slate-900 text-white hover:bg-slate-800"
+              className="bg-slate-900 text-slate-50 hover:bg-slate-800 hover:text-white"
               onClick={(event) => {
                 event.preventDefault();
                 void runUpload(true);
@@ -329,7 +344,7 @@ export default function RagDocsAdmin() {
             <AlertDialogCancel disabled={submitting}>취소</AlertDialogCancel>
             <AlertDialogAction
               disabled={submitting}
-              className="bg-red-600 text-white hover:bg-red-700"
+              className="bg-red-600 text-slate-50 hover:bg-red-700 hover:text-white"
               onClick={(event) => {
                 event.preventDefault();
                 void handleDelete();
