@@ -63,6 +63,19 @@ type LoanApplicationSummary = {
   productKey: string;
   productName: string;
   applicationStatus: string;
+  appliedAt?: string;
+};
+
+type CompletedLoanHistory = {
+  loanHistoryId: number;
+  productKey: string;
+  productName: string;
+  status: string;
+  totalPrincipal: number;
+  interestRate: number;
+  repaymentType: string;
+  startDate: string;
+  completedAt: string;
 };
 
 type DepositAccountSummary = {
@@ -158,6 +171,7 @@ export default function MyPage() {
   const [depositAccounts, setDepositAccounts] = useState<DepositAccountSummary[]>([]);
   const [loanSummary, setLoanSummary] = useState<MyLoanSummary | null>(null);
   const [loanApplications, setLoanApplications] = useState<LoanApplicationSummary[]>([]);
+  const [completedLoans, setCompletedLoans] = useState<CompletedLoanHistory[]>([]);
   const [selectedProductKey, setSelectedProductKey] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
@@ -181,12 +195,20 @@ export default function MyPage() {
       setErrorMessage("");
 
       try {
-        const [profileResponse, cardHistoryResponse, depositAccountsResponse, loanSummaryResponse, loanApplicationsResponse] = await Promise.all([
+        const [
+          profileResponse,
+          cardHistoryResponse,
+          depositAccountsResponse,
+          loanSummaryResponse,
+          loanApplicationsResponse,
+          completedLoansResponse,
+        ] = await Promise.all([
           getJson<MyProfile>("/api/auth/me"),
           getJson<CardHistoryResponse>("/api/cards/history"),
           getJson<DepositAccountSummary[]>("/api/deposit-accounts/me").catch(() => []),
           getJson<MyLoanSummary>("/api/loans/me/summary").catch(() => null),
           getJson<LoanApplicationSummary[]>("/api/loan-applications/me").catch(() => []),
+          getJson<CompletedLoanHistory[]>("/api/loans/me/completed").catch(() => []),
         ]);
 
         if (!isMounted) {
@@ -198,6 +220,7 @@ export default function MyPage() {
         setDepositAccounts(depositAccountsResponse);
         setLoanSummary(loanSummaryResponse);
         setLoanApplications(loanApplicationsResponse);
+        setCompletedLoans(completedLoansResponse);
       } catch (error) {
         if (!isMounted) {
           return;
@@ -209,6 +232,7 @@ export default function MyPage() {
         setDepositAccounts([]);
         setLoanSummary(null);
         setLoanApplications([]);
+        setCompletedLoans([]);
         setErrorMessage(
           message === "UNAUTHORIZED"
             ? "로그인 후 마이페이지를 확인할 수 있습니다."
@@ -228,21 +252,34 @@ export default function MyPage() {
     };
   }, []);
 
+  const isApplicationActive = (application: LoanApplicationSummary) => {
+    const latestCompletedLoan = completedLoans.find((loan) => loan.productKey === application.productKey);
+    if (!latestCompletedLoan) {
+      return true;
+    }
+    if (!application.appliedAt) {
+      return false;
+    }
+    return application.appliedAt.slice(0, 10) >= latestCompletedLoan.completedAt;
+  };
+
+  const activeLoanApplications = loanApplications.filter(isApplicationActive);
+
   useEffect(() => {
-    if (loanApplications.length === 0) {
+    if (activeLoanApplications.length === 0) {
       setSelectedProductKey("");
       return;
     }
 
-    if (loanApplications.some((application) => application.productKey === selectedProductKey)) {
+    if (activeLoanApplications.some((application) => application.productKey === selectedProductKey)) {
       return;
     }
 
     setSelectedProductKey(
-      loanApplications.find((application) => application.productKey === "youth-loan")?.productKey ??
-        loanApplications[0].productKey,
+      activeLoanApplications.find((application) => application.productKey === "youth-loan")?.productKey ??
+        activeLoanApplications[0].productKey,
     );
-  }, [loanApplications, selectedProductKey]);
+  }, [activeLoanApplications, selectedProductKey]);
 
   useEffect(() => {
     if (!selectedProductKey) {
@@ -286,7 +323,7 @@ export default function MyPage() {
   const sectionToggleClass =
     "flex items-center justify-center p-0 text-slate-400 transition hover:text-slate-600";
   const selectedLoanApplication =
-    loanApplications.find((application) => application.productKey === selectedProductKey) ?? null;
+    activeLoanApplications.find((application) => application.productKey === selectedProductKey) ?? null;
   const repaymentMethodLabel = !loanSummary
     ? "상환 방식 정보 없음"
     : loanSummary.repaymentType === "MATURITY_LUMP_SUM"
@@ -458,9 +495,9 @@ export default function MyPage() {
               </button>
               {isLoanOpen && (
                 <>
-                  {loanApplications.length > 0 && (
+                  {activeLoanApplications.length > 0 && (
                     <div className="mt-6 flex flex-wrap gap-2">
-                      {loanApplications.map((application) => {
+                      {activeLoanApplications.map((application) => {
                         const isSelected = application.productKey === selectedProductKey;
                         return (
                           <button
@@ -579,11 +616,11 @@ export default function MyPage() {
                       </p>
                     </div>
                   )}
-                  {loanApplications.length > 0 && (
+                  {activeLoanApplications.length > 0 && (
                     <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
                       <p className="text-sm text-slate-500">신청 상품</p>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        {loanApplications.map((application) => (
+                        {activeLoanApplications.map((application) => (
                           <span
                             key={application.loanApplicationId}
                             className="rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700"

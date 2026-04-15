@@ -35,6 +35,18 @@ type LoanApplicationSummary = {
   certificateSubmitted: boolean;
 };
 
+type CompletedLoanHistory = {
+  loanHistoryId: number;
+  productKey: string;
+  productName: string;
+  status: string;
+  totalPrincipal: number;
+  interestRate: number;
+  repaymentType: string;
+  startDate: string;
+  completedAt: string;
+};
+
 type DetailTab = "guide" | "rate" | "terms" | "caution";
 
 const loanDetails: Record<string, LoanDetailItem> = {
@@ -81,7 +93,7 @@ const loanDetails: Record<string, LoanDetailItem> = {
     target: "만 19세 ~ 29세 청년 고객",
     limit: "최소 50만원 ~ 최대 500만원",
     period: "12개월 ~ 24개월",
-    rate: "연 3.8% ~ 6.2%",
+    rate: "연 5.5% 시작 (우대 적용 시 최저 3.5%)",
     guide: [
       "자격증, 어학, 실무 교육 등 자기계발 목적에 맞는 자금을 지원합니다.",
       "대출 신청 후 내 대출 관리에서 서류를 제출하면 심사가 이어집니다.",
@@ -152,6 +164,7 @@ export default function LoanDetail() {
   const { productId } = useParams<{ productId: string }>();
   const product = productId ? loanDetails[productId] : undefined;
   const [applications, setApplications] = useState<LoanApplicationSummary[]>([]);
+  const [completedLoans, setCompletedLoans] = useState<CompletedLoanHistory[]>([]);
   const [activeTab, setActiveTab] = useState<DetailTab>("guide");
 
   useEffect(() => {
@@ -159,14 +172,20 @@ export default function LoanDetail() {
       const isAuthenticated = await checkAuthentication();
       if (!isAuthenticated) {
         setApplications([]);
+        setCompletedLoans([]);
         return;
       }
 
       try {
-        const nextApplications = await getJson<LoanApplicationSummary[]>("/api/loan-applications/me");
+        const [nextApplications, nextCompletedLoans] = await Promise.all([
+          getJson<LoanApplicationSummary[]>("/api/loan-applications/me"),
+          getJson<CompletedLoanHistory[]>("/api/loans/me/completed"),
+        ]);
         setApplications(nextApplications);
+        setCompletedLoans(nextCompletedLoans);
       } catch {
         setApplications([]);
+        setCompletedLoans([]);
       }
     };
 
@@ -180,10 +199,17 @@ export default function LoanDetail() {
     };
   }, []);
 
-  const application = useMemo(
+  const latestApplication = useMemo(
     () => applications.find((item) => item.productKey === productId) ?? null,
     [applications, productId],
   );
+  const latestCompletedLoan = useMemo(
+    () => completedLoans.find((item) => item.productKey === productId) ?? null,
+    [completedLoans, productId],
+  );
+  const isInUse =
+    !!latestApplication &&
+    (!latestCompletedLoan || latestApplication.appliedAt.slice(0, 10) >= latestCompletedLoan.completedAt);
 
   const handlePrimaryAction = () => {
     if (!productId || !product) {
@@ -191,7 +217,7 @@ export default function LoanDetail() {
       return;
     }
 
-    if (application) {
+    if (isInUse) {
       navigate("/loan/management");
       return;
     }
@@ -269,9 +295,9 @@ export default function LoanDetail() {
 
       <div className="mb-8 rounded-3xl border border-[#d7e5f5] bg-[linear-gradient(135deg,_#edf4fb_0%,_#dfeefb_50%,_#f8fbff_100%)] p-8 text-center text-slate-900 shadow-xl">
         <h3 className="mb-2 text-2xl font-bold">상품 내용을 확인한 뒤 바로 신청할 수 있습니다</h3>
-        {application && (
+        {latestApplication && isInUse && (
           <div className="mb-4 inline-flex rounded-full border border-emerald-600/70 bg-emerald-600 px-4 py-1 text-sm font-semibold text-white shadow-sm">
-            {getApplicationStatusLabel(application)}
+            {getApplicationStatusLabel(latestApplication)}
           </div>
         )}
         <p className="mb-6 text-slate-600">
@@ -286,7 +312,7 @@ export default function LoanDetail() {
           onClick={handlePrimaryAction}
           className="rounded-xl bg-[#6d8ca6] px-8 py-3 font-semibold text-white shadow-md transition-all hover:bg-[#5c7c97]"
         >
-          {application ? "내 대출 관리 보기" : "대출 신청하기"}
+          {isInUse ? "내 대출 관리 보기" : "대출 신청하기"}
         </button>
       </div>
 

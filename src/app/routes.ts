@@ -13,6 +13,7 @@ import LoanDetail from "./pages/loan/LoanDetail";
 import LoanApply from "./pages/loan/LoanApply";
 import MyLoanManagement from "./pages/loan/MyLoanManagement";
 import MyCreditScore from "./pages/loan/MyCreditScore";
+import CompletedLoanDetail from "./pages/loan/CompletedLoanDetail";
 import DdokgaeCard from "./pages/card/DdokgaeCard";
 import CardHistory from "./pages/card/CardHistory";
 import SpendingAnalysis from "./pages/card/SpendingAnalysis";
@@ -39,6 +40,7 @@ export const router = createBrowserRouter([
       { path: "loan/products/:productId", Component: LoanDetail },
       { path: "loan/products/:productId/apply", Component: LoanApply },
       { path: "loan/management", Component: MyLoanManagement },
+      { path: "loan/management/completed/:loanHistoryId", Component: CompletedLoanDetail },
       { path: "loan/credit-score", Component: MyCreditScore },
       { path: "card/ddokgae", Component: DdokgaeCard },
       { path: "card/history", Component: CardHistory },
