@@ -132,6 +132,9 @@ const failureReasonMessages: Record<string, string> = {
   PASS_KEYWORD_NOT_FOUND: "합격 또는 취득을 확인할 수 있는 문구를 찾지 못했습니다.",
   INVALID_DOCUMENT_TYPE: "자격증 증빙용 문서로 확인되지 않습니다.",
   OCR_TEXT_NOT_DETECTED: NO_TEXT_DETECTED_MESSAGE,
+  CERTIFICATE_DATE_NOT_FOUND: "문서에서 자격증 취득일 또는 발급일을 확인하지 못했습니다.",
+  CERTIFICATE_DATE_BEFORE_APPLICATION: "대출 신청일 이후에 취득한 자격증만 우대금리 인증이 가능합니다.",
+  LOAN_APPLICATION_DATE_NOT_FOUND: "대출 신청일 정보를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.",
 };
 
 function getApplicationStatusLabel(application: LoanApplicationSummary) {
@@ -996,15 +999,6 @@ export default function MyLoanManagement() {
                       ))}
                     </div>
                   </div>
-
-                  {selectedApplication.preferentialRateVerificationSubmitted && (
-                    <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50/70 px-4 py-4">
-                      <p className="text-sm font-semibold text-emerald-700">서류 제출 완료</p>
-                      <p className="mt-2 text-sm text-slate-600">
-                        자기계발 대출 신청 건에 필요한 서류 제출이 완료되었습니다. 인증 결과와 진행 상태를 확인해 주세요.
-                      </p>
-                    </div>
-                  )}
 
                   <div className="mb-4 rounded-xl border border-slate-200 bg-white px-4 py-2 shadow-sm">
                     <p className="mb-1 text-xs font-medium text-slate-500">자격증 종류</p>
