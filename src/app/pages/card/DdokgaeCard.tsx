@@ -50,6 +50,10 @@ type CardPreview = {
   cardHolderName: string;
 };
 
+type SelectableCard = CardPreviewAccount & {
+  displayLabel: string;
+};
+
 type MyProfile = {
   name: string;
 };
@@ -88,6 +92,8 @@ function formatPreviewExpiredYm(expiredYm: string | null) {
 export default function DdokgaeCard() {
   const navigate = useNavigate();
   const [isApplyDialogOpen, setIsApplyDialogOpen] = useState(false);
+  const [ownedCards, setOwnedCards] = useState<SelectableCard[]>([]);
+  const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
   const [accountName, setAccountName] = useState("");
   const [cardPassword, setCardPassword] = useState("");
   const [submitError, setSubmitError] = useState("");
@@ -125,25 +131,37 @@ export default function DdokgaeCard() {
           : DEFAULT_CARD_PREVIEW.cardHolderName;
         setCurrentUserName(resolvedUserName);
 
-        const ownedCards = response.accounts.filter((account) => account.cardId && account.cardNumber);
-        if (ownedCards.length === 0) {
-          setCardPreview({
-            ...DEFAULT_CARD_PREVIEW,
-            cardHolderName: resolvedUserName,
-          });
-          return;
-        }
+        const nextOwnedCards = response.accounts
+          .filter((account) => account.cardId != null && !!account.cardNumber?.trim())
+          .map((account) => ({
+            ...account,
+            displayLabel: `${account.accountName} ${account.accountNumber}`,
+          }));
 
-        const randomCard = ownedCards[Math.floor(Math.random() * ownedCards.length)];
-        setCardPreview({
-          cardNumber: formatPreviewCardNumber(randomCard.cardNumber),
-          expiredYm: formatPreviewExpiredYm(randomCard.expiredYm),
-          cardHolderName: resolvedUserName,
-        });
+        setOwnedCards(nextOwnedCards);
+
+        const nextSelectedCard =
+          nextOwnedCards.find((card) => card.cardId === selectedCardId) ?? nextOwnedCards[0] ?? null;
+
+        setSelectedCardId(nextSelectedCard?.cardId ?? null);
+        setCardPreview(
+          nextSelectedCard
+            ? {
+                cardNumber: formatPreviewCardNumber(nextSelectedCard.cardNumber),
+                expiredYm: formatPreviewExpiredYm(nextSelectedCard.expiredYm),
+                cardHolderName: resolvedUserName,
+              }
+            : {
+                ...DEFAULT_CARD_PREVIEW,
+                cardHolderName: resolvedUserName,
+              },
+        );
       } catch {
         if (isMounted) {
           setCurrentUserName(DEFAULT_CARD_PREVIEW.cardHolderName);
           setCardPreview(DEFAULT_CARD_PREVIEW);
+          setOwnedCards([]);
+          setSelectedCardId(null);
         }
       }
     }
@@ -154,6 +172,23 @@ export default function DdokgaeCard() {
       isMounted = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (selectedCardId == null) {
+      return;
+    }
+
+    const selected = ownedCards.find((card) => card.cardId === selectedCardId) ?? null;
+    if (!selected) {
+      return;
+    }
+
+    setCardPreview({
+      cardNumber: formatPreviewCardNumber(selected.cardNumber),
+      expiredYm: formatPreviewExpiredYm(selected.expiredYm),
+      cardHolderName: currentUserName,
+    });
+  }, [currentUserName, ownedCards, selectedCardId]);
 
   const features = [
     {
@@ -269,7 +304,29 @@ export default function DdokgaeCard() {
                 </div>
               </div>
 
-              <div className="relative">
+              <div className="relative md:-mt-9">
+                {ownedCards.length > 0 && (
+                  <div className="mb-3 flex items-center justify-end gap-3">
+                    <label htmlFor="card-preview-select" className="text-[11px] font-semibold whitespace-nowrap text-slate-500">
+                      표시 카드 선택
+                    </label>
+                    <div className="w-full max-w-[12rem]">
+                      <select
+                        id="card-preview-select"
+                        value={selectedCardId ?? ""}
+                        onChange={(event) => setSelectedCardId(Number(event.target.value))}
+                        className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+                      >
+                        {ownedCards.map((card) => (
+                          <option key={card.cardId} value={card.cardId}>
+                            {card.displayLabel}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
+
                 <div className="mx-auto flex max-w-md justify-center">
                   <div className="relative aspect-[1.58/1] w-full overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,#8ea2ff_0%,#4f66ff_28%,#223dff_64%,#1b28c9_100%)] shadow-[0_14px_36px_rgba(9,11,18,0.28)] ring-1 ring-white/10">
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_22%,rgba(255,255,255,0.24),transparent_22%),radial-gradient(circle_at_84%_18%,rgba(255,255,255,0.12),transparent_14%),radial-gradient(circle_at_50%_100%,rgba(111,129,255,0.20),transparent_32%),linear-gradient(180deg,rgba(255,255,255,0.08),transparent_24%)]" />
@@ -320,6 +377,7 @@ export default function DdokgaeCard() {
                 </div>
               </div>
             </div>
+
           </div>
         </div>
 

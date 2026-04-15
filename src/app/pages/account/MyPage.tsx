@@ -1,4 +1,4 @@
-import { BadgeCheck, ChevronDown, ChevronUp, CreditCard, FileText, User } from "lucide-react";
+import { BadgeCheck, ChevronDown, ChevronUp, CreditCard, FileText, Landmark, PiggyBank, User } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router";
 
@@ -65,6 +65,20 @@ type LoanApplicationSummary = {
   applicationStatus: string;
 };
 
+type DepositAccountSummary = {
+  depositAccountId: number;
+  depositProductName: string;
+  depositProductType: "FIXED_DEPOSIT" | "FIXED_SAVING";
+  depositAccountNumber: string;
+  currentBalance: number;
+  interestRate: number;
+  maturityDate: string;
+  status: string;
+  paidInstallmentCount: number;
+  totalInstallmentCount: number;
+  savingMonth: number;
+};
+
 const quickMenus = [
   {
     title: "회원정보 관리",
@@ -121,9 +135,27 @@ function maskCardNumber(cardNumber: string | null) {
   return `${digitsOnly.slice(0, 4)}-****-****-${digitsOnly.slice(-4)}`;
 }
 
+function formatDepositStatus(status: string) {
+  switch (status) {
+    case "ACTIVE":
+      return "유지중";
+    case "CLOSED":
+      return "만기해지";
+    case "EARLY_CLOSED":
+      return "중도해지";
+    default:
+      return status;
+  }
+}
+
+function getDepositProductLabel(type: DepositAccountSummary["depositProductType"]) {
+  return type === "FIXED_DEPOSIT" ? "정기예금" : "정기적금";
+}
+
 export default function MyPage() {
   const [profile, setProfile] = useState<MyProfile | null>(null);
   const [accounts, setAccounts] = useState<CardHistoryAccount[]>([]);
+  const [depositAccounts, setDepositAccounts] = useState<DepositAccountSummary[]>([]);
   const [loanSummary, setLoanSummary] = useState<MyLoanSummary | null>(null);
   const [loanApplications, setLoanApplications] = useState<LoanApplicationSummary[]>([]);
   const [selectedProductKey, setSelectedProductKey] = useState("");
@@ -138,6 +170,7 @@ export default function MyPage() {
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [isBankingOpen, setIsBankingOpen] = useState(false);
   const [isLoanOpen, setIsLoanOpen] = useState(false);
+  const [isDepositOpen, setIsDepositOpen] = useState(false);
   const [isQuickMenuOpen, setIsQuickMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -148,9 +181,10 @@ export default function MyPage() {
       setErrorMessage("");
 
       try {
-        const [profileResponse, cardHistoryResponse, loanSummaryResponse, loanApplicationsResponse] = await Promise.all([
+        const [profileResponse, cardHistoryResponse, depositAccountsResponse, loanSummaryResponse, loanApplicationsResponse] = await Promise.all([
           getJson<MyProfile>("/api/auth/me"),
           getJson<CardHistoryResponse>("/api/cards/history"),
+          getJson<DepositAccountSummary[]>("/api/deposit-accounts/me").catch(() => []),
           getJson<MyLoanSummary>("/api/loans/me/summary").catch(() => null),
           getJson<LoanApplicationSummary[]>("/api/loan-applications/me").catch(() => []),
         ]);
@@ -161,6 +195,7 @@ export default function MyPage() {
 
         setProfile(profileResponse);
         setAccounts(cardHistoryResponse.accounts);
+        setDepositAccounts(depositAccountsResponse);
         setLoanSummary(loanSummaryResponse);
         setLoanApplications(loanApplicationsResponse);
       } catch (error) {
@@ -171,6 +206,7 @@ export default function MyPage() {
         const message = error instanceof Error ? error.message : "REQUEST_FAILED";
         setProfile(null);
         setAccounts([]);
+        setDepositAccounts([]);
         setLoanSummary(null);
         setLoanApplications([]);
         setErrorMessage(
@@ -245,6 +281,8 @@ export default function MyPage() {
 
   const issuedCards = accounts.filter((account) => account.cardId);
   const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0);
+  const activeDepositAccounts = depositAccounts.filter((account) => account.status === "ACTIVE");
+  const totalDepositBalance = activeDepositAccounts.reduce((sum, account) => sum + account.currentBalance, 0);
   const sectionToggleClass =
     "flex items-center justify-center p-0 text-slate-400 transition hover:text-slate-600";
   const selectedLoanApplication =
@@ -254,6 +292,9 @@ export default function MyPage() {
     : loanSummary.repaymentType === "MATURITY_LUMP_SUM"
       ? "만기일시상환"
       : "원리금균등분할상환";
+  const featuredDepositAccounts = [...activeDepositAccounts]
+    .sort((left, right) => right.currentBalance - left.currentBalance)
+    .slice(0, 3);
 
   const handleOpenRevealForm = () => {
     setIsRevealFormOpen(true);
@@ -309,7 +350,7 @@ export default function MyPage() {
             </div>
           </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
             <div className="rounded-3xl border border-sky-100 bg-[linear-gradient(135deg,_rgba(219,234,254,0.95)_0%,_rgba(239,246,255,0.98)_48%,_rgba(248,250,252,1)_100%)] px-5 py-5 text-slate-900 shadow-[0_20px_45px_rgba(148,163,184,0.18)]">
               <p className="text-sm text-slate-500">보유 계좌 · 카드</p>
               <p className="mt-3 text-3xl font-semibold">{accounts.length}개</p>
@@ -317,6 +358,11 @@ export default function MyPage() {
             <div className="rounded-3xl border border-blue-100 bg-blue-50/70 px-5 py-5">
               <p className="text-sm text-slate-500">총 예금 잔액</p>
               <p className="mt-3 text-3xl font-semibold text-slate-900">{formatAmount(totalBalance)}</p>
+            </div>
+            <div className="rounded-3xl border border-emerald-100 bg-emerald-50/70 px-5 py-5">
+              <p className="text-sm text-slate-500">보유 예적금</p>
+              <p className="mt-3 text-3xl font-semibold text-slate-900">{activeDepositAccounts.length}개</p>
+              <p className="mt-2 text-sm text-slate-500">{formatAmount(totalDepositBalance)}</p>
             </div>
           </div>
         </div>
@@ -546,6 +592,108 @@ export default function MyPage() {
                           </span>
                         ))}
                       </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </section>
+
+            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
+              <button
+                type="button"
+                onClick={() => setIsDepositOpen((prev) => !prev)}
+                className="flex w-full items-center justify-between gap-4 text-left"
+              >
+                <h2 className="text-2xl font-bold text-slate-900">예적금</h2>
+                <span className={sectionToggleClass}>
+                  {isDepositOpen ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                </span>
+              </button>
+
+              {isDepositOpen && (
+                <>
+                  {activeDepositAccounts.length > 0 ? (
+                    <div className="mt-6 space-y-4">
+                      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
+                        <div>
+                          <p className="text-lg font-semibold text-slate-900">유지 중인 예적금</p>
+                        </div>
+                        <Link
+                          to="/deposit/management"
+                          className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                        >
+                          예적금 관리
+                        </Link>
+                      </div>
+
+                      <div className="grid gap-4 xl:grid-cols-3">
+                        {featuredDepositAccounts.map((account) => {
+                          const Icon = account.depositProductType === "FIXED_DEPOSIT" ? Landmark : PiggyBank;
+
+                          return (
+                            <div
+                              key={account.depositAccountId}
+                              className="rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-5"
+                            >
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex items-start gap-3">
+                                  <div className="rounded-2xl bg-white p-3 text-sky-700 shadow-sm">
+                                    <Icon className="h-5 w-5" />
+                                  </div>
+                                  <div>
+                                    <p className="text-base font-semibold text-slate-900">{account.depositProductName}</p>
+                                    <p className="mt-1 text-sm text-slate-500">{account.depositAccountNumber}</p>
+                                  </div>
+                                </div>
+                                <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700">
+                                  {getDepositProductLabel(account.depositProductType)}
+                                </span>
+                              </div>
+
+                              <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                                <div>
+                                  <p className="text-slate-500">현재 상태</p>
+                                  <p className="mt-1 font-semibold text-slate-900">
+                                    {formatDepositStatus(account.status)}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-slate-500">현재 잔액</p>
+                                  <p className="mt-1 font-semibold text-slate-900">
+                                    {formatAmount(account.currentBalance)}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-slate-500">적용 금리</p>
+                                  <p className="mt-1 font-semibold text-slate-900">
+                                    연 {account.interestRate.toFixed(2)}%
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-slate-500">
+                                    {account.depositProductType === "FIXED_SAVING" ? "납입 진행" : "만기일"}
+                                  </p>
+                                  <p className="mt-1 font-semibold text-slate-900">
+                                    {account.depositProductType === "FIXED_SAVING"
+                                      ? `${account.paidInstallmentCount}/${account.totalInstallmentCount || account.savingMonth}`
+                                      : account.maturityDate}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-6 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-5 py-6">
+                      <p className="text-sm text-slate-500">현재 가입한 예적금이 없습니다.</p>
+                      <Link
+                        to="/deposit/products"
+                        className="mt-4 inline-flex rounded-xl bg-[#6d8ca6] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#5c7c97]"
+                      >
+                        예적금 상품 보러 가기
+                      </Link>
                     </div>
                   )}
                 </>
