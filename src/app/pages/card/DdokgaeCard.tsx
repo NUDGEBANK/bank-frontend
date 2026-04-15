@@ -132,7 +132,7 @@ export default function DdokgaeCard() {
         setCurrentUserName(resolvedUserName);
 
         const nextOwnedCards = response.accounts
-          .filter((account) => account.cardId && account.cardNumber)
+          .filter((account) => account.cardId != null && !!account.cardNumber?.trim())
           .map((account) => ({
             ...account,
             displayLabel: `${account.accountName} ${account.accountNumber}`,

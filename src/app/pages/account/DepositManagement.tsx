@@ -277,10 +277,14 @@ export default function DepositManagement() {
       nextAccounts.find((account) => account.depositAccountId === targetId)?.depositAccountId ??
       nextAccounts[0]?.depositAccountId ??
       null;
+    const selectedIndex = nextSelectedId == null
+      ? -1
+      : nextAccounts.findIndex((account) => account.depositAccountId === nextSelectedId);
+    const nextPage = selectedIndex >= 0 ? Math.floor(selectedIndex / pageSize) + 1 : 1;
 
     setAccounts(nextAccounts);
     setSelectedId(nextSelectedId);
-    setAccountPage(1);
+    setAccountPage(nextPage);
 
     if (nextSelectedId == null) {
       setDetail(null);
