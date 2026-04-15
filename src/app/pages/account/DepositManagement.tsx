@@ -167,6 +167,8 @@ export default function DepositManagement() {
   const [actionError, setActionError] = useState("");
   const [isPaying, setIsPaying] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const [accountPage, setAccountPage] = useState(1);
+  const pageSize = 5;
 
   const selectedSummary = useMemo(
     () => accounts.find((account) => account.depositAccountId === selectedId) ?? null,
@@ -180,6 +182,15 @@ export default function DepositManagement() {
 
     return detail.schedules.find((schedule) => !schedule.isPaid) ?? null;
   }, [detail]);
+
+  const pagedAccounts = useMemo(() => {
+    const totalPages = Math.max(1, Math.ceil(accounts.length / pageSize));
+    const currentPage = Math.min(accountPage, totalPages);
+    const startIndex = (currentPage - 1) * pageSize;
+    return accounts.slice(startIndex, startIndex + pageSize);
+  }, [accounts, accountPage]);
+
+  const accountTotalPages = useMemo(() => Math.max(1, Math.ceil(accounts.length / pageSize)), [accounts]);
 
   useEffect(() => {
     let isMounted = true;
@@ -269,6 +280,7 @@ export default function DepositManagement() {
 
     setAccounts(nextAccounts);
     setSelectedId(nextSelectedId);
+    setAccountPage(1);
 
     if (nextSelectedId == null) {
       setDetail(null);
@@ -402,7 +414,7 @@ export default function DepositManagement() {
       ) : (
         <div className="grid gap-6 xl:grid-cols-[minmax(320px,0.9fr)_minmax(0,1.4fr)]">
           <aside className="space-y-4">
-            {accounts.map((account) => {
+            {pagedAccounts.map((account) => {
               const isSelected = account.depositAccountId === selectedId;
               const Icon = account.depositProductType === "FIXED_DEPOSIT" ? Landmark : PiggyBank;
 
@@ -452,6 +464,29 @@ export default function DepositManagement() {
                 </button>
               );
             })}
+            {accounts.length > pageSize && (
+              <div className="flex items-center justify-between gap-3 rounded-[28px] border border-slate-200 bg-white px-5 py-4 shadow-[0_20px_50px_rgba(15,23,42,0.06)]">
+                <button
+                  type="button"
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={accountPage <= 1}
+                  onClick={() => setAccountPage((current) => Math.max(1, current - 1))}
+                >
+                  이전
+                </button>
+                <span className="text-sm font-medium text-slate-500">
+                  {accountPage} / {accountTotalPages}
+                </span>
+                <button
+                  type="button"
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  disabled={accountPage >= accountTotalPages}
+                  onClick={() => setAccountPage((current) => Math.min(accountTotalPages, current + 1))}
+                >
+                  다음
+                </button>
+              </div>
+            )}
           </aside>
 
           <section className="rounded-[32px] border border-slate-200 bg-white p-8 shadow-[0_20px_50px_rgba(15,23,42,0.06)]">
