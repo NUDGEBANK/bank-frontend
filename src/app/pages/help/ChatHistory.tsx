@@ -887,7 +887,6 @@ export default function ChatHistory() {
 
           <AlertDialogFooter className="border-t border-slate-100 px-6 py-4 sm:justify-between">
             <AlertDialogCancel
-              onClick={closeDeleteDialog}
               className="rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50"
             >
               취소
