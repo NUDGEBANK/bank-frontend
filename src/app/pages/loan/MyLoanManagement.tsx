@@ -1,4 +1,4 @@
-﻿import { Calendar, Calculator, ChevronDown, ChevronUp, FileSearch, TrendingDown, Upload } from "lucide-react";
+﻿﻿import { Calendar, Calculator, ChevronDown, ChevronUp, FileSearch, TrendingDown, Upload } from "lucide-react";
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import { getJson, postJson } from "../../lib/api";
@@ -15,6 +15,18 @@ type LoanApplicationSummary = {
   preferentialRateVerificationAvailable: boolean;
   preferentialRateVerificationSubmitted: boolean;
   preferentialRateVerificationStatus: string | null;
+};
+
+type CompletedLoanHistory = {
+  loanHistoryId: number;
+  productKey: string;
+  productName: string;
+  status: string;
+  totalPrincipal: number;
+  interestRate: number;
+  repaymentType: string;
+  startDate: string;
+  completedAt: string;
 };
 
 type UploadStatus = "idle" | "selected" | "uploading" | "completed" | "failed";
@@ -211,6 +223,7 @@ export default function MyLoanManagement() {
   const loanManagementRequestIdRef = useRef(0);
   const [simulationAmount, setSimulationAmount] = useState(1000000);
   const [applications, setApplications] = useState<LoanApplicationSummary[]>([]);
+  const [completedLoans, setCompletedLoans] = useState<CompletedLoanHistory[]>([]);
   const [summary, setSummary] = useState<MyLoanSummary | null>(null);
   const [repaymentSchedules, setRepaymentSchedules] = useState<MyLoanRepaymentSchedule[]>([]);
   const [repaymentHistories, setRepaymentHistories] = useState<MyLoanRepaymentHistory[]>([]);
@@ -226,6 +239,19 @@ export default function MyLoanManagement() {
   const [repaymentActionMessage, setRepaymentActionMessage] = useState<string | null>(null);
   const [isRepaymentSubmitting, setIsRepaymentSubmitting] = useState(false);
   const [isRepaymentHistoryExpanded, setIsRepaymentHistoryExpanded] = useState(false);
+
+  const isApplicationOnOrAfterCompletedLoan = (
+    application: LoanApplicationSummary,
+    completedLoan: CompletedLoanHistory,
+  ) => application.appliedAt.slice(0, 10) >= completedLoan.completedAt;
+
+  const isApplicationActive = (application: LoanApplicationSummary) => {
+    const latestCompletedLoan = completedLoans.find((loan) => loan.productKey === application.productKey);
+    if (!latestCompletedLoan) {
+      return true;
+    }
+    return isApplicationOnOrAfterCompletedLoan(application, latestCompletedLoan);
+  };
 
   const refreshLoanManagement = async () => {
     const requestId = ++loanManagementRequestIdRef.current;
@@ -277,17 +303,23 @@ export default function MyLoanManagement() {
       const isAuthenticated = await checkAuthentication();
       if (!isAuthenticated) {
         setApplications([]);
+        setCompletedLoans([]);
         return;
       }
 
       try {
-        const nextApplications = await getJson<LoanApplicationSummary[]>("/api/loan-applications/me");
+        const [nextApplications, nextCompletedLoans] = await Promise.all([
+          getJson<LoanApplicationSummary[]>("/api/loan-applications/me"),
+          getJson<CompletedLoanHistory[]>("/api/loans/me/completed"),
+        ]);
         if (requestId === applicationsRequestIdRef.current) {
           setApplications(nextApplications);
+          setCompletedLoans(nextCompletedLoans);
         }
       } catch {
         if (requestId === applicationsRequestIdRef.current) {
           setApplications([]);
+          setCompletedLoans([]);
         }
       }
     };
@@ -326,21 +358,26 @@ export default function MyLoanManagement() {
     );
   }, [summary?.remainingPrincipal]);
 
+  const activeApplications = useMemo(
+    () => applications.filter(isApplicationActive),
+    [applications, completedLoans],
+  );
+
   useEffect(() => {
-    if (applications.length === 0) {
+    if (activeApplications.length === 0) {
       setSelectedProductKey("");
       return;
     }
 
-    if (applications.some((application) => application.productKey === selectedProductKey)) {
+    if (activeApplications.some((application) => application.productKey === selectedProductKey)) {
       return;
     }
 
     setSelectedProductKey(
-      applications.find((application) => application.productKey === "youth-loan")?.productKey ??
-        applications[0].productKey,
+      activeApplications.find((application) => application.productKey === "youth-loan")?.productKey ??
+        activeApplications[0].productKey,
     );
-  }, [applications, selectedProductKey]);
+  }, [activeApplications, selectedProductKey]);
 
   const repaidPrincipal = summary?.repaidPrincipal ?? 0;
   const repaymentProgress =
@@ -374,10 +411,7 @@ export default function MyLoanManagement() {
   const remainingInterestAmount = summary?.remainingInterestAmount ?? 0;
   const hasLoanData = !!summary;
   const showLoanLoadingState = isLoanDataLoading && !hasLoanData;
-  const showLoanEmptyState =
-    !isLoanDataLoading &&
-    !hasLoanData &&
-    loanDataError === "대출 관리 정보가 없습니다.";
+  const shouldShowLoanEmptyState = !isLoanDataLoading && activeApplications.length === 0;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -393,10 +427,10 @@ export default function MyLoanManagement() {
 
   const selectedApplication = useMemo(
     () =>
-      applications.find((application) => application.productKey === selectedProductKey) ??
-      applications[0] ??
+      activeApplications.find((application) => application.productKey === selectedProductKey) ??
+      activeApplications[0] ??
       null,
-    [applications, selectedProductKey],
+    [activeApplications, selectedProductKey],
   );
   const canSubmitCertificate = !!selectedApplication?.preferentialRateVerificationAvailable;
   const isYouthLoanSelected = selectedApplication?.productKey === "youth-loan";
@@ -626,7 +660,7 @@ export default function MyLoanManagement() {
         </div>
 
         <div className="space-y-8 px-6 py-8 md:px-8 lg:px-10">
-          {applications.length > 0 && (
+          {activeApplications.length > 0 && (
             <section className="rounded-3xl border border-slate-200 bg-slate-50/80 px-5 py-5">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
@@ -639,7 +673,7 @@ export default function MyLoanManagement() {
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {applications.map((application) => {
+                  {activeApplications.map((application) => {
                     const isSelected = application.productKey === selectedProductKey;
                     return (
                       <button
@@ -661,22 +695,90 @@ export default function MyLoanManagement() {
             </section>
           )}
 
+          {completedLoans.length > 0 && (
+            <section className="rounded-3xl border border-slate-200 bg-white px-5 py-5 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-600">
+                    Completed Products
+                  </p>
+                  <h2 className="mt-2 text-xl font-bold text-slate-900">이전 상품 내역</h2>
+                  <p className="mt-2 text-sm text-slate-500">
+                    완납한 상품을 선택하면 축하 페이지와 이전 이용 정보를 확인할 수 있습니다.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {completedLoans.map((loan) => (
+                    <Link
+                      key={loan.loanHistoryId}
+                      to={`/loan/management/completed/${loan.loanHistoryId}`}
+                      className="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100"
+                    >
+                      {loan.productName}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </section>
+          )}
+
           {showLoanLoadingState ? (
             <section className="rounded-3xl border border-slate-200 bg-slate-50/80 px-6 py-8 text-center text-sm text-slate-500">
               대출 관리 정보를 불러오는 중입니다.
             </section>
-          ) : showLoanEmptyState ? (
-            <section className="rounded-3xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-8 text-center">
-              <h2 className="text-xl font-bold text-slate-900">대출 관리 정보가 없습니다</h2>
-              <p className="mt-2 text-sm text-slate-500">
-                현재 실행된 대출 데이터가 없어 관리 정보를 표시할 수 없습니다.
-              </p>
-              <Link
-                to="/loan/products"
-                className="mt-4 inline-block rounded-xl bg-[#6d8ca6] px-4 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-[#5c7c97]"
-              >
-                대출 상품 보러가기
-              </Link>
+          ) : shouldShowLoanEmptyState ? (
+            <section className="rounded-[32px] border border-white/70 bg-gradient-to-br from-slate-900 via-sky-900 to-emerald-700 px-6 py-10 text-white shadow-[0_30px_70px_rgba(15,23,42,0.18)]">
+              <div className="max-w-4xl">
+                <p className="text-sm font-semibold uppercase tracking-[0.28em] text-sky-200">
+                  Loan Start
+                </p>
+                <h2 className="mt-3 text-3xl font-bold tracking-tight">
+                  아직 진행 중인 대출이 없습니다
+                </h2>
+                <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-100">
+                  소비분석 대출과 자기계발 대출 상품을 비교하고, 지금 필요한 대출을 바로 신청할 수 있습니다.
+                  완납한 상품은 위의 이전 상품 내역에서 다시 확인할 수 있습니다.
+                </p>
+              </div>
+
+              <div className="mt-8 grid gap-4 md:grid-cols-3">
+                <div className="rounded-3xl border border-white/15 bg-white/10 px-5 py-5 backdrop-blur-sm">
+                  <p className="text-sm text-sky-100">소비분석 대출</p>
+                  <p className="mt-3 text-2xl font-bold">최대 300만원</p>
+                  <p className="mt-2 text-sm text-slate-100">
+                    소비 패턴 기반으로 한도와 상환 계획을 확인할 수 있습니다.
+                  </p>
+                </div>
+                <div className="rounded-3xl border border-white/15 bg-white/10 px-5 py-5 backdrop-blur-sm">
+                  <p className="text-sm text-sky-100">자기계발 대출</p>
+                  <p className="mt-3 text-2xl font-bold">최대 500만원</p>
+                  <p className="mt-2 text-sm text-slate-100">
+                    자격증 OCR 인증과 우대금리 혜택을 함께 확인할 수 있습니다.
+                  </p>
+                </div>
+                <div className="rounded-3xl border border-white/15 bg-white/10 px-5 py-5 backdrop-blur-sm">
+                  <p className="text-sm text-sky-100">신청 후 관리</p>
+                  <p className="mt-3 text-2xl font-bold">상환 일정 관리</p>
+                  <p className="mt-2 text-sm text-slate-100">
+                    신청 이후에는 상환 일정, 이자 정보, 이전 상품 내역을 한 번에 확인합니다.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <Link
+                  to="/loan/products"
+                  className="inline-flex items-center justify-center rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
+                >
+                  대출 상품 보러가기
+                </Link>
+                <Link
+                  to="/loan/credit-score"
+                  className="inline-flex items-center justify-center rounded-2xl border border-white/25 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
+                >
+                  내 신용 점수 확인하기
+                </Link>
+              </div>
             </section>
           ) : (
             <>
@@ -935,7 +1037,7 @@ export default function MyLoanManagement() {
             </div>
           )}
 
-          {loanDataError && !isLoanDataLoading && !showLoanEmptyState && (
+          {loanDataError && !isLoanDataLoading && !shouldShowLoanEmptyState && !hasLoanData && (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
               {loanDataError === "대출 관리 정보가 없습니다."
                 ? "현재 조회할 대출 관리 정보가 없습니다."

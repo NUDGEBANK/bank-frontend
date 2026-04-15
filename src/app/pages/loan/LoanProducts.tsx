@@ -27,6 +27,18 @@ type LoanApplicationSummary = {
   certificateSubmitted: boolean;
 };
 
+type CompletedLoanHistory = {
+  loanHistoryId: number;
+  productKey: string;
+  productName: string;
+  status: string;
+  totalPrincipal: number;
+  interestRate: number;
+  repaymentType: string;
+  startDate: string;
+  completedAt: string;
+};
+
 function getApplicationStatusLabel(application: LoanApplicationSummary) {
   switch (application.applicationStatus) {
     case "DOCUMENT_REQUIRED":
@@ -60,7 +72,7 @@ const loanProducts: LoanProduct[] = [
     id: "youth-loan",
     name: "자기계발 대출",
     badge: "청년 특화",
-    rate: "연 3.8% ~ 6.2%",
+    rate: "연 5.5% (우대 적용 시 최저 3.5%)",
     limit: "최대 500만원",
     period: "12개월 ~ 24개월",
     target: "만 19세 ~ 29세 청년",
@@ -85,20 +97,27 @@ const loanProducts: LoanProduct[] = [
 export default function LoanProducts() {
   const navigate = useNavigate();
   const [applications, setApplications] = useState<LoanApplicationSummary[]>([]);
+  const [completedLoans, setCompletedLoans] = useState<CompletedLoanHistory[]>([]);
 
   useEffect(() => {
     const syncApplications = async () => {
       const isAuthenticated = await checkAuthentication();
       if (!isAuthenticated) {
         setApplications([]);
+        setCompletedLoans([]);
         return;
       }
 
       try {
-        const nextApplications = await getJson<LoanApplicationSummary[]>("/api/loan-applications/me");
+        const [nextApplications, nextCompletedLoans] = await Promise.all([
+          getJson<LoanApplicationSummary[]>("/api/loan-applications/me"),
+          getJson<CompletedLoanHistory[]>("/api/loans/me/completed"),
+        ]);
         setApplications(nextApplications);
+        setCompletedLoans(nextCompletedLoans);
       } catch {
         setApplications([]);
+        setCompletedLoans([]);
       }
     };
 
@@ -121,12 +140,31 @@ export default function LoanProducts() {
     [],
   );
 
-  const getApplication = (productId: string) =>
+  const getLatestApplication = (productId: string) =>
     applications.find((application) => application.productKey === productId) ?? null;
 
+  const getLatestCompletedLoan = (productId: string) =>
+    completedLoans.find((loan) => loan.productKey === productId) ?? null;
+
+  const isApplicationOnOrAfterCompletedLoan = (
+    application: LoanApplicationSummary,
+    completedLoan: CompletedLoanHistory,
+  ) => application.appliedAt.slice(0, 10) >= completedLoan.completedAt;
+
+  const isProductInUse = (productId: string) => {
+    const latestApplication = getLatestApplication(productId);
+    const latestCompletedLoan = getLatestCompletedLoan(productId);
+    if (!latestApplication) {
+      return false;
+    }
+    if (!latestCompletedLoan) {
+      return true;
+    }
+    return isApplicationOnOrAfterCompletedLoan(latestApplication, latestCompletedLoan);
+  };
+
   const handleApply = (product: LoanProduct) => {
-    const existing = getApplication(product.id);
-    if (existing) {
+    if (isProductInUse(product.id)) {
       navigate("/loan/management");
       return;
     }
@@ -153,7 +191,8 @@ export default function LoanProducts() {
 
         <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
           {primaryProducts.map((product) => {
-            const application = getApplication(product.id);
+            const application = getLatestApplication(product.id);
+            const isInUse = isProductInUse(product.id);
 
             return (
               <section
@@ -167,7 +206,7 @@ export default function LoanProducts() {
                       {product.badge}
                     </span>
                   )}
-                  {application && (
+                  {application && isInUse && (
                     <span className="rounded-full border border-emerald-600/70 bg-emerald-600 px-4 py-1 text-sm font-semibold text-white shadow-sm">
                       {getApplicationStatusLabel(application)}
                     </span>
@@ -217,7 +256,7 @@ export default function LoanProducts() {
                     className="flex-1 rounded-xl border border-[#2a4b78] bg-[#2a4b78] py-4 font-bold text-white shadow-md transition-all hover:bg-[#223f64]"
                   >
                     <span style={{ color: "#fff" }}>
-                      {application ? "내 대출 관리 보기" : "대출 신청하기"}
+                      {isInUse ? "내 대출 관리 보기" : "대출 신청하기"}
                     </span>
                   </button>
                 </div>
@@ -228,7 +267,8 @@ export default function LoanProducts() {
 
         <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
           {secondaryProducts.map((product) => {
-            const application = getApplication(product.id);
+            const application = getLatestApplication(product.id);
+            const isInUse = isProductInUse(product.id);
 
             return (
             <div
@@ -237,7 +277,7 @@ export default function LoanProducts() {
             >
               <div className="mb-4 flex items-center justify-between gap-3">
                 <h3 className="text-xl font-bold text-white">{product.name}</h3>
-                {application && (
+                {application && isInUse && (
                   <span className="rounded-full border border-emerald-600/70 bg-emerald-600 px-3 py-1 text-xs font-semibold text-white shadow-sm">
                     {getApplicationStatusLabel(application)}
                   </span>
@@ -264,7 +304,7 @@ export default function LoanProducts() {
                 className="mt-3 block w-full rounded-xl border border-[#2a4b78] bg-[#2a4b78] py-3 text-center font-bold text-white shadow-sm transition-all hover:bg-[#223f64]"
               >
                 <span style={{ color: "#fff" }}>
-                  {application ? "내 대출 관리 보기" : "대출 신청하기"}
+                  {isInUse ? "내 대출 관리 보기" : "대출 신청하기"}
                 </span>
               </button>
             </div>

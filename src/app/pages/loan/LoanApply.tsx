@@ -76,7 +76,7 @@ const productConfigs: Record<string, LoanApplyConfig> = {
     subtitle: "자격증, 어학, 직무 교육 등 자기계발 비용을 준비하는 청년 대상 상품입니다.",
     limit: "최대 500만원",
     period: "12개월 ~ 24개월",
-    rate: "연 3.8% ~ 6.2%",
+    rate: "연 5.5% (우대 적용 시 최저 3.5%)",
     defaultAmount: "3000000",
     defaultPurpose: "자격증 및 직무 교육 준비",
     amountRange: { min: 500000, max: 5000000 },
