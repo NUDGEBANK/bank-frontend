@@ -727,6 +727,8 @@ export default function SpendingAnalysis() {
             <button
               type="button"
               onClick={() => setIsMonthlyInsightOpen((prev) => !prev)}
+              aria-expanded={isMonthlyInsightOpen}
+              aria-controls="monthly-insight-panel"
               className="flex w-full items-center justify-between gap-4 text-left"
             >
               <div>
@@ -741,7 +743,10 @@ export default function SpendingAnalysis() {
             </button>
 
             {isMonthlyInsightOpen && (
-              <div className="mt-5 grid gap-4 md:grid-cols-3">
+              <div
+                id="monthly-insight-panel"
+                className="mt-5 grid gap-4 md:grid-cols-3"
+              >
                 <article className="flex min-h-[168px] flex-col rounded-2xl border border-rose-100 bg-rose-50/80 p-5">
                   <p className="text-sm font-medium text-slate-500">위험소비 건수</p>
                   <p className="mt-3 text-2xl font-bold text-slate-900">
@@ -780,6 +785,8 @@ export default function SpendingAnalysis() {
             <button
               type="button"
               onClick={() => setIsCategoryStatsOpen((prev) => !prev)}
+              aria-expanded={isCategoryStatsOpen}
+              aria-controls="category-stats-panel"
               className="flex w-full items-center justify-between gap-4 text-left"
             >
               <div>
@@ -794,7 +801,7 @@ export default function SpendingAnalysis() {
             </button>
 
             {isCategoryStatsOpen && (categoryStats.length > 0 ? (
-              <div className="mt-6">
+              <div id="category-stats-panel" className="mt-6">
                 <div className="mb-5 flex flex-wrap items-center gap-x-6 gap-y-3">
                   <div className="flex items-center gap-2.5 text-base font-semibold text-slate-700">
                     <span className="h-3.5 w-3.5 rounded-full bg-[#2f7de1]" />
@@ -871,6 +878,8 @@ export default function SpendingAnalysis() {
             <button
               type="button"
               onClick={() => setIsMonthlyFlowOpen((prev) => !prev)}
+              aria-expanded={isMonthlyFlowOpen}
+              aria-controls="monthly-flow-panel"
               className="flex w-full items-center justify-between gap-4 text-left"
             >
               <div>
@@ -885,7 +894,7 @@ export default function SpendingAnalysis() {
             </button>
 
             {isMonthlyFlowOpen && (
-              <div className="mt-6">
+              <div id="monthly-flow-panel" className="mt-6">
                 <div className="mb-5 flex flex-wrap items-center gap-x-6 gap-y-3">
                   <div className="flex items-center gap-2.5 text-base font-semibold text-slate-700">
                     <span className="h-3.5 w-3.5 rounded-full bg-[#2f7de1]" />
