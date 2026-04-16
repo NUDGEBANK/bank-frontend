@@ -20,6 +20,7 @@ import SpendingAnalysis from "./pages/card/SpendingAnalysis";
 import MyPage from "./pages/account/MyPage";
 import ChatHistory from "./pages/help/ChatHistory";
 import LoanApplicationGuide from "./pages/loan/LoanApplicationGuide";
+import AboutBank from "./pages/AboutBank";
 import RagDocs from "./pages/admin/RagDocs";
 
 
@@ -29,6 +30,7 @@ export const router = createBrowserRouter([
     Component: Root,
     children: [
       { index: true, Component: Home },
+      { path: "about", Component: AboutBank },
       { path: "login", Component: Login },
       { path: "signup", Component: Signup },
       { path: "deposit/products", Component: DepositProducts },

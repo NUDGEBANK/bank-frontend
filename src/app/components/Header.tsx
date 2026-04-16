@@ -19,9 +19,9 @@ const DROPDOWN_INFO_WIDTH = 96;
 const menuItems: MenuItem[] = [
   {
     label: "은행 소개",
-    path: "#",
+    path: "/about",
     description: "NUDGEBANK의 서비스 방향과 핵심 금융 기능을 소개합니다.",
-    submenu: [{ label: "은행 소개", path: "/" }],
+    submenu: [{ label: "은행 소개", path: "/about" }],
   },
   {
     label: "예금·적금",
