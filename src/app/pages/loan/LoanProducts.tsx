@@ -164,9 +164,9 @@ export default function LoanProducts() {
 
               <div className="mb-4 flex items-baseline gap-1">
                 <span className="text-lg font-bold text-slate-500">연</span>
-                <span className="text-3xl font-extrabold text-slate-900">4.2</span>
-                <span className="text-lg text-slate-300">~</span>
-                <span className="text-3xl font-extrabold text-slate-900">8.9</span>
+                <span className="text-3xl font-extrabold text-slate-900">5</span>
+                <span className="text-lg font-medium text-slate-500">~</span>
+                <span className="text-3xl font-extrabold text-slate-900">12</span>
                 <span className="text-lg font-bold text-slate-500">%</span>
               </div>
 

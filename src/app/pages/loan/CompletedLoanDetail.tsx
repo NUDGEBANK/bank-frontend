@@ -134,30 +134,30 @@ export default function CompletedLoanDetail() {
     : repaymentHistories.slice(0, 5);
 
   return (
-    <div className="min-h-screen bg-[#f3f7fb] px-4 py-10 text-slate-900">
+    <div className="min-h-screen bg-slate-50 px-4 py-10 text-slate-900">
       <div className="mx-auto max-w-6xl">
-        <div className="rounded-[32px] border border-white/70 bg-white/90 shadow-[0_35px_80px_rgba(15,23,42,0.08)] backdrop-blur-xl">
+        <div className="rounded-[32px] border border-slate-200 bg-white shadow-[0_20px_50px_rgba(15,23,42,0.06)]">
           <div className="border-b border-slate-100 px-6 py-6 md:px-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-emerald-600">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-600">
               Completed Loan
             </p>
             <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
               완납 대출 상세
             </h1>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-slate-600">
               이전에 이용한 대출 상품의 상환 기록과 최종 이용 정보를 확인할 수 있습니다.
             </p>
           </div>
 
           <div className="space-y-8 px-6 py-8 md:px-8 lg:px-10">
-            <section className="rounded-3xl border border-emerald-100 bg-emerald-50/80 px-6 py-6">
+            <section className="rounded-3xl border border-slate-200 bg-slate-50 px-6 py-6">
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-start gap-4">
-                  <div className="rounded-full bg-white p-3 shadow-sm">
-                    <Award className="h-7 w-7 text-emerald-600" />
+                  <div className="rounded-full bg-white p-3 shadow-sm ring-1 ring-slate-200">
+                    <Award className="h-7 w-7 text-slate-700" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-600">
+                    <p className="text-sm font-semibold uppercase tracking-[0.12em] text-slate-600">
                       Congratulations
                     </p>
                     <h2 className="mt-2 text-2xl font-bold text-slate-900">
@@ -170,7 +170,7 @@ export default function CompletedLoanDetail() {
                 </div>
                 <Link
                   to="/loan/management"
-                  className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
                 >
                   내 대출 관리로 돌아가기
                 </Link>
@@ -187,31 +187,31 @@ export default function CompletedLoanDetail() {
               </section>
             ) : (
               <>
-                <section className="rounded-3xl border-2 border-white/30 bg-gradient-to-br from-slate-800 via-sky-800 to-emerald-700 p-6 text-white shadow-[0_24px_60px_rgba(15,23,42,0.18)]">
+                <section className="rounded-3xl border border-slate-200 bg-white p-6 text-slate-900 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
                   <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                     <div>
-                      <div className="mb-4 inline-flex rounded-full border border-white/25 bg-white/10 px-4 py-1 text-sm font-semibold backdrop-blur-sm">
+                      <div className="mb-4 inline-flex rounded-full border border-slate-200 bg-slate-100 px-4 py-1 text-sm font-semibold text-slate-700">
                         이전 상품 내역
                       </div>
-                      <h3 className="text-3xl font-bold">
+                      <h3 className="text-3xl font-bold text-slate-900">
                         {selectedCompletedLoan?.productName ?? "완납 상품"}
                       </h3>
-                      <p className="mt-3 max-w-2xl text-sm text-slate-100">
+                      <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
                         기존 대출관리와 같은 기준으로, 이전 대출의 원금·금리·상환 이력을 다시 확인할 수 있습니다.
                       </p>
                     </div>
                     <div className="grid gap-4 sm:grid-cols-3">
-                      <div className="rounded-2xl border border-white/20 bg-white/10 px-4 py-4 backdrop-blur-sm">
-                        <p className="text-xs uppercase tracking-[0.18em] text-slate-100">최종 금리</p>
-                        <p className="mt-2 text-2xl font-bold">연 {summary.interestRate.toFixed(2)}%</p>
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                        <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-600">최종 금리</p>
+                        <p className="mt-2 text-2xl font-bold text-slate-900">연 {summary.interestRate.toFixed(2)}%</p>
                       </div>
-                      <div className="rounded-2xl border border-white/20 bg-white/10 px-4 py-4 backdrop-blur-sm">
-                        <p className="text-xs uppercase tracking-[0.18em] text-slate-100">총 원금</p>
-                        <p className="mt-2 text-2xl font-bold">{formatAmount(summary.totalPrincipal)}</p>
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                        <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-600">총 원금</p>
+                        <p className="mt-2 text-2xl font-bold text-slate-900">{formatAmount(summary.totalPrincipal)}</p>
                       </div>
-                      <div className="rounded-2xl border border-white/20 bg-white/10 px-4 py-4 backdrop-blur-sm">
-                        <p className="text-xs uppercase tracking-[0.18em] text-slate-100">완납일</p>
-                        <p className="mt-2 text-2xl font-bold">
+                      <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                        <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-600">완납일</p>
+                        <p className="mt-2 text-2xl font-bold text-slate-900">
                           {selectedCompletedLoan?.completedAt ?? summary.endDate}
                         </p>
                       </div>
@@ -220,25 +220,25 @@ export default function CompletedLoanDetail() {
                 </section>
 
                 <section className="grid gap-4 md:grid-cols-4">
-                  <div className="rounded-3xl border border-sky-100 bg-sky-50/80 px-5 py-5">
+                  <div className="rounded-3xl border border-slate-200 bg-white px-5 py-5">
                     <p className="text-sm text-slate-500">잔여 원금</p>
                     <p className="mt-3 text-3xl font-semibold text-slate-900">
                       {formatAmount(summary.remainingPrincipal)}
                     </p>
                   </div>
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 px-5 py-5">
+                  <div className="rounded-3xl border border-slate-200 bg-white px-5 py-5">
                     <p className="text-sm text-slate-500">총 원금</p>
                     <p className="mt-3 text-2xl font-bold text-slate-900">
                       {formatAmount(summary.totalPrincipal)}
                     </p>
                   </div>
-                  <div className="rounded-3xl border border-emerald-100 bg-emerald-50/80 px-5 py-5">
+                  <div className="rounded-3xl border border-slate-200 bg-white px-5 py-5">
                     <p className="text-sm text-slate-500">누적 상환 원금</p>
                     <p className="mt-3 text-2xl font-bold text-slate-900">
                       {formatAmount(summary.repaidPrincipal)}
                     </p>
                   </div>
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 px-5 py-5">
+                  <div className="rounded-3xl border border-slate-200 bg-white px-5 py-5">
                     <p className="text-sm text-slate-500">금리</p>
                     <p className="mt-3 text-2xl font-bold text-slate-900">
                       연 {summary.interestRate.toFixed(2)}%
@@ -252,7 +252,7 @@ export default function CompletedLoanDetail() {
                     <p className="mt-2 text-xl font-bold text-slate-900">{repaymentMethodLabel}</p>
                     <p className="mt-2 text-sm text-slate-600">{repaymentMethodDescription}</p>
                   </div>
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 px-5 py-5">
+                  <div className="rounded-3xl border border-slate-200 bg-white px-5 py-5">
                     <p className="text-sm text-slate-500">대출 기간</p>
                     <p className="mt-2 text-xl font-bold text-slate-900">
                       {summary.startDate} ~ {summary.endDate}
@@ -261,7 +261,7 @@ export default function CompletedLoanDetail() {
                       완납일 {selectedCompletedLoan?.completedAt ?? summary.endDate}
                     </p>
                   </div>
-                  <div className="rounded-3xl border border-emerald-100 bg-emerald-50/70 px-5 py-5">
+                  <div className="rounded-3xl border border-slate-200 bg-white px-5 py-5">
                     <p className="text-sm text-slate-500">완납 상태</p>
                     <p className="mt-2 text-xl font-bold text-slate-900">완납 완료</p>
                     <p className="mt-2 text-sm text-slate-600">
@@ -374,12 +374,12 @@ export default function CompletedLoanDetail() {
                       >
                         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                           <div>
-                            <p className="text-sm text-slate-500">{schedule.dueDate}</p>
+                            <p className="text-sm font-medium text-slate-700">{schedule.dueDate}</p>
                             <p className="mt-1 text-base font-semibold text-slate-900">
                               {schedule.settled ? "납부 완료" : "납부 예정"}
                             </p>
                           </div>
-                          <div className="grid gap-3 text-sm text-slate-600 md:grid-cols-2 lg:grid-cols-4">
+                          <div className="grid gap-4 text-sm text-slate-700 md:grid-cols-2 lg:grid-cols-4">
                             <div>
                               <p className="text-slate-500">예정 원금</p>
                               <p className="mt-1 font-semibold text-slate-900">
