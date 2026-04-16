@@ -3,6 +3,10 @@ import { useNavigate } from "react-router";
 import { MessageCircle, Send, X } from "lucide-react";
 
 import { sendMessage, type ChatAction } from "../api/chat";
+import {
+  CHAT_HISTORY_STORAGE_KEY,
+  CHAT_SESSION_ID_STORAGE_KEY,
+} from "../lib/chatStorage";
 import MessageMarkdown from "./MessageMarkdown";
 import { Button } from "./ui/button";
 
@@ -53,10 +57,10 @@ export default function ChatBot() {
   const [inputValue, setInputValue] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(() =>
-    sessionStorage.getItem("chat_session_id"),
+    sessionStorage.getItem(CHAT_SESSION_ID_STORAGE_KEY),
   );
   const [messages, setMessages] = useState<Message[]>(() => {
-    const saved = sessionStorage.getItem("chat_history");
+    const saved = sessionStorage.getItem(CHAT_HISTORY_STORAGE_KEY);
     if (saved) return JSON.parse(saved);
 
     return [
@@ -87,15 +91,15 @@ export default function ChatBot() {
   const streamDoneRef = useRef(false);
 
   useEffect(() => {
-    sessionStorage.setItem("chat_history", JSON.stringify(messages));
+    sessionStorage.setItem(CHAT_HISTORY_STORAGE_KEY, JSON.stringify(messages));
   }, [messages]);
 
   useEffect(() => {
     if (sessionId) {
-      sessionStorage.setItem("chat_session_id", sessionId);
+      sessionStorage.setItem(CHAT_SESSION_ID_STORAGE_KEY, sessionId);
       return;
     }
-    sessionStorage.removeItem("chat_session_id");
+    sessionStorage.removeItem(CHAT_SESSION_ID_STORAGE_KEY);
   }, [sessionId]);
 
   useEffect(() => {
