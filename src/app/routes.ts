@@ -21,6 +21,7 @@ import MyPage from "./pages/account/MyPage";
 import ChatHistory from "./pages/help/ChatHistory";
 import LoanApplicationGuide from "./pages/loan/LoanApplicationGuide";
 import AboutBank from "./pages/AboutBank";
+import RagDocs from "./pages/admin/RagDocs";
 
 
 export const router = createBrowserRouter([
@@ -49,6 +50,7 @@ export const router = createBrowserRouter([
       { path: "card/spending-analysis", Component: SpendingAnalysis },
       { path: "account/mypage", Component: MyPage },
       { path: "help/chat-history", Component: ChatHistory },
+      { path: "admin/ragdocs", Component: RagDocs },
     ],
   },
 ]);
