@@ -1,4 +1,4 @@
-﻿﻿import { Calendar, Calculator, ChevronDown, ChevronUp, FileSearch, TrendingDown, Upload } from "lucide-react";
+﻿﻿﻿﻿import { Calendar, Calculator, ChevronDown, ChevronUp, FileSearch, TrendingDown, Upload } from "lucide-react";
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import { getJson, postJson } from "../../lib/api";
@@ -35,6 +35,8 @@ type CertificateSubmissionResponse = {
   submissionId: number;
   filename: string;
   contentType: string;
+  processingStatus: string;
+  detectedCertificateDate: string | null;
   extractedText: string;
   lines: string[];
   lineCount: number;
@@ -230,9 +232,11 @@ export default function MyLoanManagement() {
   const [isLoanDataLoading, setIsLoanDataLoading] = useState(false);
   const [loanDataError, setLoanDataError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFilePreviewUrl, setSelectedFilePreviewUrl] = useState<string | null>(null);
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>("idle");
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [ocrResult, setOcrResult] = useState<CertificateSubmissionResponse | null>(null);
+  const [ocrVisualStepIndex, setOcrVisualStepIndex] = useState(0);
   const [certificateId, setCertificateId] = useState("");
   const [selectedProductKey, setSelectedProductKey] = useState("");
   const [repaymentAmountInput, setRepaymentAmountInput] = useState("");
@@ -351,6 +355,46 @@ export default function MyLoanManagement() {
       window.removeEventListener("storage", handleStorageChange);
     };
   }, [selectedProductKey]);
+
+  useEffect(() => {
+    if (!selectedFile) {
+      setSelectedFilePreviewUrl(null);
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(selectedFile);
+    setSelectedFilePreviewUrl(previewUrl);
+
+    return () => {
+      URL.revokeObjectURL(previewUrl);
+    };
+  }, [selectedFile]);
+
+  useEffect(() => {
+    if (uploadStatus === "idle") {
+      setOcrVisualStepIndex(0);
+      return;
+    }
+
+    if (uploadStatus === "selected") {
+      setOcrVisualStepIndex(1);
+      return;
+    }
+
+    if (uploadStatus === "completed" || uploadStatus === "failed") {
+      setOcrVisualStepIndex(3);
+      return;
+    }
+
+    setOcrVisualStepIndex(1);
+    const stepTimer = window.setInterval(() => {
+      setOcrVisualStepIndex((currentIndex) => (currentIndex >= 3 ? 3 : currentIndex + 1));
+    }, 900);
+
+    return () => {
+      window.clearInterval(stepTimer);
+    };
+  }, [uploadStatus]);
 
   useEffect(() => {
     setSimulationAmount((currentAmount) =>
@@ -517,6 +561,15 @@ export default function MyLoanManagement() {
   const visibleRepaymentHistories = isRepaymentHistoryExpanded
     ? repaymentHistories
     : repaymentHistories.slice(0, 5);
+  const isPdfPreview = !!selectedFile?.type.includes("pdf");
+  const currentOcrStepIndex =
+    uploadStatus === "completed" || uploadStatus === "failed"
+      ? 3
+      : uploadStatus === "uploading"
+        ? ocrVisualStepIndex
+        : uploadStatus === "selected"
+          ? 1
+          : 0;
 
   const statusText: Record<UploadStatus, string> = {
     idle: "자기계발 대출 신청 후 자격증 파일을 제출할 수 있습니다.",
@@ -1047,6 +1100,15 @@ export default function MyLoanManagement() {
 
           {selectedApplication?.preferentialRateVerificationAvailable && (
             <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
+              <style>{`
+                @keyframes ocr-scan-line {
+                  0% { transform: translateY(-12%); opacity: 0; }
+                  12% { opacity: 1; }
+                  50% { opacity: 1; }
+                  88% { opacity: 1; }
+                  100% { transform: translateY(300px); opacity: 0; }
+                }
+              `}</style>
               <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                 <div>
                   <p className="text-sm font-semibold uppercase tracking-[0.24em] text-sky-600">
@@ -1081,7 +1143,7 @@ export default function MyLoanManagement() {
                 </div>
               </div>
 
-              <div className="grid gap-6 lg:grid-cols-[minmax(0,1.18fr)_minmax(320px,0.82fr)]">
+              <div className="grid gap-6">
                 <div>
                   <div className="mb-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
                     <div className="mb-3 flex items-center justify-between">
@@ -1146,10 +1208,132 @@ export default function MyLoanManagement() {
                     <p className="mb-6 text-slate-500">
                       JPG, PNG, PDF 형식의 자격증 파일을 업로드해 주세요.
                     </p>
-                    <div className="mb-6 rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
-                      <p className="text-sm font-medium text-slate-700">
-                        {selectedFile ? selectedFile.name : "선택된 파일이 없습니다."}
-                      </p>
+                    <div className="mb-6 grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
+                      <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+                        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-800">
+                              {selectedFile ? selectedFile.name : "선택된 파일이 없습니다."}
+                            </p>
+                            <p className="mt-1 text-xs text-slate-500">
+                              {selectedFile
+                                ? "문서 미리보기에서 OCR 스캔 과정을 확인할 수 있습니다."
+                                : "파일을 선택하면 여기에 문서 미리보기가 표시됩니다."}
+                            </p>
+                          </div>
+                          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                            {selectedFile ? (isPdfPreview ? "PDF" : "IMAGE") : "PREVIEW"}
+                          </span>
+                        </div>
+                        <div className="relative h-[360px] bg-[radial-gradient(circle_at_top,rgba(14,165,233,0.08),transparent_45%),linear-gradient(180deg,#f8fafc_0%,#eef2ff_100%)]">
+                          {selectedFilePreviewUrl ? (
+                            <>
+                              {isPdfPreview ? (
+                                <object
+                                  data={selectedFilePreviewUrl}
+                                  type="application/pdf"
+                                  className="h-full w-full"
+                                >
+                                  <iframe
+                                    title="certificate-preview"
+                                    src={selectedFilePreviewUrl}
+                                    className="h-full w-full"
+                                  />
+                                </object>
+                              ) : (
+                                <img
+                                  src={selectedFilePreviewUrl}
+                                  alt="업로드한 자격증 미리보기"
+                                  className="h-full w-full object-contain"
+                                />
+                              )}
+
+                              <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                                <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-slate-950/12 to-transparent" />
+                                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent_38%,rgba(14,165,233,0.06)_68%,transparent)]" />
+                                {(uploadStatus === "uploading" || uploadStatus === "completed") && (
+                                  <>
+                                    <div className="absolute inset-x-6 top-0 h-24 animate-[ocr-scan-line_2.2s_ease-in-out_infinite] rounded-full bg-[linear-gradient(180deg,rgba(56,189,248,0)_0%,rgba(56,189,248,0.12)_45%,rgba(34,197,94,0.38)_50%,rgba(56,189,248,0.12)_55%,rgba(56,189,248,0)_100%)] blur-sm" />
+                                    <div className="absolute inset-x-8 top-0 h-px animate-[ocr-scan-line_2.2s_ease-in-out_infinite] bg-emerald-400/90 shadow-[0_0_24px_rgba(52,211,153,0.9)]" />
+                                    <div className="absolute right-4 top-4 rounded-full border border-white/60 bg-white/80 px-3 py-1 text-xs font-semibold text-slate-700 backdrop-blur">
+                                      {uploadStatus === "uploading" ? "문서 스캔 중" : "스캔 완료"}
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </>
+                          ) : (
+                            <div className="flex h-full flex-col items-center justify-center px-6 text-center">
+                              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-sky-100">
+                                <Upload className="h-8 w-8 text-sky-700" />
+                              </div>
+                              <p className="text-sm font-semibold text-slate-800">문서 미리보기를 준비하고 있습니다</p>
+                              <p className="mt-2 text-sm text-slate-500">
+                                파일을 선택하면 OCR 분석 전 문서 내용을 바로 확인할 수 있습니다.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-5">
+                          <div className="mb-3 flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-100">
+                              <FileSearch className="h-5 w-5 text-sky-700" />
+                            </div>
+                            <div>
+                              <p className="text-sm text-slate-500">OCR 진행 상태</p>
+                              <h3 className="text-lg font-bold text-slate-900">업로드 현황</h3>
+                            </div>
+                          </div>
+                          <p className="text-sm text-slate-500">{statusText[uploadStatus]}</p>
+                        </div>
+
+                        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-5">
+                          <p className="mb-3 text-sm text-slate-500">인증 단계</p>
+                          <div className="space-y-3">
+                            {ocrSteps.map((step, index) => (
+                              <div key={step} className="flex items-center gap-3">
+                                <div
+                                  className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
+                                    index < currentOcrStepIndex
+                                      ? "bg-emerald-100 text-emerald-700"
+                                      : index === currentOcrStepIndex
+                                        ? "bg-sky-100 text-sky-700"
+                                        : "bg-slate-200 text-slate-500"
+                                  }`}
+                                >
+                                  {index + 1}
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-sm font-medium text-slate-700">{step}</p>
+                                  <p className="mt-1 text-xs text-slate-500">
+                                    {index < currentOcrStepIndex
+                                      ? "완료"
+                                      : index === currentOcrStepIndex
+                                        ? uploadStatus === "uploading"
+                                          ? "진행 중"
+                                          : uploadStatus === "completed"
+                                            ? "완료"
+                                            : "대기"
+                                        : "대기"}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {ocrResult?.detectedCertificateDate && (
+                          <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5">
+                            <p className="text-sm text-emerald-700">감지된 자격증 날짜</p>
+                            <p className="mt-2 text-lg font-bold text-emerald-900">
+                              {ocrResult.detectedCertificateDate}
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div className="flex flex-col gap-4 sm:flex-row">
                       <button
@@ -1173,33 +1357,6 @@ export default function MyLoanManagement() {
                 </div>
 
                 <div className="space-y-4">
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-5">
-                    <div className="mb-3 flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-100">
-                        <FileSearch className="h-5 w-5 text-sky-700" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-slate-500">OCR 진행 상태</p>
-                        <h3 className="text-lg font-bold text-slate-900">업로드 현황</h3>
-                      </div>
-                    </div>
-                    <p className="text-sm text-slate-500">{statusText[uploadStatus]}</p>
-                  </div>
-
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-5">
-                    <p className="mb-3 text-sm text-slate-500">인증 단계</p>
-                    <div className="space-y-3">
-                      {ocrSteps.map((step, index) => (
-                        <div key={step} className="flex items-center gap-3">
-                          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 text-sm font-semibold text-sky-700">
-                            {index + 1}
-                          </div>
-                          <p className="text-sm font-medium text-slate-700">{step}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
                   {uploadStatus === "failed" && uploadError && (
                     <div className="rounded-2xl border border-red-200 bg-red-50 p-5">
                       <p className="mb-2 text-sm text-red-700">업로드 오류</p>
@@ -1240,6 +1397,7 @@ export default function MyLoanManagement() {
                       </div>
                     </div>
                   )}
+
                 </div>
               </div>
             </section>
