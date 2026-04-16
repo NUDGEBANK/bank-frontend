@@ -45,8 +45,8 @@ const menuItems: MenuItem[] = [
     label: "카드",
     description: "넛지 카드 발급과 이용 내역, 소비 분석 서비스를 제공합니다.",
     submenu: [
-      { label: "넛지 카드", path: "/card/ddokgae" },
-      { label: "카드이용내역", path: "/card/history" },
+      { label: "넛지 체크카드", path: "/card/nudgecard" },
+      { label: "카드 이용 내역", path: "/card/history" },
       { label: "소비 분석", path: "/card/spending-analysis" },
     ],
   },
