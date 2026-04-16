@@ -1,4 +1,4 @@
-﻿﻿﻿﻿import { Calendar, Calculator, ChevronDown, ChevronUp, FileSearch, TrendingDown, Upload } from "lucide-react";
+﻿﻿﻿﻿import { ChevronDown, ChevronLeft, ChevronUp, Upload } from "lucide-react";
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
 import { getJson, postJson } from "../../lib/api";
@@ -260,6 +260,7 @@ export default function MyLoanManagement() {
   const [repaymentActionMessage, setRepaymentActionMessage] = useState<string | null>(null);
   const [isRepaymentSubmitting, setIsRepaymentSubmitting] = useState(false);
   const [isRepaymentHistoryExpanded, setIsRepaymentHistoryExpanded] = useState(false);
+  const [isScheduleExpanded, setIsScheduleExpanded] = useState(false);
   const [highlightedRepaymentId, setHighlightedRepaymentId] = useState<number | null>(null);
   const repaymentTransactionIdFromQuery = useMemo(() => {
     const value = new URLSearchParams(location.search).get("repaymentTransactionId");
@@ -614,6 +615,10 @@ export default function MyLoanManagement() {
     ? repaymentHistories
     : repaymentHistories.slice(0, 5);
 
+  const visibleSchedules = isScheduleExpanded
+    ? repaymentSchedules
+    : repaymentSchedules.slice(0, 5);
+
   useEffect(() => {
     if (!targetRepaymentHistory) {
       scrolledRepaymentIdRef.current = null;
@@ -790,134 +795,120 @@ export default function MyLoanManagement() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-10">
-      <div className="overflow-hidden rounded-[32px] border border-slate-200/80 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
-        <div className="border-b border-slate-100 bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.14),_transparent_38%),linear-gradient(135deg,_#f8fbff_0%,_#ffffff_52%,_#f8fafc_100%)] px-6 py-6 md:px-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-sky-600">
-            Loan Management
-          </p>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">내 대출 관리</h1>
-          <p className="mt-2 text-sm text-slate-500">
-            상환 현황, 조기 상환 시뮬레이션, 신청 중인 상품 상태를 한 곳에서 확인할 수 있습니다.
-          </p>
-        </div>
+    <div className="min-h-screen bg-slate-50">
+      <div className="mx-auto max-w-6xl px-6 pt-10 pb-14">
+        {/* 헤더 */}
+        <Link
+          to="/loan/products"
+          className="mb-6 inline-flex items-center gap-1 text-sm text-slate-600 transition-colors hover:text-slate-800"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          대출 상품 목록
+        </Link>
+        <h1 className="text-2xl font-bold text-slate-800">내 대출 관리</h1>
+        <p className="mt-2 text-sm text-slate-600">
+          상환 현황, 조기 상환 시뮬레이션, 신청 중인 상품 상태를 한 곳에서 확인할 수 있습니다.
+        </p>
 
-        <div className="space-y-8 px-6 py-8 md:px-8 lg:px-10">
+        <div className="mt-6 space-y-5">
+          {/* 상품 선택 */}
           {activeApplications.length > 0 && (
-            <section className="rounded-3xl border border-slate-200 bg-slate-50/80 px-5 py-5">
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-sky-600">
-                    Selected Product
-                  </p>
-                  <h2 className="mt-2 text-xl font-bold text-slate-900">신청 상품별 대출 관리</h2>
-                  <p className="mt-2 text-sm text-slate-500">
-                    신청한 상품을 선택하면 해당 상품 기준 대출 정보와 상환 현황을 확인할 수 있습니다.
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {activeApplications.map((application) => {
-                    const isSelected = application.productKey === selectedProductKey;
-                    return (
-                      <button
-                        key={application.loanApplicationId}
-                        type="button"
-                        onClick={() => setSelectedProductKey(application.productKey)}
-                        className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                          isSelected
-                            ? "border-sky-600 bg-sky-600 text-white"
-                            : "border-slate-200 bg-white text-slate-700 hover:border-sky-300 hover:text-sky-700"
-                        }`}
-                      >
-                        {application.productName}
-                      </button>
-                    );
-                  })}
-                </div>
+            <section className="rounded-2xl bg-white px-6 py-6 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
+              <h2 className="text-sm font-bold text-slate-900">신청 상품별 대출 관리</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                신청한 상품을 선택하면 해당 상품 기준 대출 정보와 상환 현황을 확인할 수 있습니다.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {activeApplications.map((application) => {
+                  const isSelected = application.productKey === selectedProductKey;
+                  return (
+                    <button
+                      key={application.loanApplicationId}
+                      type="button"
+                      onClick={() => setSelectedProductKey(application.productKey)}
+                      className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                        isSelected
+                          ? "border-slate-900 bg-slate-900"
+                          : "border-slate-200 bg-white text-slate-700 hover:border-slate-500 hover:text-slate-900"
+                      }`}
+                      style={isSelected ? { color: "#ffffff" } : undefined}
+                    >
+                      {application.productName}
+                    </button>
+                  );
+                })}
               </div>
             </section>
           )}
 
+          {/* 이전 상품 내역 */}
           {completedLoans.length > 0 && (
-            <section className="rounded-3xl border border-slate-200 bg-white px-5 py-5 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-600">
-                    Completed Products
-                  </p>
-                  <h2 className="mt-2 text-xl font-bold text-slate-900">이전 상품 내역</h2>
-                  <p className="mt-2 text-sm text-slate-500">
-                    완납한 상품을 선택하면 축하 페이지와 이전 이용 정보를 확인할 수 있습니다.
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {completedLoans.map((loan) => (
-                    <Link
-                      key={loan.loanHistoryId}
-                      to={`/loan/management/completed/${loan.loanHistoryId}`}
-                      className="rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100"
-                    >
-                      {loan.productName}
-                    </Link>
-                  ))}
-                </div>
+            <section className="rounded-2xl bg-white px-6 py-6 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
+              <h2 className="text-sm font-bold text-slate-900">이전 상품 내역</h2>
+              <p className="mt-1 text-sm text-slate-600">
+                완납한 상품을 선택하면 축하 페이지와 이전 이용 정보를 확인할 수 있습니다.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {completedLoans.map((loan) => (
+                  <Link
+                    key={loan.loanHistoryId}
+                    to={`/loan/management/completed/${loan.loanHistoryId}`}
+                    className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                  >
+                    {loan.productName}
+                  </Link>
+                ))}
               </div>
             </section>
           )}
 
           {showLoanLoadingState ? (
-            <section className="rounded-3xl border border-slate-200 bg-slate-50/80 px-6 py-8 text-center text-sm text-slate-500">
+            <section className="rounded-2xl bg-white px-6 py-8 text-center text-sm text-slate-600 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
               대출 관리 정보를 불러오는 중입니다.
             </section>
           ) : shouldShowLoanEmptyState ? (
-            <section className="rounded-[32px] border border-white/70 bg-gradient-to-br from-slate-900 via-sky-900 to-emerald-700 px-6 py-10 text-white shadow-[0_30px_70px_rgba(15,23,42,0.18)]">
-              <div className="max-w-4xl">
-                <p className="text-sm font-semibold uppercase tracking-[0.28em] text-sky-200">
-                  Loan Start
-                </p>
-                <h2 className="mt-3 text-3xl font-bold tracking-tight">
-                  아직 진행 중인 대출이 없습니다
-                </h2>
-                <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-100">
-                  소비분석 대출과 자기계발 대출 상품을 비교하고, 지금 필요한 대출을 바로 신청할 수 있습니다.
-                  완납한 상품은 위의 이전 상품 내역에서 다시 확인할 수 있습니다.
-                </p>
-              </div>
-
-              <div className="mt-8 grid gap-4 md:grid-cols-3">
-                <div className="rounded-3xl border border-white/15 bg-white/10 px-5 py-5 backdrop-blur-sm">
-                  <p className="text-sm text-sky-100">소비분석 대출</p>
-                  <p className="mt-3 text-2xl font-bold">최대 300만원</p>
-                  <p className="mt-2 text-sm text-slate-100">
+            <section className="rounded-2xl bg-white px-6 py-8 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
+              <h2 className="text-lg font-bold text-slate-900">
+                아직 진행 중인 대출이 없습니다
+              </h2>
+              <p className="mt-2 text-sm text-slate-600">
+                소비분석 대출과 자기계발 대출 상품을 비교하고, 지금 필요한 대출을 바로 신청할 수 있습니다.
+                완납한 상품은 위의 이전 상품 내역에서 다시 확인할 수 있습니다.
+              </p>
+              <div className="mt-6 grid gap-3 md:grid-cols-3">
+                <div className="rounded-xl border border-slate-100 px-4 py-4">
+                  <p className="text-xs font-medium text-slate-600">소비분석 대출</p>
+                  <p className="mt-2 text-lg font-bold text-slate-900">최대 300만원</p>
+                  <p className="mt-1 text-sm text-slate-600">
                     소비 패턴 기반으로 한도와 상환 계획을 확인할 수 있습니다.
                   </p>
                 </div>
-                <div className="rounded-3xl border border-white/15 bg-white/10 px-5 py-5 backdrop-blur-sm">
-                  <p className="text-sm text-sky-100">자기계발 대출</p>
-                  <p className="mt-3 text-2xl font-bold">최대 500만원</p>
-                  <p className="mt-2 text-sm text-slate-100">
+                <div className="rounded-xl border border-slate-100 px-4 py-4">
+                  <p className="text-xs font-medium text-slate-600">자기계발 대출</p>
+                  <p className="mt-2 text-lg font-bold text-slate-900">최대 500만원</p>
+                  <p className="mt-1 text-sm text-slate-600">
                     자격증 OCR 인증과 우대금리 혜택을 함께 확인할 수 있습니다.
                   </p>
                 </div>
-                <div className="rounded-3xl border border-white/15 bg-white/10 px-5 py-5 backdrop-blur-sm">
-                  <p className="text-sm text-sky-100">신청 후 관리</p>
-                  <p className="mt-3 text-2xl font-bold">상환 일정 관리</p>
-                  <p className="mt-2 text-sm text-slate-100">
+                <div className="rounded-xl border border-slate-100 px-4 py-4">
+                  <p className="text-xs font-medium text-slate-600">신청 후 관리</p>
+                  <p className="mt-2 text-lg font-bold text-slate-900">상환 일정 관리</p>
+                  <p className="mt-1 text-sm text-slate-600">
                     신청 이후에는 상환 일정, 이자 정보, 이전 상품 내역을 한 번에 확인합니다.
                   </p>
                 </div>
               </div>
-
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-6 flex gap-3">
                 <Link
                   to="/loan/products"
-                  className="inline-flex items-center justify-center rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
+                  className="flex items-center gap-1.5 rounded-full bg-black px-5 py-2.5 text-sm font-semibold transition-colors hover:bg-gray-800"
+                  style={{ color: "#ffffff" }}
                 >
                   대출 상품 보러가기
                 </Link>
                 <Link
                   to="/loan/credit-score"
-                  className="inline-flex items-center justify-center rounded-2xl border border-white/25 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/15"
+                  className="rounded-full border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 hover:text-slate-900"
                 >
                   내 신용 점수 확인하기
                 </Link>
@@ -925,310 +916,311 @@ export default function MyLoanManagement() {
             </section>
           ) : (
             <>
-          <section className="grid gap-4 md:grid-cols-4">
-            <div className="rounded-3xl border border-sky-100 bg-sky-50/80 px-5 py-5">
-              <p className="text-sm text-slate-500">잔여 원금</p>
-              <p className="mt-3 text-3xl font-semibold text-slate-900">
-                {formatAmount(summary?.remainingPrincipal ?? 0)}
-              </p>
-            </div>
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 px-5 py-5">
-              <p className="text-sm text-slate-500">총 원금</p>
-              <p className="mt-3 text-2xl font-bold text-slate-900">
-                {formatAmount(summary?.totalPrincipal ?? 0)}
-              </p>
-            </div>
-            <div className="rounded-3xl border border-emerald-100 bg-emerald-50/80 px-5 py-5">
-              <p className="text-sm text-slate-500">누적 상환 원금</p>
-              <p className="mt-3 text-2xl font-bold text-slate-900">
-                {formatAmount(repaidPrincipal)}
-              </p>
-            </div>
-            <div className="rounded-3xl border border-slate-200 bg-slate-50 px-5 py-5">
-              <p className="text-sm text-slate-500">금리</p>
-              <p className="mt-3 text-2xl font-bold text-slate-900">
-                연 {(summary?.interestRate ?? 0).toFixed(2)}%
-              </p>
-            </div>
-          </section>
+              {/* 요약 통계 */}
+              <section className="grid gap-4 md:grid-cols-4">
+                <div className="rounded-2xl bg-white px-5 py-5 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
+                  <p className="text-xs font-medium text-slate-600">잔여 원금</p>
+                  <p className="mt-2 text-2xl font-bold text-slate-900">
+                    {formatAmount(summary?.remainingPrincipal ?? 0)}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-white px-5 py-5 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
+                  <p className="text-xs font-medium text-slate-600">총 원금</p>
+                  <p className="mt-2 text-xl font-bold text-slate-900">
+                    {formatAmount(summary?.totalPrincipal ?? 0)}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-white px-5 py-5 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
+                  <p className="text-xs font-medium text-slate-600">누적 상환 원금</p>
+                  <p className="mt-2 text-xl font-bold text-slate-900">
+                    {formatAmount(repaidPrincipal)}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-white px-5 py-5 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
+                  <p className="text-xs font-medium text-slate-600">금리</p>
+                  <p className="mt-2 text-xl font-bold text-slate-900">
+                    연 {(summary?.interestRate ?? 0).toFixed(2)}%
+                  </p>
+                </div>
+              </section>
 
-          <section className="grid gap-4 lg:grid-cols-3">
-            <div className="rounded-3xl border border-slate-200 bg-white px-5 py-5 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-              <p className="text-sm text-slate-500">상환 방식</p>
-              <p className="mt-2 text-xl font-bold text-slate-900">{repaymentMethodLabel}</p>
-              <p className="mt-2 text-sm text-slate-600">{repaymentMethodDescription}</p>
-            </div>
-            <div className="rounded-3xl border border-sky-100 bg-sky-50/70 px-5 py-5">
-              <p className="text-sm text-slate-500">상환 가상계좌</p>
-              <p className="mt-2 text-xl font-bold text-slate-900">
-                {summary?.repaymentAccountNumber ?? "발급 예정"}
-              </p>
-              <p className="mt-2 text-sm text-slate-600">
-                선택한 대출 상품 기준으로 입금 및 상환에 사용하는 계좌입니다.
-              </p>
-            </div>
-            <div className="rounded-3xl border border-emerald-100 bg-emerald-50/70 px-5 py-5">
-              <p className="text-sm text-slate-500">우대금리 상태</p>
-              <p className="mt-2 text-xl font-bold text-slate-900">{preferentialRateStatus}</p>
-              <p className="mt-2 text-sm text-slate-600">
-                {isYouthLoanSelected
-                  ? "자격증 OCR 인증이 완료되면 우대금리가 현재 금리에 반영됩니다."
-                  : "현재 선택한 상품은 OCR 우대금리 대상이 아닙니다."}
-              </p>
-            </div>
-          </section>
-
-          {isYouthLoanSelected && (
-            <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-3 text-sm text-slate-700">
-              상환을 위해 가상계좌 번호를 확인하고 수동 상환으로 직접 납부해 주세요.
-            </div>
-          )}
-          {repaymentActionMessage && (
-            <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3 text-sm text-slate-700">
-              {repaymentActionMessage}
-            </div>
-          )}
-
-          {summary && (
-            <section className="mt-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900">상환 실행</h2>
-                  <p className="mt-2 text-sm text-slate-500">
+              {/* 상세 정보 */}
+              <section className="grid gap-4 lg:grid-cols-2">
+                <div className="rounded-2xl bg-white px-5 py-5 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
+                  <p className="text-xs font-medium text-slate-600">상환 방식</p>
+                  <p className="mt-2 text-base font-bold text-slate-900">{repaymentMethodLabel}</p>
+                  <p className="mt-1 text-sm text-slate-600">{repaymentMethodDescription}</p>
+                </div>
+                <div className="rounded-2xl bg-white px-5 py-5 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
+                  <p className="text-xs font-medium text-slate-600">우대금리 상태</p>
+                  <p className="mt-2 text-base font-bold text-slate-900">{preferentialRateStatus}</p>
+                  <p className="mt-1 text-sm text-slate-600">
                     {isYouthLoanSelected
-                      ? "가상계좌 입금 또는 원하는 금액 입력으로 수동 상환을 진행할 수 있습니다."
-                      : "가상계좌 입금 또는 원하는 금액 입력으로 수동 상환을 진행할 수 있습니다."}
+                      ? "자격증 OCR 인증이 완료되면 우대금리가 현재 금리에 반영됩니다."
+                      : "현재 선택한 상품은 OCR 우대금리 대상이 아닙니다."}
                   </p>
                 </div>
-                <div className="rounded-2xl border border-sky-100 bg-sky-50/70 px-4 py-3 text-sm text-slate-600">
-                  <p>상환 가상계좌</p>
-                  <p className="mt-1 font-semibold text-slate-900">
-                    {summary.repaymentAccountNumber || "발급 예정"}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-5 grid gap-4 md:grid-cols-[minmax(0,1fr)_auto]">
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={repaymentAmountInput}
-                  onChange={(event) => setRepaymentAmountInput(event.target.value)}
-                  className="h-12 rounded-2xl border border-slate-200 px-4 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
-                  placeholder="상환 금액 입력"
-                />
-                <button
-                  type="button"
-                  onClick={handleManualRepayment}
-                  disabled={isRepaymentSubmitting}
-                  className="rounded-2xl bg-sky-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-                >
-                  수동 상환
-                </button>
-              </div>
-            </section>
-          )}
+              </section>
 
-          <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.9fr)]">
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-xl font-bold text-slate-900">최근 상환 내역</h2>
-                {repaymentHistories.length > 5 && (
-                  <button
-                    type="button"
-                    onClick={() => setIsRepaymentHistoryExpanded((prev) => !prev)}
-                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
-                  >
-                    {isRepaymentHistoryExpanded ? "접기" : "더보기"}
-                    {isRepaymentHistoryExpanded ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
-                  </button>
-                )}
-              </div>
-              <div className="mt-5 space-y-3">
-                {visibleRepaymentHistories.map((repayment) => (
-                  <div
-                    key={repayment.repaymentId}
-                    ref={(element) => {
-                      repaymentHistoryItemRefs.current[repayment.repaymentId] = element;
-                    }}
-                    id={`repayment-history-${repayment.repaymentId}`}
-                    className={`flex flex-col gap-3 rounded-2xl border px-4 py-4 md:flex-row md:items-center md:justify-between ${
-                      highlightedRepaymentId === repayment.repaymentId
-                        ? "border-sky-300 bg-sky-50/80"
-                        : "border-slate-100 bg-slate-50/80"
-                    }`}
-                  >
-                    <div>
-                      <p className="text-sm text-slate-500">{repayment.repaymentDatetime.slice(0, 10)}</p>
-                      <p className="mt-1 text-lg font-semibold text-slate-900">
-                        {formatAmount(repayment.repaymentAmount)}
-                      </p>
-                    </div>
-                    <div className="grid gap-3 text-sm text-slate-600 md:grid-cols-2 md:gap-8">
-                      <div>
-                        <p className="text-slate-500">원금</p>
-                        <p className="mt-1 font-semibold text-slate-900">
-                          상환 이력에서 별도 제공 예정
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-slate-500">이자</p>
-                        <p className="mt-1 font-semibold text-slate-900">
-                          상환 이력에서 별도 제공 예정
-                        </p>
-                      </div>
-                      {repayment.reason &&
-                          (<div>
-                        <p className="text-slate-500">자동상환 비율 산정 근거</p>
-                        <p className="mt-1 font-semibold text-slate-900">
-                          {repayment.reason}
-                        </p>
-                      </div>)}
-                      {repayment.transaction && (
-                          <div>
-                            <p className="text-slate-500">결제 상품명</p>
-                            <p className="mt-1 font-semibold text-slate-900">
-                              {repayment.transaction.menuName}
-                            </p>
-                          </div>
-                      )}
-                      {repayment.transaction && (
-                          <div>
-                            <p className="text-slate-500">결제 금액</p>
-                            <p className="mt-1 font-semibold text-slate-900">
-                              {repayment.transaction.amount}
-                            </p>
-                          </div>
-                      )}
-                      {repayment.transaction && (
-                          <div>
-                            <p className="text-slate-500">결제 시간</p>
-                            <p className="mt-1 font-semibold text-slate-900">
-                              {repayment.transaction.transactionDatetime}
-                            </p>
-                          </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {repaymentHistories.length === 0 && (
-                  <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-4 py-5 text-sm text-slate-500">
-                    상환 내역이 없습니다.
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-              <h2 className="text-xl font-bold text-slate-900">이자 정보</h2>
-              <div className="mt-5 space-y-4">
-                <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4">
-                  <p className="text-sm text-slate-500">누적 납입 이자</p>
-                  <p className="mt-2 text-2xl font-bold text-slate-900">
-                    {formatAmount(summary?.cumulativeInterest ?? 0)}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4">
-                  <p className="text-sm text-slate-500">잔여 예상 이자</p>
-                  <p className="mt-2 text-2xl font-bold text-slate-900">
-                    {formatAmount(remainingInterestAmount)}
-                  </p>
-                </div>
-                {summary && (
-                  <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4">
-                    <p className="text-sm text-slate-500">다음 회차 이자 정보</p>
-                    <p className="mt-2 text-sm text-slate-600">
-                      예정 원금{" "}
-                      <span className="font-semibold text-slate-900">
-                        {formatAmount(summary.nextPaymentPrincipal)}
-                      </span>
-                    </p>
-                    <p className="mt-1 text-sm text-slate-600">
-                      예정 이자{" "}
-                      <span className="font-semibold text-slate-900">
-                        {formatAmount(summary.nextPaymentInterest)}
-                      </span>
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </section>
-
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
-            <h2 className="text-xl font-bold text-slate-900">상환 일정</h2>
-            <div className="mt-5 space-y-3">
-              {repaymentSchedules.map((schedule) => (
-                <div
-                  key={schedule.scheduleId}
-                  className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4"
-                >
-                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <p className="text-sm text-slate-500">{schedule.dueDate}</p>
-                      <p className="mt-1 text-base font-semibold text-slate-900">
-                        {schedule.settled ? "납부 완료" : "납부 예정"}
-                      </p>
-                    </div>
-                    <div className="grid gap-3 text-sm text-slate-600 md:grid-cols-2 lg:grid-cols-4">
-                      <div>
-                        <p className="text-slate-500">예정 원금</p>
-                        <p className="mt-1 font-semibold text-slate-900">
-                          {formatAmount(schedule.plannedPrincipal)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-slate-500">예정 이자</p>
-                        <p className="mt-1 font-semibold text-slate-900">
-                          {formatAmount(schedule.plannedInterest)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-slate-500">납부 원금</p>
-                        <p className="mt-1 font-semibold text-slate-900">
-                          {formatAmount(schedule.paidPrincipal)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-slate-500">납부 이자</p>
-                        <p className="mt-1 font-semibold text-slate-900">
-                          {formatAmount(schedule.paidInterest)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {repaymentSchedules.length === 0 && (
-                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-4 py-5 text-sm text-slate-500">
-                  상환 일정이 없습니다.
+              {isYouthLoanSelected && (
+                <div className="rounded-xl bg-white px-4 py-3 text-sm text-slate-600 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
+                  상환을 위해 가상계좌 번호를 확인하고 수동 상환으로 직접 납부해 주세요.
                 </div>
               )}
-            </div>
-          </section>
+              {repaymentActionMessage && (
+                <div className="rounded-xl bg-white px-4 py-3 text-sm text-slate-700 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
+                  {repaymentActionMessage}
+                </div>
+              )}
+
+              {/* 상환 실행 */}
+              {summary && (
+                <section className="rounded-2xl bg-white px-6 py-6 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
+                  <h2 className="text-sm font-bold text-slate-900">상환 실행</h2>
+                  <p className="mt-1 text-sm text-slate-600">
+                    가상계좌 입금 또는 원하는 금액 입력으로 수동 상환을 진행할 수 있습니다.
+                  </p>
+                  <div className="mt-3 rounded-xl border border-slate-100 px-4 py-3 text-sm text-slate-600">
+                    상환 가상계좌{" "}
+                    <span className="font-semibold text-slate-900">
+                      {summary.repaymentAccountNumber || "발급 예정"}
+                    </span>
+                  </div>
+                  <div className="mt-4 flex gap-3">
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={repaymentAmountInput}
+                      onChange={(event) => setRepaymentAmountInput(event.target.value)}
+                      className="h-11 flex-1 rounded-xl border border-slate-200 px-4 text-sm text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
+                      placeholder="상환 금액 입력"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleManualRepayment}
+                      disabled={isRepaymentSubmitting}
+                      className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-500"
+                      style={{ color: "#ffffff" }}
+                    >
+                      수동 상환
+                    </button>
+                  </div>
+                </section>
+              )}
+
+              {/* 최근 상환 내역 + 이자 정보 */}
+              <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.9fr)]">
+                <div className="rounded-2xl bg-white px-6 py-6 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-bold text-slate-900">최근 상환 내역</h2>
+                    {repaymentHistories.length > 5 && (
+                      <button
+                        type="button"
+                        onClick={() => setIsRepaymentHistoryExpanded((prev) => !prev)}
+                        className="inline-flex items-center gap-1 text-sm font-medium text-slate-700 transition hover:text-slate-900"
+                      >
+                        {isRepaymentHistoryExpanded ? "접기" : "더보기"}
+                        {isRepaymentHistoryExpanded ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                      </button>
+                    )}
+                  </div>
+                  <div className="mt-4 space-y-3">
+                    {visibleRepaymentHistories.map((repayment) => (
+                      <div
+                        key={repayment.repaymentId}
+                        ref={(element) => {
+                          repaymentHistoryItemRefs.current[repayment.repaymentId] = element;
+                        }}
+                        id={`repayment-history-${repayment.repaymentId}`}
+                        className={`rounded-xl border px-4 py-3 ${
+                          highlightedRepaymentId === repayment.repaymentId
+                            ? "border-slate-400 bg-slate-50"
+                            : "border-slate-100"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-medium text-slate-600">{repayment.repaymentDatetime.slice(0, 10)}</p>
+                          <p className="text-sm font-bold text-slate-900">
+                            {formatAmount(repayment.repaymentAmount)}
+                          </p>
+                        </div>
+                        <div className="mt-2 space-y-1 text-xs text-slate-600">
+                          <div className="flex justify-between">
+                            <span>원금</span>
+                            <span className="font-semibold text-slate-900">상환 이력에서 별도 제공 예정</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>이자</span>
+                            <span className="font-semibold text-slate-900">상환 이력에서 별도 제공 예정</span>
+                          </div>
+                          {repayment.reason && (
+                            <div className="flex justify-between">
+                              <span>자동상환 비율 산정 근거</span>
+                              <span className="font-semibold text-slate-900">{repayment.reason}</span>
+                            </div>
+                          )}
+                          {repayment.transaction && (
+                            <>
+                              <div className="flex justify-between">
+                                <span>결제 상품명</span>
+                                <span className="font-semibold text-slate-900">{repayment.transaction.menuName}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>결제 금액</span>
+                                <span className="font-semibold text-slate-900">{repayment.transaction.amount}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>결제 시간</span>
+                                <span className="font-semibold text-slate-900">{repayment.transaction.transactionDatetime}</span>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {repaymentHistories.length === 0 && (
+                      <div className="rounded-xl border border-dashed border-slate-200 px-4 py-5 text-center text-sm text-slate-600">
+                        상환 내역이 없습니다.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl bg-white px-6 py-6 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
+                  <h2 className="text-sm font-bold text-slate-900">이자 정보</h2>
+                  <div className="mt-4 space-y-3">
+                    <div className="rounded-xl border border-slate-100 px-4 py-4">
+                      <p className="text-xs font-medium text-slate-600">누적 납입 이자</p>
+                      <p className="mt-2 text-xl font-bold text-slate-900">
+                        {formatAmount(summary?.cumulativeInterest ?? 0)}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-slate-100 px-4 py-4">
+                      <p className="text-xs font-medium text-slate-600">잔여 예상 이자</p>
+                      <p className="mt-2 text-xl font-bold text-slate-900">
+                        {formatAmount(remainingInterestAmount)}
+                      </p>
+                    </div>
+                    {summary && (
+                      <div className="rounded-xl border border-slate-100 px-4 py-4">
+                        <p className="text-xs font-medium text-slate-600">다음 회차 이자 정보</p>
+                        <div className="mt-2 space-y-1 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-slate-600">예정 원금</span>
+                            <span className="font-semibold text-slate-900">
+                              {formatAmount(summary.nextPaymentPrincipal)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-600">예정 이자</span>
+                            <span className="font-semibold text-slate-900">
+                              {formatAmount(summary.nextPaymentInterest)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </section>
+
+              {/* 상환 일정 */}
+              <section className="rounded-2xl bg-white px-6 py-6 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-bold text-slate-900">상환 일정</h2>
+                  {repaymentSchedules.length > 5 && (
+                    <button
+                      type="button"
+                      onClick={() => setIsScheduleExpanded((prev) => !prev)}
+                      className="inline-flex items-center gap-1 text-sm font-medium text-slate-700 transition hover:text-slate-900"
+                    >
+                      {isScheduleExpanded ? "접기" : `더보기 (${repaymentSchedules.length - 5}건)`}
+                      {isScheduleExpanded ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </button>
+                  )}
+                </div>
+                <div className="mt-4 space-y-3">
+                  {visibleSchedules.map((schedule) => (
+                    <div
+                      key={schedule.scheduleId}
+                      className="rounded-xl border border-slate-100 px-4 py-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <p className="text-sm font-medium text-slate-700">{schedule.dueDate}</p>
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                          schedule.settled
+                            ? "bg-slate-200 text-slate-700"
+                            : (schedule.overdueDays ?? 0) > 0
+                              ? "bg-red-50 text-red-600"
+                              : "bg-slate-100 text-slate-700"
+                        }`}>
+                          {schedule.settled ? "납부 완료" : (schedule.overdueDays ?? 0) > 0 ? "연체" : "납부 예정"}
+                        </span>
+                      </div>
+                      <div className="mt-3 grid gap-4 text-sm text-slate-700 md:grid-cols-4">
+                        <div className="flex justify-between md:flex-col">
+                          <span>예정 원금</span>
+                          <span className="text-sm font-semibold text-slate-900 md:mt-1 md:text-base">
+                            {formatAmount(schedule.plannedPrincipal)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between md:flex-col">
+                          <span>예정 이자</span>
+                          <span className="text-sm font-semibold text-slate-900 md:mt-1 md:text-base">
+                            {formatAmount(schedule.plannedInterest)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between md:flex-col">
+                          <span>납부 원금</span>
+                          <span className="text-sm font-semibold text-slate-900 md:mt-1 md:text-base">
+                            {formatAmount(schedule.paidPrincipal)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between md:flex-col">
+                          <span>납부 이자</span>
+                          <span className="text-sm font-semibold text-slate-900 md:mt-1 md:text-base">
+                            {formatAmount(schedule.paidInterest)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {repaymentSchedules.length === 0 && (
+                    <div className="rounded-xl border border-dashed border-slate-200 px-4 py-5 text-center text-sm text-slate-600">
+                      상환 일정이 없습니다.
+                    </div>
+                  )}
+                </div>
+              </section>
             </>
           )}
 
           {isLoanDataLoading && hasLoanData && (
-            <div className="rounded-2xl border border-slate-200 bg-slate-50/80 px-5 py-4 text-sm text-slate-500">
+            <div className="rounded-xl bg-white px-5 py-4 text-sm text-slate-600 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
               대출 관리 정보를 불러오는 중입니다.
             </div>
           )}
 
           {loanDataError && !isLoanDataLoading && !shouldShowLoanEmptyState && !hasLoanData && (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
               {loanDataError === "대출 관리 정보가 없습니다."
                 ? "현재 조회할 대출 관리 정보가 없습니다."
                 : loanDataError}
             </div>
           )}
 
+          {/* OCR 자격증 제출 */}
           {selectedApplication?.preferentialRateVerificationAvailable && (
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
+            <section className="rounded-2xl bg-white px-6 py-6 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
               <style>{`
                 @keyframes ocr-scan-line {
                   0% { transform: translateY(-12%); opacity: 0; }
@@ -1238,297 +1230,274 @@ export default function MyLoanManagement() {
                   100% { transform: translateY(300px); opacity: 0; }
                 }
               `}</style>
-              <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+
+              <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-sky-600">
-                    Preferential Rate
-                  </p>
-                  <h2 className="mt-2 text-2xl font-bold text-slate-900">
-                    자기계발 대출 OCR 제출
-                  </h2>
-                  <p className="mt-2 text-sm text-slate-500">
+                  <h2 className="text-sm font-bold text-slate-900">자기계발 대출 OCR 제출</h2>
+                  <p className="mt-1 text-sm text-slate-600">
                     자기계발 대출 신청자에게만 보이는 제출 영역입니다.
                   </p>
                 </div>
-                <div className="rounded-2xl border border-sky-100 bg-sky-50/60 px-4 py-4 text-sm text-slate-600">
-                  <p>
+                <div className="rounded-xl border border-slate-100 px-4 py-3 text-sm">
+                  <p className="text-slate-600">
                     신청 상품{" "}
                     <span className="font-semibold text-slate-900">
                       {selectedApplication.productName}
                     </span>
                   </p>
-                  <p className="mt-1">
+                  <p className="mt-1 text-slate-600">
                     상태{" "}
-                    <span className="font-semibold text-sky-700">
+                    <span className="font-semibold text-slate-700">
                       {getReviewStatusLabel(selectedApplication)}
                     </span>
                   </p>
-                  <p className="mt-1">
+                  <p className="mt-1 text-slate-600">
                     인증 상태{" "}
-                    <span className="font-semibold text-sky-700">
+                    <span className="font-semibold text-slate-700">
                       {getPreferentialRateStatusLabel(selectedApplication)}
                     </span>
                   </p>
                 </div>
               </div>
 
-              <div className="grid gap-6">
-                <div>
-                  <div className="mb-4 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
-                    <div className="mb-3 flex items-center justify-between">
-                      <p className="font-medium text-slate-700">지원 자격증 안내</p>
-                      <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700">
-                        총 26종
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-2 text-xs text-slate-600">
-                      {certificateGroups.map((group) => (
-                        <span
-                          key={group.label}
-                          className="rounded-full border border-slate-200 bg-white px-3 py-1"
-                        >
-                          {group.label}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="mb-4 rounded-xl border border-slate-200 bg-white px-4 py-2 shadow-sm">
-                    <p className="mb-1 text-xs font-medium text-slate-500">자격증 종류</p>
-                    <select
-                      value={certificateId}
-                      onChange={(event) => setCertificateId(event.target.value)}
-                      className="w-full bg-transparent py-1 text-sm text-slate-900 outline-none"
-                    >
-                      <option value="">자격증 종류 선택</option>
-                      {certificateGroups.map((group) => (
-                        <optgroup key={group.label} label={group.label}>
-                          {group.options.map((certificate) => (
-                            <option key={certificate.id} value={certificate.id}>
-                              {certificate.label} (-{(certificateDiscountMap[certificate.id] ?? 0).toFixed(1)}%p)
-                            </option>
-                          ))}
-                        </optgroup>
-                      ))}
-                    </select>
-                  </div>
-
-                  {certificateId && (
-                    <div className="mb-4 rounded-2xl border border-emerald-100 bg-emerald-50/70 px-4 py-4">
-                      <p className="text-sm font-semibold text-emerald-700">선택 자격증 우대금리</p>
-                      <p className="mt-2 text-sm text-slate-700">
-                        현재 선택한 자격증은 금리 <span className="font-semibold text-slate-900">-{selectedCertificateDiscount.toFixed(1)}%p</span> 인하 대상입니다.
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="rounded-3xl border-2 border-dashed border-sky-200 bg-slate-50 p-8">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept=".jpg,.jpeg,.png,.pdf"
-                      className="hidden"
-                      onChange={handleFileSelect}
-                    />
-                    <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-sky-100">
-                      <Upload className="h-7 w-7 text-sky-700" />
-                    </div>
-                    <h3 className="mb-2 text-xl font-bold text-slate-900">자격증 파일 업로드</h3>
-                    <p className="mb-6 text-slate-500">
-                      JPG, PNG, PDF 형식의 자격증 파일을 업로드해 주세요.
-                    </p>
-                    <div className="mb-6 grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
-                      <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
-                          <div>
-                            <p className="text-sm font-semibold text-slate-800">
-                              {selectedFile ? selectedFile.name : "선택된 파일이 없습니다."}
-                            </p>
-                            <p className="mt-1 text-xs text-slate-500">
-                              {selectedFile
-                                ? "문서 미리보기에서 OCR 스캔 과정을 확인할 수 있습니다."
-                                : "파일을 선택하면 여기에 문서 미리보기가 표시됩니다."}
-                            </p>
-                          </div>
-                          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                            {selectedFile ? (isPdfPreview ? "PDF" : "IMAGE") : "PREVIEW"}
-                          </span>
-                        </div>
-                        <div className="relative h-[360px] bg-[radial-gradient(circle_at_top,rgba(14,165,233,0.08),transparent_45%),linear-gradient(180deg,#f8fafc_0%,#eef2ff_100%)]">
-                          {selectedFilePreviewUrl ? (
-                            <>
-                              {isPdfPreview ? (
-                                <object
-                                  data={selectedFilePreviewUrl}
-                                  type="application/pdf"
-                                  className="h-full w-full"
-                                >
-                                  <iframe
-                                    title="certificate-preview"
-                                    src={selectedFilePreviewUrl}
-                                    className="h-full w-full"
-                                  />
-                                </object>
-                              ) : (
-                                <img
-                                  src={selectedFilePreviewUrl}
-                                  alt="업로드한 자격증 미리보기"
-                                  className="h-full w-full object-contain"
-                                />
-                              )}
-
-                              <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                                <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-slate-950/12 to-transparent" />
-                                <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent_38%,rgba(14,165,233,0.06)_68%,transparent)]" />
-                                {(uploadStatus === "uploading" || uploadStatus === "completed") && (
-                                  <>
-                                    <div className="absolute inset-x-6 top-0 h-24 animate-[ocr-scan-line_2.2s_ease-in-out_infinite] rounded-full bg-[linear-gradient(180deg,rgba(56,189,248,0)_0%,rgba(56,189,248,0.12)_45%,rgba(34,197,94,0.38)_50%,rgba(56,189,248,0.12)_55%,rgba(56,189,248,0)_100%)] blur-sm" />
-                                    <div className="absolute inset-x-8 top-0 h-px animate-[ocr-scan-line_2.2s_ease-in-out_infinite] bg-emerald-400/90 shadow-[0_0_24px_rgba(52,211,153,0.9)]" />
-                                    <div className="absolute right-4 top-4 rounded-full border border-white/60 bg-white/80 px-3 py-1 text-xs font-semibold text-slate-700 backdrop-blur">
-                                      {uploadStatus === "uploading" ? "문서 스캔 중" : "스캔 완료"}
-                                    </div>
-                                  </>
-                                )}
-                              </div>
-                            </>
-                          ) : (
-                            <div className="flex h-full flex-col items-center justify-center px-6 text-center">
-                              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-sky-100">
-                                <Upload className="h-8 w-8 text-sky-700" />
-                              </div>
-                              <p className="text-sm font-semibold text-slate-800">문서 미리보기를 준비하고 있습니다</p>
-                              <p className="mt-2 text-sm text-slate-500">
-                                파일을 선택하면 OCR 분석 전 문서 내용을 바로 확인할 수 있습니다.
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-5">
-                          <div className="mb-3 flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-sky-100">
-                              <FileSearch className="h-5 w-5 text-sky-700" />
-                            </div>
-                            <div>
-                              <p className="text-sm text-slate-500">OCR 진행 상태</p>
-                              <h3 className="text-lg font-bold text-slate-900">업로드 현황</h3>
-                            </div>
-                          </div>
-                          <p className="text-sm text-slate-500">{statusText[uploadStatus]}</p>
-                        </div>
-
-                        <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-5">
-                          <p className="mb-3 text-sm text-slate-500">인증 단계</p>
-                          <div className="space-y-3">
-                            {ocrSteps.map((step, index) => (
-                              <div key={step} className="flex items-center gap-3">
-                                <div
-                                  className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
-                                    index < currentOcrStepIndex
-                                      ? "bg-emerald-100 text-emerald-700"
-                                      : index === currentOcrStepIndex
-                                        ? "bg-sky-100 text-sky-700"
-                                        : "bg-slate-200 text-slate-500"
-                                  }`}
-                                >
-                                  {index + 1}
-                                </div>
-                                <div className="flex-1">
-                                  <p className="text-sm font-medium text-slate-700">{step}</p>
-                                  <p className="mt-1 text-xs text-slate-500">
-                                    {index < currentOcrStepIndex
-                                      ? "완료"
-                                      : index === currentOcrStepIndex
-                                        ? uploadStatus === "uploading"
-                                          ? "진행 중"
-                                          : uploadStatus === "completed"
-                                            ? "완료"
-                                            : "대기"
-                                        : "대기"}
-                                  </p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {ocrResult?.detectedCertificateDate && (
-                          <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5">
-                            <p className="text-sm text-emerald-700">감지된 자격증 날짜</p>
-                            <p className="mt-2 text-lg font-bold text-emerald-900">
-                              {ocrResult.detectedCertificateDate}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-4 sm:flex-row">
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={!canSubmitCertificate}
-                        className="rounded-xl bg-sky-100 py-4 font-bold text-slate-900 transition hover:bg-sky-200 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500 sm:flex-1"
-                      >
-                        파일 선택
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleUpload}
-                        disabled={!canSubmitCertificate || !selectedFile || uploadStatus === "uploading"}
-                        className="rounded-xl bg-[#8ea9bc] py-4 font-bold text-white shadow-md transition hover:bg-[#7d9aae] disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-700 disabled:opacity-100 sm:flex-1"
-                      >
-                        {uploadStatus === "uploading" ? "업로드 중..." : "업로드 시작"}
-                      </button>
-                    </div>
-                  </div>
+              <div className="mb-4 rounded-xl border border-slate-100 px-4 py-4">
+                <div className="mb-3 flex items-center justify-between">
+                  <p className="text-sm font-medium text-slate-700">지원 자격증 안내</p>
+                  <span className="rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-medium text-slate-700">
+                    총 26종
+                  </span>
                 </div>
-
-                <div className="space-y-4">
-                  {uploadStatus === "failed" && uploadError && (
-                    <div className="rounded-2xl border border-red-200 bg-red-50 p-5">
-                      <p className="mb-2 text-sm text-red-700">업로드 오류</p>
-                      <p className="text-sm text-red-900">{uploadError}</p>
-                    </div>
-                  )}
-
-                  {ocrResult && (
-                    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                      <p className="mb-2 text-sm text-slate-500">인증 결과</p>
-                      <h3 className="mb-4 text-lg font-bold text-slate-900">
-                        {ocrResult.verificationStatus === "VERIFIED"
-                          ? "자격증 인증 완료"
-                          : "자격증 인증 확인 필요"}
-                      </h3>
-                      <div className="space-y-3 text-sm text-slate-600">
-                        <p>
-                          인증 상태{" "}
-                          <span className="font-semibold text-slate-900">
-                            {ocrResult.verificationStatus}
-                          </span>
-                        </p>
-                        <p>
-                          추출 라인 수{" "}
-                          <span className="font-semibold text-slate-900">
-                            {ocrResult.lineCount}
-                          </span>
-                        </p>
-                        {ocrResult.failureReason && (
-                          <p>
-                            실패 사유{" "}
-                            <span className="font-semibold text-slate-900">
-                              {failureReasonMessages[ocrResult.failureReason] ??
-                                ocrResult.failureReason}
-                            </span>
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
+                <div className="flex flex-wrap gap-2 text-xs text-slate-700">
+                  {certificateGroups.map((group) => (
+                    <span
+                      key={group.label}
+                      className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1"
+                    >
+                      {group.label}
+                    </span>
+                  ))}
                 </div>
               </div>
+
+              <div className="mb-4 rounded-xl border border-slate-200 px-4 py-3">
+                <p className="mb-1 text-xs font-medium text-slate-600">자격증 종류</p>
+                <select
+                  value={certificateId}
+                  onChange={(event) => setCertificateId(event.target.value)}
+                  className="w-full bg-transparent py-1 text-sm text-slate-900 outline-none"
+                >
+                  <option value="">자격증 종류 선택</option>
+                  {certificateGroups.map((group) => (
+                    <optgroup key={group.label} label={group.label}>
+                      {group.options.map((certificate) => (
+                        <option key={certificate.id} value={certificate.id}>
+                          {certificate.label} (-{(certificateDiscountMap[certificate.id] ?? 0).toFixed(1)}%p)
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </div>
+
+              {certificateId && (
+                <div className="mb-4 rounded-xl border border-slate-100 px-4 py-3">
+                  <p className="text-sm font-medium text-slate-700">선택 자격증 우대금리</p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    현재 선택한 자격증은 금리 <span className="font-semibold text-slate-900">-{selectedCertificateDiscount.toFixed(1)}%p</span> 인하 대상입니다.
+                  </p>
+                </div>
+              )}
+
+              <div className="rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-6">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.pdf"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
+                <h3 className="text-sm font-bold text-slate-900">자격증 파일 업로드</h3>
+                <p className="mt-1 text-sm text-slate-600">
+                  JPG, PNG, PDF 형식의 자격증 파일을 업로드해 주세요.
+                </p>
+
+                <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px]">
+                  <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                    <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+                      <div>
+                        <p className="text-sm font-medium text-slate-700">
+                          {selectedFile ? selectedFile.name : "선택된 파일이 없습니다."}
+                        </p>
+                        <p className="mt-0.5 text-xs text-slate-600">
+                          {selectedFile
+                            ? "문서 미리보기에서 OCR 스캔 과정을 확인할 수 있습니다."
+                            : "파일을 선택하면 여기에 문서 미리보기가 표시됩니다."}
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-slate-200 px-2.5 py-0.5 text-xs font-medium text-slate-700">
+                        {selectedFile ? (isPdfPreview ? "PDF" : "IMAGE") : "PREVIEW"}
+                      </span>
+                    </div>
+                    <div className="relative h-[360px] bg-slate-50">
+                      {selectedFilePreviewUrl ? (
+                        <>
+                          {isPdfPreview ? (
+                            <object
+                              data={selectedFilePreviewUrl}
+                              type="application/pdf"
+                              className="h-full w-full"
+                            >
+                              <iframe
+                                title="certificate-preview"
+                                src={selectedFilePreviewUrl}
+                                className="h-full w-full"
+                              />
+                            </object>
+                          ) : (
+                            <img
+                              src={selectedFilePreviewUrl}
+                              alt="업로드한 자격증 미리보기"
+                              className="h-full w-full object-contain"
+                            />
+                          )}
+
+                          <div className="pointer-events-none absolute inset-0 overflow-hidden">
+                            {(uploadStatus === "uploading" || uploadStatus === "completed") && (
+                              <>
+                                <div className="absolute inset-x-6 top-0 h-24 animate-[ocr-scan-line_2.2s_ease-in-out_infinite] rounded-full bg-[linear-gradient(180deg,rgba(56,189,248,0)_0%,rgba(56,189,248,0.12)_45%,rgba(34,197,94,0.38)_50%,rgba(56,189,248,0.12)_55%,rgba(56,189,248,0)_100%)] blur-sm" />
+                                <div className="absolute inset-x-8 top-0 h-px animate-[ocr-scan-line_2.2s_ease-in-out_infinite] bg-emerald-400/90 shadow-[0_0_24px_rgba(52,211,153,0.9)]" />
+                                <div className="absolute right-3 top-3 rounded-full bg-white px-2.5 py-0.5 text-xs font-medium text-slate-600">
+                                  {uploadStatus === "uploading" ? "문서 스캔 중" : "스캔 완료"}
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex h-full flex-col items-center justify-center px-6 text-center">
+                          <Upload className="mb-3 h-8 w-8 text-slate-300" />
+                          <p className="text-sm font-medium text-slate-600">문서 미리보기를 준비하고 있습니다</p>
+                          <p className="mt-1 text-xs text-slate-600">
+                            파일을 선택하면 OCR 분석 전 문서 내용을 바로 확인할 수 있습니다.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="rounded-xl border border-slate-100 px-4 py-4">
+                      <p className="text-xs font-medium text-slate-600">OCR 진행 상태</p>
+                      <p className="mt-2 text-sm text-slate-700">{statusText[uploadStatus]}</p>
+                    </div>
+
+                    <div className="rounded-xl border border-slate-100 px-4 py-4">
+                      <p className="mb-3 text-xs font-medium text-slate-600">인증 단계</p>
+                      <div className="space-y-2.5">
+                        {ocrSteps.map((step, index) => (
+                          <div key={step} className="flex items-center gap-3">
+                            <div
+                              className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
+                                index < currentOcrStepIndex
+                                  ? "bg-slate-900 text-white"
+                                  : index === currentOcrStepIndex
+                                    ? "bg-slate-200 text-slate-700"
+                                    : "bg-slate-200 text-slate-700"
+                              }`}
+                            >
+                              {index + 1}
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm text-slate-700">{step}</p>
+                              <p className="text-xs text-slate-600">
+                                {index < currentOcrStepIndex
+                                  ? "완료"
+                                  : index === currentOcrStepIndex
+                                    ? uploadStatus === "uploading"
+                                      ? "진행 중"
+                                      : uploadStatus === "completed"
+                                        ? "완료"
+                                        : "대기"
+                                    : "대기"}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {ocrResult?.detectedCertificateDate && (
+                      <div className="rounded-xl border border-slate-100 px-4 py-4">
+                        <p className="text-xs font-medium text-slate-600">감지된 자격증 날짜</p>
+                        <p className="mt-1 text-base font-bold text-slate-900">
+                          {ocrResult.detectedCertificateDate}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mt-4 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={!canSubmitCertificate}
+                    className="flex-1 rounded-full border border-slate-200 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-900 disabled:cursor-not-allowed disabled:text-slate-500"
+                  >
+                    파일 선택
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleUpload}
+                    disabled={!canSubmitCertificate || !selectedFile || uploadStatus === "uploading"}
+                    className="flex-1 rounded-full bg-black py-3 text-sm font-semibold transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
+                    style={{ color: "#ffffff" }}
+                  >
+                    {uploadStatus === "uploading" ? "업로드 중..." : "업로드 시작"}
+                  </button>
+                </div>
+              </div>
+
+              {uploadStatus === "failed" && uploadError && (
+                <div className="mt-4 rounded-xl border border-red-100 bg-red-50 px-4 py-4">
+                  <p className="text-xs text-red-500">업로드 오류</p>
+                  <p className="mt-1 text-sm text-red-700">{uploadError}</p>
+                </div>
+              )}
+
+              {ocrResult && (
+                <div className="mt-4 rounded-xl border border-slate-100 px-4 py-4">
+                  <p className="text-xs font-medium text-slate-600">인증 결과</p>
+                  <h3 className="mt-1 text-sm font-bold text-slate-900">
+                    {ocrResult.verificationStatus === "VERIFIED"
+                      ? "자격증 인증 완료"
+                      : "자격증 인증 확인 필요"}
+                  </h3>
+                  <div className="mt-3 space-y-1.5 text-sm text-slate-600">
+                    <p>
+                      인증 상태{" "}
+                      <span className="font-semibold text-slate-900">
+                        {ocrResult.verificationStatus}
+                      </span>
+                    </p>
+                    <p>
+                      추출 라인 수{" "}
+                      <span className="font-semibold text-slate-900">
+                        {ocrResult.lineCount}
+                      </span>
+                    </p>
+                    {ocrResult.failureReason && (
+                      <p>
+                        실패 사유{" "}
+                        <span className="font-semibold text-slate-900">
+                          {failureReasonMessages[ocrResult.failureReason] ??
+                            ocrResult.failureReason}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
             </section>
           )}
         </div>
