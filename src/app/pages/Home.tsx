@@ -14,7 +14,7 @@ const heroSlides = [
         title: "하루 금융을 가볍게",
         subtitle: "입출금 통장부터 카드까지 한 번에 시작하는 생활 금융",
         actionLabel: "통장 개설하기",
-        actionTo: "/account/ddokgae",
+        actionTo: "/account/nudgecard",
         image: homeBanner1,
     },
     {
@@ -28,7 +28,7 @@ const heroSlides = [
         title: "카드 쓰고, 소비 흐름까지 보기",
         subtitle: "체크카드 이용 내역과 AI 소비 분석을 함께 관리",
         actionLabel: "카드 신청하기",
-        actionTo: "/card/ddokgae",
+        actionTo: "/card/nudgecard",
         image: homeBanner3,
     },
 ] as const;
@@ -42,16 +42,16 @@ const homeCards = [
         badgeClassName: "bg-orange-200/80 text-orange-900",
     },
     {
-        badge: "추천 서비스",
+        badge: "서비스",
         title: "넛지 체크카드",
         description: "일상 소비에 맞춘 이용방법과 간편한 발급 절차를 한 번에 확인할 수 있습니다.",
-        to: "/card/ddokgae",
+        to: "/card/nudgecard",
         badgeClassName: "bg-orange-200/80 text-orange-900",
     },
     {
         badge: "추천 상품",
         title: "소비 분석 대출",
-        description: "소비 패턴 기반으로 상환 부담을 고려한 대출 상품을 추천해 드립니다.",
+        description: "카드 사용 패턴과 월별 지출 흐름을 정밀한 AI 분석으로 확인해 보세요.",
         to: "/loan/products/consumption-loan/apply",
         badgeClassName: "bg-sky-200/80 text-sky-900",
     },
@@ -63,7 +63,7 @@ const homeCards = [
         badgeClassName: "bg-sky-200/80 text-sky-900",
     },
     {
-        badge: "서비스",
+        badge: "추천 상품",
         title: "예적금 상품 추천",
         description: "지금 가입 가능한 다양한 예금·적금 상품을 한눈에 비교하고 선택할 수 있습니다.",
         to: "/deposit/products",
