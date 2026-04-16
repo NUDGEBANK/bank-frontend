@@ -60,7 +60,7 @@ const loanProducts: LoanProduct[] = [
     name: "소비분석 대출",
     badge: "분석 기반",
     rate: "연 4.2% ~ 8.9%",
-    limit: "최대 300만원",
+    limit: "최대 1,000만원",
     period: "6개월 ~ 18개월",
     target: "소비 흐름 관리가 필요한 고객",
     summary:
