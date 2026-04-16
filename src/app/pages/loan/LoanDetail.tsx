@@ -1,12 +1,4 @@
-﻿import {
-  AlertCircle,
-  Calendar,
-  Coins,
-  FileText,
-  Info,
-  Percent,
-  Users,
-} from "lucide-react";
+import { ArrowRight, ChevronLeft } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { getJson } from "../../lib/api";
@@ -15,11 +7,14 @@ import { checkAuthentication } from "../../lib/auth";
 type LoanDetailItem = {
   name: string;
   description: string;
+  badge: string;
+  heroStyle: { bg: string; accent: string; ring: string };
   features: string[];
   target: string;
   limit: string;
   period: string;
   rate: string;
+  rateDisplay: { prefix: string; main: string; sep?: string; sub?: string; suffix: string; extra?: string };
   caution: string[];
   guide: string[];
   terms: string[];
@@ -54,6 +49,12 @@ const loanDetails: Record<string, LoanDetailItem> = {
     name: "소비분석 대출",
     description:
       "소비 흐름과 월별 지출 패턴을 기준으로 자금 운용 부담을 조절할 수 있도록 설계한 상품입니다.",
+    badge: "분석 기반",
+    heroStyle: {
+      bg: "bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700",
+      accent: "bg-slate-500/20",
+      ring: "border-slate-400/10",
+    },
     features: [
       "소비 분석 기반 상담",
       "최대 1,000만원 한도",
@@ -64,6 +65,7 @@ const loanDetails: Record<string, LoanDetailItem> = {
     limit: "최소 50만원 ~ 최대 1,000만원",
     period: "6개월 ~ 18개월",
     rate: "연 4.2% ~ 8.9%",
+    rateDisplay: { prefix: "연", main: "4.2", sep: "~", sub: "8.9", suffix: "%" },
     guide: [
       "월별 소비 패턴을 기준으로 자금 운용 부담을 조절할 수 있도록 설계했습니다.",
       "지출 흐름을 함께 관리하는 상품으로 생활비 목적 자금에 적합합니다.",
@@ -84,6 +86,12 @@ const loanDetails: Record<string, LoanDetailItem> = {
     name: "자기계발 대출",
     description:
       "20대 청년이 자격증, 어학, 직무 교육 등 자기계발에 필요한 비용을 준비할 수 있도록 설계한 상품입니다.",
+    badge: "청년 특화",
+    heroStyle: {
+      bg: "bg-gradient-to-br from-[#1e3a5f] via-[#2a4b78] to-[#3d6a9e]",
+      accent: "bg-sky-400/15",
+      ring: "border-sky-300/10",
+    },
     features: [
       "자격증, 어학, 실무 교육 비용 지원",
       "최대 500만원 한도",
@@ -94,6 +102,7 @@ const loanDetails: Record<string, LoanDetailItem> = {
     limit: "최소 50만원 ~ 최대 500만원",
     period: "12개월 ~ 24개월",
     rate: "연 5.5% 시작 (우대 적용 시 최저 3.5%)",
+    rateDisplay: { prefix: "연", main: "5.5", suffix: "%", extra: "우대 시 3.5%" },
     guide: [
       "자격증, 어학, 실무 교육 등 자기계발 목적에 맞는 자금을 지원합니다.",
       "대출 신청 후 내 대출 관리에서 서류를 제출하면 심사가 이어집니다.",
@@ -114,11 +123,18 @@ const loanDetails: Record<string, LoanDetailItem> = {
     name: "비상금 대출",
     description:
       "갑작스러운 지출에 빠르게 대응할 수 있도록 소액 한도를 제공하는 단기 자금 상품입니다.",
+    badge: "소액 특화",
+    heroStyle: {
+      bg: "bg-gradient-to-br from-zinc-800 via-zinc-700 to-zinc-600",
+      accent: "bg-zinc-400/15",
+      ring: "border-zinc-400/10",
+    },
     features: ["최대 200만원", "단기 자금 대응", "모바일 신청", "빠른 실행"],
     target: "소액 단기 자금이 필요한 고객",
     limit: "최소 30만원 ~ 최대 200만원",
     period: "1개월 ~ 12개월",
     rate: "연 5.1% ~ 9.9%",
+    rateDisplay: { prefix: "연", main: "5.1", sep: "~", sub: "9.9", suffix: "%" },
     guide: [
       "갑작스러운 생활비와 긴급 자금 수요에 대응하기 위한 상품입니다.",
       "짧은 기간 안에 빠르게 실행할 수 있도록 단순한 구조로 설계했습니다.",
@@ -156,6 +172,19 @@ function getApplicationStatusLabel(application: LoanApplicationSummary) {
       return "심사 반려";
     default:
       return "접수 완료";
+  }
+}
+
+function getStatusStyle(status: string) {
+  switch (status) {
+    case "APPROVED":
+      return "bg-emerald-500 text-white";
+    case "REJECTED":
+      return "bg-red-500 text-white";
+    case "DOCUMENT_REQUIRED":
+      return "bg-amber-500 text-white";
+    default:
+      return "bg-sky-500 text-white";
   }
 }
 
@@ -227,10 +256,10 @@ export default function LoanDetail() {
 
   if (!product) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-12">
-        <div className="rounded-lg border border-white/20 bg-white/95 p-8 text-center shadow-2xl backdrop-blur-md">
-          <h1 className="mb-4 text-2xl font-bold text-gray-900">상품을 찾을 수 없습니다</h1>
-          <Link to="/loan/products" className="font-semibold text-blue-600 hover:underline">
+      <div className="min-h-screen bg-slate-50">
+        <div className="mx-auto max-w-3xl px-6 py-20 text-center">
+          <h1 className="mb-4 text-2xl font-bold text-slate-900">상품을 찾을 수 없습니다</h1>
+          <Link to="/loan/products" className="text-sm font-medium text-slate-500 hover:text-slate-700">
             대출 상품 목록으로 돌아가기
           </Link>
         </div>
@@ -238,87 +267,118 @@ export default function LoanDetail() {
     );
   }
 
+  const rd = product.rateDisplay;
+
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12">
-      <div className="mb-8">
+    <div className="min-h-screen bg-slate-50">
+      {/* 메인 콘텐츠 */}
+      <div className="mx-auto max-w-3xl px-6 pt-10">
+        {/* 네비게이션 */}
         <Link
           to="/loan/products"
-          className="mb-4 inline-block font-semibold text-blue-300 transition-colors hover:text-white"
+          className="mb-8 inline-flex items-center gap-1 text-sm text-slate-400 transition-colors hover:text-slate-600"
         >
-          ← 대출 상품 목록
+          <ChevronLeft className="h-4 w-4" />
+          대출 상품 목록
         </Link>
-        <h1 className="mb-4 text-4xl font-bold text-white drop-shadow-lg">{product.name}</h1>
-        <p className="text-xl text-blue-100 drop-shadow-md">{product.description}</p>
-      </div>
 
-      <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-4">
-        <div className="rounded-lg border border-white/20 bg-white/95 p-6 shadow-2xl backdrop-blur-md">
-          <div className="mb-3 flex items-center gap-3">
-            <div className="rounded bg-blue-100 p-2">
-              <AlertCircle className="h-5 w-5 text-blue-600" />
-            </div>
-            <h3 className="font-bold text-gray-900">특징</h3>
+        {/* 상품 정보 카드 */}
+        <div className="rounded-2xl bg-white px-6 pb-6 pt-7 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
+          {/* 뱃지 */}
+          <div className="mb-3 flex items-center gap-2">
+            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+              {product.badge}
+            </span>
+            {latestApplication && isInUse && (
+              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getStatusStyle(latestApplication.applicationStatus)}`}>
+                {getApplicationStatusLabel(latestApplication)}
+              </span>
+            )}
           </div>
-          <p className="text-sm text-gray-600">{product.features.length}가지 핵심 조건</p>
+
+          {/* 상품명 & 설명 */}
+          <h1 className="text-2xl font-bold text-slate-900">{product.name}</h1>
+          <p className="mt-2 text-sm leading-relaxed text-slate-400">
+            {product.description}
+          </p>
+
+          {/* 금리 */}
+          <div className="mt-6 flex items-baseline gap-1">
+            <span className="text-lg font-bold text-slate-500">{rd.prefix}</span>
+            <span className="text-4xl font-extrabold tracking-tight text-slate-900">{rd.main}</span>
+            {rd.sep && (
+              <>
+                <span className="mx-0.5 text-xl text-slate-300">{rd.sep}</span>
+                <span className="text-4xl font-extrabold tracking-tight text-slate-900">{rd.sub}</span>
+              </>
+            )}
+            <span className="text-lg font-bold text-slate-500">{rd.suffix}</span>
+            {rd.extra && (
+              <span className="ml-3 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-500">
+                {rd.extra}
+              </span>
+            )}
+          </div>
+
+          {/* 요약 정보 */}
+          <div className="mt-6 flex border-t border-slate-100 pt-5">
+            <div className="flex-1 border-r border-slate-100 pr-5">
+              <span className="text-xs text-slate-400">대상</span>
+              <p className="mt-1 text-sm font-semibold text-slate-700">{product.target}</p>
+            </div>
+            <div className="flex-1 border-r border-slate-100 px-5">
+              <span className="text-xs text-slate-400">한도</span>
+              <p className="mt-1 text-sm font-semibold text-slate-700">{product.limit}</p>
+            </div>
+            <div className="flex-1 pl-5">
+              <span className="text-xs text-slate-400">기간</span>
+              <p className="mt-1 text-sm font-semibold text-slate-700">{product.period}</p>
+            </div>
+          </div>
+
+          {/* 특징 */}
+          <div className="mt-5 border-t border-slate-100 pt-5">
+            <h3 className="mb-3 text-sm font-bold text-slate-900">상품 특징</h3>
+            <div className="flex flex-wrap gap-2">
+              {product.features.map((feature) => (
+                <span
+                  key={feature}
+                  className="rounded-full border border-slate-200 bg-slate-50 px-3.5 py-1.5 text-xs font-medium text-slate-600"
+                >
+                  {feature}
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
 
-        <div className="rounded-lg border border-white/20 bg-white/95 p-6 shadow-2xl backdrop-blur-md">
-          <div className="mb-3 flex items-center gap-3">
-            <div className="rounded bg-blue-100 p-2">
-              <Users className="h-5 w-5 text-blue-600" />
-            </div>
-            <h3 className="font-bold text-gray-900">대상</h3>
-          </div>
-          <p className="text-sm text-gray-600">{product.target}</p>
+        {/* CTA */}
+        <div className="mt-5 rounded-2xl bg-white px-6 py-6 shadow-[0_2px_20px_rgba(0,0,0,0.08)]">
+          <p className="mb-1 text-center text-base font-bold text-slate-800">
+            상품 내용을 확인한 뒤 바로 신청할 수 있습니다
+          </p>
+          <p className="mb-5 text-center text-xs text-slate-400">
+            {productId === "youth-loan"
+              ? "신청 후 내 대출 관리에서 OCR 서류를 제출하면 심사가 이어집니다."
+              : productId === "consumption-loan"
+                ? "신청 후 심사 상태를 내 대출 관리에서 바로 확인할 수 있습니다."
+                : "신청 후 심사 상태와 상환 일정을 내 대출 관리에서 확인할 수 있습니다."}
+          </p>
+          <button
+            type="button"
+            onClick={handlePrimaryAction}
+            className="flex w-full items-center justify-center gap-1.5 rounded-full bg-black py-3.5 text-sm font-semibold transition-colors hover:bg-gray-800"
+            style={{ color: "#ffffff" }}
+          >
+            {isInUse ? "내 대출 관리" : "신청하기"}
+            <ArrowRight className="h-4 w-4" style={{ color: "#ffffff" }} />
+          </button>
         </div>
 
-        <div className="rounded-lg border border-white/20 bg-white/95 p-6 shadow-2xl backdrop-blur-md">
-          <div className="mb-3 flex items-center gap-3">
-            <div className="rounded bg-blue-100 p-2">
-              <Coins className="h-5 w-5 text-blue-600" />
-            </div>
-            <h3 className="font-bold text-gray-900">한도</h3>
-          </div>
-          <p className="text-sm text-gray-600">{product.limit}</p>
-        </div>
-
-        <div className="rounded-lg border border-white/20 bg-white/95 p-6 shadow-2xl backdrop-blur-md">
-          <div className="mb-3 flex items-center gap-3">
-            <div className="rounded bg-blue-100 p-2">
-              <Calendar className="h-5 w-5 text-blue-600" />
-            </div>
-            <h3 className="font-bold text-gray-900">기간</h3>
-          </div>
-          <p className="text-sm text-gray-600">{product.period}</p>
-        </div>
-      </div>
-
-      <div className="mb-8 rounded-3xl border border-[#d7e5f5] bg-[linear-gradient(135deg,_#edf4fb_0%,_#dfeefb_50%,_#f8fbff_100%)] p-8 text-center text-slate-900 shadow-xl">
-        <h3 className="mb-2 text-2xl font-bold">상품 내용을 확인한 뒤 바로 신청할 수 있습니다</h3>
-        {latestApplication && isInUse && (
-          <div className="mb-4 inline-flex rounded-full border border-emerald-600/70 bg-emerald-600 px-4 py-1 text-sm font-semibold text-white shadow-sm">
-            {getApplicationStatusLabel(latestApplication)}
-          </div>
-        )}
-        <p className="mb-6 text-slate-600">
-          {productId === "youth-loan"
-            ? "자기계발 대출은 신청 후 내 대출 관리에서 OCR 서류를 제출하면 심사가 이어집니다."
-            : productId === "consumption-loan"
-              ? "소비분석 대출은 신청 후 심사 상태를 내 대출 관리에서 바로 확인할 수 있습니다."
-              : "비상금 대출은 신청 후 심사 상태와 상환 일정을 내 대출 관리에서 확인할 수 있습니다."}
-        </p>
-        <button
-          type="button"
-          onClick={handlePrimaryAction}
-          className="rounded-xl bg-[#6d8ca6] px-8 py-3 font-semibold text-white shadow-md transition-all hover:bg-[#5c7c97]"
-        >
-          {isInUse ? "내 대출 관리 보기" : "대출 신청하기"}
-        </button>
-      </div>
-
-      <div className="rounded-lg border border-white/20 bg-white/95 shadow-2xl backdrop-blur-md">
-        <div className="border-b border-gray-200">
-          <div className="flex flex-wrap">
+        {/* 탭 영역 */}
+        <div className="mt-5 mb-14 overflow-hidden rounded-2xl bg-white shadow-[0_2px_20px_rgba(0,0,0,0.08)]">
+          {/* 탭 헤더 */}
+          <div className="flex border-b border-slate-100">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -326,94 +386,76 @@ export default function LoanDetail() {
                 onClick={() => setActiveTab(tab.id)}
                 className={
                   activeTab === tab.id
-                    ? "border-b-2 border-blue-600 px-6 py-4 font-semibold text-blue-600"
-                    : "px-6 py-4 font-semibold text-gray-500 hover:text-gray-700"
+                    ? "border-b-2 border-slate-900 px-5 py-3.5 text-sm font-semibold text-slate-900"
+                    : "px-5 py-3.5 text-sm font-medium text-slate-400 transition-colors hover:text-slate-600"
                 }
               >
                 {tab.label}
               </button>
             ))}
           </div>
-        </div>
 
-        <div className="p-8">
-          {activeTab === "guide" && (
-            <section>
-              <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
-                <Info className="h-5 w-5 text-blue-600" />
-                상품 특징
-              </h3>
+          {/* 탭 콘텐츠 */}
+          <div className="px-6 py-6">
+            {activeTab === "guide" && (
               <ul className="space-y-3">
                 {product.guide.map((item) => (
-                  <li key={item} className="flex items-start gap-3">
-                    <div className="mt-2 h-1.5 w-1.5 rounded-full bg-blue-600" />
-                    <span className="text-gray-700">{item}</span>
+                  <li key={item} className="flex items-start gap-2.5 text-sm leading-relaxed text-slate-600">
+                    <div className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300" />
+                    {item}
                   </li>
                 ))}
               </ul>
-            </section>
-          )}
+            )}
 
-          {activeTab === "rate" && (
-            <section>
-              <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
-                <Percent className="h-5 w-5 text-blue-600" />
-                금리 정보
-              </h3>
-              <div className="rounded-lg border border-gray-200 bg-gray-50/80 p-6 backdrop-blur-sm">
-                <div className="mb-4 flex items-center justify-between">
-                  <span className="text-gray-700">적용 금리</span>
-                  <span className="text-xl font-bold text-gray-900">{product.rate}</span>
+            {activeTab === "rate" && (
+              <div>
+                <div className="rounded-xl bg-slate-50 p-5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-slate-500">적용 금리</span>
+                    <span className="text-lg font-bold text-slate-900">{product.rate}</span>
+                  </div>
+                  <p className="mt-3 text-xs leading-relaxed text-slate-400">
+                    실제 적용 금리는 신용도, 심사 결과, 거래 조건에 따라 달라질 수 있습니다.
+                  </p>
                 </div>
-                <p className="text-sm text-gray-600">
-                  실제 적용 금리는 신용도, 심사 결과, 거래 조건에 따라 달라질 수 있습니다.
-                </p>
+                {productId === "youth-loan" && (
+                  <div className="mt-4 rounded-xl bg-emerald-50 p-5">
+                    <p className="mb-3 text-sm font-semibold text-emerald-700">자기계발 대출 상환 기준</p>
+                    <ul className="space-y-2 text-xs leading-relaxed text-slate-600">
+                      <li>매달 이자를 납부하고 만기 회차에 원금을 일괄 상환합니다.</li>
+                      <li>가상계좌 번호를 확인해 수동 상환으로 직접 납부합니다.</li>
+                      <li>연체 시 약정 금리에 3.0%p가 가산되며 최대 연 15.0%까지 적용됩니다.</li>
+                    </ul>
+                  </div>
+                )}
               </div>
-              {productId === "youth-loan" && (
-                <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50/80 p-6 backdrop-blur-sm">
-                  <p className="text-sm font-semibold text-emerald-700">자기계발 대출 상환 기준</p>
-                  <ul className="mt-3 space-y-2 text-sm text-gray-700">
-                    <li>매달 이자를 납부하고 만기 회차에 원금을 일괄 상환합니다.</li>
-                    <li>가상계좌 번호를 확인해 수동 상환으로 직접 납부합니다.</li>
-                    <li>연체 시 약정 금리에 3.0%p가 가산되며 최대 연 15.0%까지 적용됩니다.</li>
-                  </ul>
-                </div>
-              )}
-            </section>
-          )}
+            )}
 
-          {activeTab === "terms" && (
-            <section>
-              <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
-                <FileText className="h-5 w-5 text-blue-600" />
-                약관 및 설명서
-              </h3>
+            {activeTab === "terms" && (
               <ul className="space-y-3">
                 {product.terms.map((item) => (
-                  <li key={item} className="flex items-start gap-3">
-                    <div className="mt-2 h-1.5 w-1.5 rounded-full bg-slate-400" />
-                    <span className="text-gray-700">{item}</span>
+                  <li key={item} className="flex items-start gap-2.5 text-sm leading-relaxed text-slate-600">
+                    <div className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-300" />
+                    {item}
                   </li>
                 ))}
               </ul>
-            </section>
-          )}
+            )}
 
-          {activeTab === "caution" && (
-            <section>
-              <h3 className="mb-4 flex items-center gap-2 text-xl font-bold text-gray-900">
-                <FileText className="h-5 w-5 text-blue-600" />
-                유의사항
-              </h3>
-              <div className="rounded-lg border border-yellow-200 bg-yellow-50/80 p-6 backdrop-blur-sm">
-                <ul className="space-y-2 text-sm text-gray-700">
+            {activeTab === "caution" && (
+              <div className="rounded-xl bg-amber-50 p-5">
+                <ul className="space-y-2.5">
                   {product.caution.map((item) => (
-                    <li key={item}>• {item}</li>
+                    <li key={item} className="flex items-start gap-2.5 text-xs leading-relaxed text-slate-600">
+                      <div className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-amber-400" />
+                      {item}
+                    </li>
                   ))}
                 </ul>
               </div>
-            </section>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>
