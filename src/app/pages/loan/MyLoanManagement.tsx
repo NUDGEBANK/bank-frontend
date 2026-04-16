@@ -1,6 +1,6 @@
 ﻿﻿﻿﻿import { Calendar, Calculator, ChevronDown, ChevronUp, FileSearch, TrendingDown, Upload } from "lucide-react";
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 import { getJson, postJson } from "../../lib/api";
 import { checkAuthentication } from "../../lib/auth";
 
@@ -234,9 +234,12 @@ function getReviewStatusLabel(application: LoanApplicationSummary) {
 }
 
 export default function MyLoanManagement() {
+  const location = useLocation();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const applicationsRequestIdRef = useRef(0);
   const loanManagementRequestIdRef = useRef(0);
+  const repaymentHistoryItemRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const scrolledRepaymentIdRef = useRef<number | null>(null);
   const [simulationAmount, setSimulationAmount] = useState(1000000);
   const [applications, setApplications] = useState<LoanApplicationSummary[]>([]);
   const [completedLoans, setCompletedLoans] = useState<CompletedLoanHistory[]>([]);
@@ -257,6 +260,16 @@ export default function MyLoanManagement() {
   const [repaymentActionMessage, setRepaymentActionMessage] = useState<string | null>(null);
   const [isRepaymentSubmitting, setIsRepaymentSubmitting] = useState(false);
   const [isRepaymentHistoryExpanded, setIsRepaymentHistoryExpanded] = useState(false);
+  const [highlightedRepaymentId, setHighlightedRepaymentId] = useState<number | null>(null);
+  const repaymentTransactionIdFromQuery = useMemo(() => {
+    const value = new URLSearchParams(location.search).get("repaymentTransactionId");
+    if (!value) {
+      return null;
+    }
+
+    const parsedValue = Number(value);
+    return Number.isFinite(parsedValue) ? parsedValue : null;
+  }, [location.search]);
 
   const isApplicationOnOrAfterCompletedLoan = (
     application: LoanApplicationSummary,
@@ -572,9 +585,72 @@ export default function MyLoanManagement() {
     const overdueDays = schedule.overdueDays ?? 0;
     return sum + (remainingDue * overdueRate * overdueDays) / 100 / 365;
   }, 0);
+  const targetRepaymentHistory = useMemo(() => {
+    if (repaymentTransactionIdFromQuery === null) {
+      return null;
+    }
+
+    return (
+      repaymentHistories.find(
+        (repayment) => repayment.transaction?.transactionId === repaymentTransactionIdFromQuery,
+      ) ?? null
+    );
+  }, [repaymentHistories, repaymentTransactionIdFromQuery]);
+
+  useEffect(() => {
+    if (!targetRepaymentHistory) {
+      return;
+    }
+
+    const targetIndex = repaymentHistories.findIndex(
+      (repayment) => repayment.repaymentId === targetRepaymentHistory.repaymentId,
+    );
+    if (targetIndex >= 5 && !isRepaymentHistoryExpanded) {
+      setIsRepaymentHistoryExpanded(true);
+    }
+  }, [isRepaymentHistoryExpanded, repaymentHistories, targetRepaymentHistory]);
+
   const visibleRepaymentHistories = isRepaymentHistoryExpanded
     ? repaymentHistories
     : repaymentHistories.slice(0, 5);
+
+  useEffect(() => {
+    if (!targetRepaymentHistory) {
+      scrolledRepaymentIdRef.current = null;
+      return;
+    }
+
+    if (scrolledRepaymentIdRef.current === targetRepaymentHistory.repaymentId) {
+      return;
+    }
+
+    const targetElement = repaymentHistoryItemRefs.current[targetRepaymentHistory.repaymentId];
+    if (!targetElement) {
+      return;
+    }
+
+    targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
+    scrolledRepaymentIdRef.current = targetRepaymentHistory.repaymentId;
+  }, [targetRepaymentHistory, visibleRepaymentHistories]);
+
+  useEffect(() => {
+    if (!targetRepaymentHistory) {
+      setHighlightedRepaymentId(null);
+      return;
+    }
+
+    setHighlightedRepaymentId(targetRepaymentHistory.repaymentId);
+    const timerId = window.setTimeout(() => {
+      setHighlightedRepaymentId((currentId) =>
+        currentId === targetRepaymentHistory.repaymentId ? null : currentId,
+      );
+    }, 1000);
+
+    return () => {
+      window.clearTimeout(timerId);
+    };
+  }, [targetRepaymentHistory]);
+
   const isPdfPreview = !!selectedFile?.type.includes("pdf");
   const currentOcrStepIndex =
     uploadStatus === "completed" || uploadStatus === "failed"
@@ -976,7 +1052,15 @@ export default function MyLoanManagement() {
                 {visibleRepaymentHistories.map((repayment) => (
                   <div
                     key={repayment.repaymentId}
-                    className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-4 md:flex-row md:items-center md:justify-between"
+                    ref={(element) => {
+                      repaymentHistoryItemRefs.current[repayment.repaymentId] = element;
+                    }}
+                    id={`repayment-history-${repayment.repaymentId}`}
+                    className={`flex flex-col gap-3 rounded-2xl border px-4 py-4 md:flex-row md:items-center md:justify-between ${
+                      highlightedRepaymentId === repayment.repaymentId
+                        ? "border-sky-300 bg-sky-50/80"
+                        : "border-slate-100 bg-slate-50/80"
+                    }`}
                   >
                     <div>
                       <p className="text-sm text-slate-500">{repayment.repaymentDatetime.slice(0, 10)}</p>
