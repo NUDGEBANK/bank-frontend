@@ -1,4 +1,4 @@
-﻿﻿﻿﻿import { ChevronDown, ChevronLeft, ChevronUp, Upload } from "lucide-react";
+﻿﻿﻿﻿﻿import { ChevronDown, ChevronLeft, ChevronUp, Upload } from "lucide-react";
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
 import { getJson, postJson } from "../../lib/api";
@@ -434,10 +434,28 @@ export default function MyLoanManagement() {
     () => applications.filter(isApplicationActive),
     [applications, completedLoans],
   );
+  const preferredProductKeyFromQuery = useMemo(() => {
+    if (repaymentTransactionIdFromQuery === null) {
+      return null;
+    }
+
+    return activeApplications.some((application) => application.productKey === "consumption-loan")
+      ? "consumption-loan"
+      : null;
+  }, [activeApplications, repaymentTransactionIdFromQuery]);
 
   useEffect(() => {
     if (activeApplications.length === 0) {
       setSelectedProductKey("");
+      return;
+    }
+
+    if (
+      preferredProductKeyFromQuery &&
+      activeApplications.some((application) => application.productKey === preferredProductKeyFromQuery) &&
+      selectedProductKey !== preferredProductKeyFromQuery
+    ) {
+      setSelectedProductKey(preferredProductKeyFromQuery);
       return;
     }
 
@@ -449,7 +467,7 @@ export default function MyLoanManagement() {
       activeApplications.find((application) => application.productKey === "youth-loan")?.productKey ??
         activeApplications[0].productKey,
     );
-  }, [activeApplications, selectedProductKey]);
+  }, [activeApplications, preferredProductKeyFromQuery, selectedProductKey]);
 
   const repaidPrincipal = summary?.repaidPrincipal ?? 0;
   const repaymentProgress =
@@ -504,22 +522,16 @@ export default function MyLoanManagement() {
       null,
     [activeApplications, selectedProductKey],
   );
+  const latestCompletedLoan = useMemo(() => {
+    if (completedLoans.length === 0) {
+      return null;
+    }
+
+    return [...completedLoans].sort((left, right) => right.completedAt.localeCompare(left.completedAt))[0] ?? null;
+  }, [completedLoans]);
   const canSubmitCertificate = !!selectedApplication?.preferentialRateVerificationAvailable;
   const isYouthLoanSelected = selectedApplication?.productKey === "youth-loan";
   const isConsumptionLoanSelected = selectedApplication?.productKey === "consumption-loan";
-  const repaymentMethodLabel = !summary
-    ? "상환 방식 정보 없음"
-    : summary.repaymentType === "MATURITY_LUMP_SUM"
-      ? "만기일시상환"
-      : "원리금균등분할상환";
-  const repaymentMethodDescription = !summary
-    ? "대출 요약 정보가 준비되면 상환 방식을 확인할 수 있습니다."
-    : summary.repaymentType === "MATURITY_LUMP_SUM"
-      ? "매달 이자를 납부하고 만기일에 원금을 한 번에 상환합니다."
-      : "매달 원금과 이자를 함께 나누어 상환합니다.";
-  const preferentialRateStatus = selectedApplication
-    ? getPreferentialRateStatusLabel(selectedApplication)
-    : "대상 아님";
   const selectedCertificateDiscount = certificateId ? certificateDiscountMap[certificateId] ?? 0 : 0;
   const isMaturityLumpSum = summary?.repaymentType === "MATURITY_LUMP_SUM";
   const overdueRate = Math.min((summary?.interestRate ?? 0) + 3, 15);
@@ -805,60 +817,49 @@ export default function MyLoanManagement() {
           <ChevronLeft className="h-4 w-4" />
           대출 상품 목록
         </Link>
-        <h1 className="text-2xl font-bold text-slate-800">내 대출 관리</h1>
-        <p className="mt-2 text-sm text-slate-600">
-          상환 현황, 조기 상환 시뮬레이션, 신청 중인 상품 상태를 한 곳에서 확인할 수 있습니다.
-        </p>
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">내 대출 관리</h1>
+            <p className="mt-2 text-sm text-slate-600">
+              상환 현황, 조기 상환 시뮬레이션, 신청 중인 상품 상태를 한 곳에서 확인할 수 있습니다.
+            </p>
+          </div>
+
+          {activeApplications.length > 0 && (
+            <div className="flex flex-wrap gap-2 xl:max-w-[60%] xl:justify-end">
+              {activeApplications.map((application) => {
+                const isSelected = application.productKey === selectedProductKey;
+                return (
+                  <button
+                    key={application.loanApplicationId}
+                    type="button"
+                    onClick={() => setSelectedProductKey(application.productKey)}
+                    className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                      isSelected
+                        ? "border-slate-900 bg-slate-900"
+                        : "border-slate-200 bg-white text-slate-700 hover:border-slate-500 hover:text-slate-900"
+                    }`}
+                    style={isSelected ? { color: "#ffffff" } : undefined}
+                  >
+                    {application.productName}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
         <div className="mt-6 space-y-5">
-          {/* 상품 선택 */}
-          {activeApplications.length > 0 && (
-            <section className="rounded-2xl bg-white px-6 py-6 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
-              <h2 className="text-sm font-bold text-slate-900">신청 상품별 대출 관리</h2>
-              <p className="mt-1 text-sm text-slate-600">
-                신청한 상품을 선택하면 해당 상품 기준 대출 정보와 상환 현황을 확인할 수 있습니다.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {activeApplications.map((application) => {
-                  const isSelected = application.productKey === selectedProductKey;
-                  return (
-                    <button
-                      key={application.loanApplicationId}
-                      type="button"
-                      onClick={() => setSelectedProductKey(application.productKey)}
-                      className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                        isSelected
-                          ? "border-slate-900 bg-slate-900"
-                          : "border-slate-200 bg-white text-slate-700 hover:border-slate-500 hover:text-slate-900"
-                      }`}
-                      style={isSelected ? { color: "#ffffff" } : undefined}
-                    >
-                      {application.productName}
-                    </button>
-                  );
-                })}
-              </div>
-            </section>
-          )}
-
           {/* 이전 상품 내역 */}
-          {completedLoans.length > 0 && (
-            <section className="rounded-2xl bg-white px-6 py-6 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
-              <h2 className="text-sm font-bold text-slate-900">이전 상품 내역</h2>
-              <p className="mt-1 text-sm text-slate-600">
-                완납한 상품을 선택하면 축하 페이지와 이전 이용 정보를 확인할 수 있습니다.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {completedLoans.map((loan) => (
-                  <Link
-                    key={loan.loanHistoryId}
-                    to={`/loan/management/completed/${loan.loanHistoryId}`}
-                    className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-500 hover:bg-slate-50 hover:text-slate-900"
-                  >
-                    {loan.productName}
-                  </Link>
-                ))}
-              </div>
+          {latestCompletedLoan && (
+            <section>
+              <Link
+                to={`/loan/management/completed/${latestCompletedLoan.loanHistoryId}`}
+                className="inline-flex items-center gap-1 text-sm text-slate-600 transition-colors hover:text-slate-800"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                이전 대출 상품
+              </Link>
             </section>
           )}
 
@@ -938,27 +939,16 @@ export default function MyLoanManagement() {
                 </div>
                 <div className="rounded-2xl bg-white px-5 py-5 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
                   <p className="text-xs font-medium text-slate-600">금리</p>
-                  <p className="mt-2 text-xl font-bold text-slate-900">
-                    연 {(summary?.interestRate ?? 0).toFixed(2)}%
-                  </p>
-                </div>
-              </section>
-
-              {/* 상세 정보 */}
-              <section className="grid gap-4 lg:grid-cols-2">
-                <div className="rounded-2xl bg-white px-5 py-5 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
-                  <p className="text-xs font-medium text-slate-600">상환 방식</p>
-                  <p className="mt-2 text-base font-bold text-slate-900">{repaymentMethodLabel}</p>
-                  <p className="mt-1 text-sm text-slate-600">{repaymentMethodDescription}</p>
-                </div>
-                <div className="rounded-2xl bg-white px-5 py-5 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
-                  <p className="text-xs font-medium text-slate-600">우대금리 상태</p>
-                  <p className="mt-2 text-base font-bold text-slate-900">{preferentialRateStatus}</p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    {isYouthLoanSelected
-                      ? "자격증 OCR 인증이 완료되면 우대금리가 현재 금리에 반영됩니다."
-                      : "현재 선택한 상품은 OCR 우대금리 대상이 아닙니다."}
-                  </p>
+                  <div className="mt-2 flex flex-wrap items-baseline gap-2">
+                    <p className="text-xl font-bold text-slate-900">
+                      연 {(summary?.interestRate ?? 0).toFixed(2)}%
+                    </p>
+                    {isYouthLoanSelected && (summary?.preferentialRateDiscount ?? 0) > 0 && (
+                      <span className="text-sm font-semibold text-emerald-600">
+                        (-{(summary?.preferentialRateDiscount ?? 0).toFixed(1)}%)
+                      </span>
+                    )}
+                  </div>
                 </div>
               </section>
 
