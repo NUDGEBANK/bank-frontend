@@ -99,7 +99,10 @@ export default function Header() {
   };
 
   const activeMenu = menuItems.find((item) => item.label === activeMenuLabel) ?? null;
-
+  const authButtonClassName =
+    "inline-flex h-10 items-center justify-center rounded-full px-4 text-sm font-semibold tracking-tight text-slate-900 transition-colors hover:text-slate-900";
+  const authPrimaryButtonClassName =
+    "inline-flex h-10 items-center justify-center rounded-full px-4 text-sm font-semibold tracking-tight text-slate-900 transition-colors hover:text-slate-600";
   const getPrimaryPath = (item: MenuItem) => {
     const firstSubmenuPath = item.submenu?.[0]?.path;
     if (firstSubmenuPath && firstSubmenuPath !== "#") {
@@ -177,14 +180,14 @@ export default function Header() {
                   <>
                     <Link
                       to="/account/mypage"
-                      className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-lg font-semibold leading-none text-slate-900 transition-all hover:bg-slate-50 lg:px-4"
+                      className={authButtonClassName}
                     >
                       마이페이지
                     </Link>
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-lg font-semibold leading-none text-slate-900 transition-all hover:bg-slate-50 lg:px-4"
+                      className={authPrimaryButtonClassName}
                     >
                       로그아웃
                     </button>
@@ -192,7 +195,7 @@ export default function Header() {
                 ) : (
                   <Link
                     to="/login"
-                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-lg font-semibold leading-none text-slate-900 transition-all hover:bg-slate-50 lg:px-4"
+                    className={authPrimaryButtonClassName}
                   >
                     로그인
                   </Link>
@@ -200,25 +203,10 @@ export default function Header() {
               </div>
 
               <div className="flex items-center justify-end gap-2 min-[1180px]:hidden">
-                {isAuthenticated ? (
-                  <Link
-                    to="/account/mypage"
-                    className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-lg font-semibold leading-none text-slate-900 transition-all hover:bg-slate-50"
-                  >
-                    마이페이지
-                  </Link>
-                ) : (
-                  <Link
-                    to="/login"
-                    className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-lg font-semibold leading-none text-slate-900 transition-all hover:bg-slate-50"
-                  >
-                    로그인
-                  </Link>
-                )}
                 <button
                   type="button"
                   onClick={() => setIsMobileMenuOpen((prev) => !prev)}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-900 transition-all hover:bg-slate-50"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-[0_8px_20px_rgba(15,23,42,0.08)] transition-all hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
                   aria-label="메뉴 열기"
                   aria-expanded={isMobileMenuOpen}
                 >
@@ -312,6 +300,24 @@ export default function Header() {
                   </div>
                 ))}
 
+                {isAuthenticated ? (
+                  <Link
+                    to="/account/mypage"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block w-full rounded-2xl px-4 py-3 text-left text-base font-semibold text-slate-900 transition hover:text-slate-600"
+                  >
+                    마이페이지
+                  </Link>
+                ) : (
+                  <Link
+                    to="/login"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block w-full rounded-2xl px-4 py-3 text-left text-base font-semibold text-slate-900 transition hover:text-slate-600"
+                  >
+                    로그인
+                  </Link>
+                )}
+
                 {isAuthenticated && (
                   <button
                     type="button"
@@ -319,7 +325,7 @@ export default function Header() {
                       await handleLogout();
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-left text-base font-semibold text-slate-900 transition hover:bg-slate-50"
+                    className="w-full rounded-2xl px-4 py-3 text-left text-base font-semibold text-slate-900 transition hover:text-slate-900"
                   >
                     로그아웃
                   </button>
