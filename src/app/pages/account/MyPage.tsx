@@ -788,7 +788,7 @@ export default function MyPage() {
                       <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-5 py-6">
                         <p className="text-sm text-slate-500">현재 보유한 계좌가 없습니다.</p>
                         <Link
-                          to="/account/ddokgae"
+                          to="/account/nudgecard"
                           className="mt-4 inline-flex rounded-xl bg-[#6d8ca6] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#5c7c97]"
                         >
                           계좌 개설하러 가기
@@ -898,7 +898,7 @@ export default function MyPage() {
                       <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-5 py-6">
                         <p className="text-sm text-slate-500">현재 발급된 카드가 없습니다.</p>
                         <Link
-                          to="/card/ddokgae"
+                          to="/card/nudgecard"
                           className="mt-4 inline-flex rounded-xl bg-[#6d8ca6] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#5c7c97]"
                         >
                           카드 신청하러 가기

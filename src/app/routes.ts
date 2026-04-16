@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter, redirect } from "react-router";
 import Root from "./Root";
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -7,14 +7,14 @@ import DepositApply from "./pages/account/DepositApply";
 import DepositManagement from "./pages/account/DepositManagement";
 import DepositProducts from "./pages/account/DepositProducts";
 import MyAccount from "./pages/account/MyAccount";
-import DdokgaeAccount from "./pages/account/DdokgaeAccount";
+import NudgeCardAccount from "./pages/account/NudgeCardAccount";
 import LoanProducts from "./pages/loan/LoanProducts";
 import LoanDetail from "./pages/loan/LoanDetail";
 import LoanApply from "./pages/loan/LoanApply";
 import MyLoanManagement from "./pages/loan/MyLoanManagement";
 import MyCreditScore from "./pages/loan/MyCreditScore";
 import CompletedLoanDetail from "./pages/loan/CompletedLoanDetail";
-import DdokgaeCard from "./pages/card/DdokgaeCard";
+import NudgeCard from "./pages/card/NudgeCard";
 import CardHistory from "./pages/card/CardHistory";
 import SpendingAnalysis from "./pages/card/SpendingAnalysis";
 import MyPage from "./pages/account/MyPage";
@@ -37,7 +37,7 @@ export const router = createBrowserRouter([
       { path: "deposit/products/:productId/apply", Component: DepositApply },
       { path: "deposit/management", Component: DepositManagement },
       { path: "account/my", Component: MyAccount },
-      { path: "account/ddokgae", Component: DdokgaeAccount },
+      { path: "account/nudgecard", Component: NudgeCardAccount },
       { path: "loan/products", Component: LoanProducts },
       { path: "loan/apply-guide", Component: LoanApplicationGuide },
       { path: "loan/products/:productId", Component: LoanDetail },
@@ -45,7 +45,7 @@ export const router = createBrowserRouter([
       { path: "loan/management", Component: MyLoanManagement },
       { path: "loan/management/completed/:loanHistoryId", Component: CompletedLoanDetail },
       { path: "loan/credit-score", Component: MyCreditScore },
-      { path: "card/ddokgae", Component: DdokgaeCard },
+      { path: "card/nudgecard", Component: NudgeCard },
       { path: "card/history", Component: CardHistory },
       { path: "card/spending-analysis", Component: SpendingAnalysis },
       { path: "account/mypage", Component: MyPage },

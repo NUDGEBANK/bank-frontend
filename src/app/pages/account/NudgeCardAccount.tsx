@@ -1,6 +1,6 @@
 import { ArrowUpRight, ArrowDownLeft, Clock } from "lucide-react";
 
-export default function DdokgaeAccount() {
+export default function NudgeCardAccount() {
   const transactions = [
     { id: 1, type: "결제", amount: -15000, balance: 350000, merchant: "카페 스타벅스", date: "2026-03-24 14:30" },
     { id: 2, type: "상환", amount: 10000, balance: 365000, merchant: "자동상환", date: "2026-03-24 12:00" },
