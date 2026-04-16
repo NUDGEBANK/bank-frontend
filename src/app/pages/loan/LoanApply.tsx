@@ -1,4 +1,4 @@
-import { CheckCircle2, FileText, ShieldCheck } from "lucide-react";
+import { ArrowRight, ChevronLeft } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { getJson, postJson } from "../../lib/api";
@@ -65,7 +65,7 @@ const productConfigs: Record<string, LoanApplyConfig> = {
     subtitle: "소비 흐름을 기준으로 자금 운용 부담을 조절할 수 있는 상품입니다.",
     limit: "최대 1,000만원",
     period: "6개월 ~ 18개월",
-    rate: "연 4.2% ~ 8.9%",
+    rate: "연 5% ~ 12%",
     defaultAmount: "2000000",
     defaultPurpose: "생활비 및 소비 관리",
     amountRange: { min: 500000, max: 10000000 },
@@ -94,6 +94,9 @@ const productConfigs: Record<string, LoanApplyConfig> = {
     termOptions: ["1개월", "3개월", "6개월", "12개월"],
   },
 };
+
+const inputClass =
+  "h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-800 outline-none transition placeholder:text-slate-300 focus:border-slate-400 focus:ring-2 focus:ring-slate-100";
 
 export default function LoanApply() {
   const navigate = useNavigate();
@@ -200,13 +203,10 @@ export default function LoanApply() {
 
   if (!productId || !product) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-12">
-        <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-lg">
-          <h1 className="text-2xl font-bold text-slate-900">요청한 상품을 찾을 수 없습니다.</h1>
-          <Link
-            to="/loan/products"
-            className="mt-4 inline-block font-semibold text-blue-600 hover:underline"
-          >
+      <div className="min-h-screen bg-slate-50">
+        <div className="mx-auto max-w-6xl px-6 py-20 text-center">
+          <h1 className="mb-4 text-2xl font-bold text-slate-900">요청한 상품을 찾을 수 없습니다.</h1>
+          <Link to="/loan/products" className="text-sm font-medium text-slate-500 hover:text-slate-700">
             대출 상품 목록으로 돌아가기
           </Link>
         </div>
@@ -284,241 +284,221 @@ export default function LoanApply() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12">
-      <div className="mb-8">
+    <div className="min-h-screen bg-slate-50">
+      <div className="mx-auto max-w-6xl px-6 pt-10 pb-14">
+        {/* 뒤로가기 */}
         <Link
           to={`/loan/products/${productId}`}
-          className="inline-flex items-center rounded-full border border-white/20 bg-white/10 px-4 py-2 font-semibold text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-white/20"
+          className="mb-8 inline-flex items-center gap-1 text-sm text-slate-400 transition-colors hover:text-slate-600"
         >
-          ← 상품 상세로 돌아가기
+          <ChevronLeft className="h-4 w-4" />
+          상품 상세로 돌아가기
         </Link>
-      </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.85fr)]">
-        <section className="rounded-3xl border border-slate-200 bg-white p-8 shadow-xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-blue-500">
-            Application
-          </p>
-          <h1 className="mt-2 text-3xl font-bold text-slate-900">{product.name} 신청</h1>
-          <p className="mt-3 text-slate-600">{product.subtitle}</p>
+        {/* 상품 요약 카드 */}
+        <div className="rounded-2xl bg-white px-6 pb-6 pt-7 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
+          <h1 className="text-2xl font-bold text-slate-900">{product.name} 신청</h1>
+          <p className="mt-1.5 text-sm text-slate-400">{product.subtitle}</p>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-              <p className="text-sm font-medium text-slate-600">한도</p>
-              <p className="mt-2 text-lg font-semibold text-slate-900">{product.limit}</p>
+          <div className="mt-5 flex border-t border-slate-100 pt-5">
+            <div className="flex-1 border-r border-slate-100 pr-5">
+              <span className="text-xs text-slate-400">한도</span>
+              <p className="mt-1 text-sm font-semibold text-slate-700">{product.limit}</p>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-              <p className="text-sm font-medium text-slate-600">기간</p>
-              <p className="mt-2 text-lg font-semibold text-slate-900">{product.period}</p>
+            <div className="flex-1 border-r border-slate-100 px-5">
+              <span className="text-xs text-slate-400">기간</span>
+              <p className="mt-1 text-sm font-semibold text-slate-700">{product.period}</p>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-              <p className="text-sm font-medium text-slate-600">금리</p>
-              <p className="mt-2 text-lg font-semibold text-slate-900">{product.rate}</p>
+            <div className="flex-1 pl-5">
+              <span className="text-xs text-slate-400">금리</span>
+              <p className="mt-1 text-sm font-semibold text-slate-700">{product.rate}</p>
             </div>
           </div>
+        </div>
 
-          <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4">
-            <p className="text-sm font-medium text-slate-600">대출 가능 여부</p>
+        {/* 대출 가능 여부 */}
+        <div className="mt-4 rounded-2xl bg-white px-6 py-5 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
+          <span className="text-xs text-slate-400">대출 가능 여부</span>
+          {isCheckingEligibility ? (
+            <p className="mt-1.5 text-sm text-slate-500">조회 중입니다...</p>
+          ) : eligibilityError ? (
+            <p className="mt-1.5 text-sm text-red-500">대출 가능 여부를 확인하지 못했습니다.</p>
+          ) : eligibility ? (
+            <>
+              <p className={`mt-1.5 text-sm font-semibold ${eligibility.eligible ? "text-emerald-600" : "text-red-500"}`}>
+                {eligibility.eligible ? "대출 신청 가능" : "대출 신청 불가"}
+              </p>
+              <p className="mt-1 text-xs text-slate-400">
+                내부 신용점수 {eligibility.creditScore}점
+                {eligibility.reasons[0] && <span className="ml-1 text-slate-400">· {eligibility.reasons[0]}</span>}
+              </p>
+            </>
+          ) : (
+            <p className="mt-1.5 text-sm text-slate-500">대출 가능 여부 정보가 없습니다.</p>
+          )}
+        </div>
 
-            {isCheckingEligibility ? (
-                <p className="mt-2 text-sm text-slate-500">조회 중입니다...</p>
-            ) : eligibilityError ? (
-                <p className="mt-2 text-sm text-red-600">대출 가능 여부를 확인하지 못했습니다.</p>
-            ) : eligibility ? (
-                <>
-                  <p
-                      className={`mt-2 text-base font-semibold ${
-                          eligibility.eligible ? "text-emerald-600" : "text-red-600"
-                      }`}
-                  >
-                    {eligibility.eligible ? "대출 신청 가능" : "대출 신청 불가"}
-                  </p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    현재 내부 신용점수는 {eligibility.creditScore}점입니다.
-                  </p>
-                  {eligibility.reasons[0] && (
-                      <p className="mt-1 text-sm text-slate-500">{eligibility.reasons[0]}</p>
-                  )}
-                </>
-            ) : (
-                <p className="mt-2 text-sm text-slate-500">대출 가능 여부 정보가 없습니다.</p>
+        {/* 진행 순서 */}
+        <div className="mt-4 rounded-2xl bg-white px-6 py-5 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
+          <h3 className="mb-3 text-sm font-bold text-slate-900">진행 순서</h3>
+          <ol className="space-y-1.5 text-sm text-slate-500">
+            <li>1. 상품 조건 확인</li>
+            <li>2. 대출 가능 여부 확인</li>
+            <li>3. 신청 정보 입력 및 동의</li>
+            <li>4. 신청 완료 후 내 대출 관리에서 상태 확인</li>
+            {productId === "youth-loan" && <li>5. 자기계발 대출은 OCR 서류 제출 진행</li>}
+          </ol>
+        </div>
+
+        {/* 안내 사항 */}
+        <div className="mt-4 rounded-2xl bg-white px-6 py-5 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
+          <h3 className="mb-3 text-sm font-bold text-slate-900">안내 사항</h3>
+          <ul className="space-y-1.5 text-sm text-slate-500">
+            <li>· 신청 후 실제 승인 여부는 심사 결과에 따라 달라질 수 있습니다.</li>
+            {productId === "youth-loan" && (
+              <li>· 자기계발 대출은 신청 후 내 대출 관리에서 OCR 인증을 진행합니다.</li>
             )}
-          </div>
+            {productId === "consumption-loan" && (
+              <li>· 소비분석 대출은 신청 후 바로 심사 상태를 조회할 수 있습니다.</li>
+            )}
+            <li>· 대출 가능 여부는 내부 신용점수를 기준으로 판단됩니다.</li>
+            <li>· 신용점수가 500점 이상이면 신청 버튼이 활성화됩니다.</li>
+            <li>· 신청 정보는 안전하게 저장되며, 대출 관리 화면에서 확인할 수 있습니다.</li>
+          </ul>
+        </div>
 
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            <div>
-              <label className="mb-2 block text-sm font-medium text-slate-600">신청 금액</label>
-              <input
-                value={amount}
-                onChange={(event) => setAmount(event.target.value)}
-                className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-700 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
-                placeholder="신청 금액을 입력해 주세요"
-              />
-            </div>
+        {/* 신청 폼 */}
+        <form className="mt-4" onSubmit={handleSubmit}>
+          <div className="rounded-2xl bg-white px-6 py-6 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
+            <h2 className="mb-5 text-sm font-bold text-slate-900">신청 정보</h2>
 
-            <div>
-              <label className="mb-2 block text-sm font-medium text-slate-600">상환 기간</label>
-              <select
-                value={loanTerm}
-                onChange={(event) => setLoanTerm(event.target.value)}
-                className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-700 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
-              >
-                {termOptions.map((termOption) => (
-                  <option key={termOption} value={termOption}>
-                    {termOption}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <div className="space-y-5">
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-slate-500">신청 금액</label>
+                <input
+                  value={amount}
+                  onChange={(event) => setAmount(event.target.value)}
+                  className={inputClass}
+                  placeholder="신청 금액을 입력해 주세요"
+                />
+              </div>
 
-            <div>
-              <label className="mb-2 block text-sm font-medium text-slate-600">신청 카드</label>
-              <select
-                value={selectedCardId}
-                onChange={(event) => setSelectedCardId(event.target.value ? Number(event.target.value) : "")}
-                className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-700 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
-              >
-                <option value="">카드를 선택해 주세요</option>
-                {accounts
-                  .filter((account) => account.cardId)
-                  .map((account) => (
-                    <option key={account.cardId} value={account.cardId ?? ""}>
-                      {account.cardNumber ?? "카드 없음"} / {account.accountName}
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-slate-500">상환 기간</label>
+                <select
+                  value={loanTerm}
+                  onChange={(event) => setLoanTerm(event.target.value)}
+                  className={inputClass}
+                >
+                  {termOptions.map((termOption) => (
+                    <option key={termOption} value={termOption}>
+                      {termOption}
                     </option>
                   ))}
-              </select>
-            </div>
+                </select>
+              </div>
 
-            <div className="grid gap-6 md:grid-cols-2">
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-600">월 소득</label>
-                <input
-                  value={monthlyIncome}
-                  onChange={(event) => setMonthlyIncome(event.target.value)}
-                  className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-700 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
-                  placeholder="월 소득을 입력해 주세요"
+                <label className="mb-1.5 block text-xs font-medium text-slate-500">신청 카드</label>
+                <select
+                  value={selectedCardId}
+                  onChange={(event) => setSelectedCardId(event.target.value ? Number(event.target.value) : "")}
+                  className={inputClass}
+                >
+                  <option value="">카드를 선택해 주세요</option>
+                  {accounts
+                    .filter((account) => account.cardId)
+                    .map((account) => (
+                      <option key={account.cardId} value={account.cardId ?? ""}>
+                        {account.cardNumber ?? "카드 없음"} / {account.accountName}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-slate-500">월 소득</label>
+                  <input
+                    value={monthlyIncome}
+                    onChange={(event) => setMonthlyIncome(event.target.value)}
+                    className={inputClass}
+                    placeholder="월 소득을 입력해 주세요"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-slate-500">급여일</label>
+                  <input
+                    value={salaryDate}
+                    onChange={(event) => setSalaryDate(event.target.value)}
+                    className={inputClass}
+                    placeholder="매월 급여일을 입력해 주세요"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-slate-500">신청 목적</label>
+                <textarea
+                  value={purpose}
+                  onChange={(event) => setPurpose(event.target.value)}
+                  className="min-h-24 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-300 focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
                 />
               </div>
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-600">급여일</label>
-                <input
-                  value={salaryDate}
-                  onChange={(event) => setSalaryDate(event.target.value)}
-                  className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm text-slate-700 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
-                  placeholder="매월 급여일을 입력해 주세요"
-                />
-              </div>
             </div>
+          </div>
 
-            <div>
-              <label className="mb-2 block text-sm font-medium text-slate-600">신청 목적</label>
-              <textarea
-                value={purpose}
-                onChange={(event) => setPurpose(event.target.value)}
-                className="min-h-32 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
-              />
-            </div>
-
-            <div className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-5">
-              <label className="flex items-start gap-3 text-sm text-slate-700">
+          {/* 동의 */}
+          <div className="mt-4 rounded-2xl bg-white px-6 py-5 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
+            <div className="space-y-3">
+              <label className="flex items-start gap-2.5 text-sm text-slate-600">
                 <input
                   type="checkbox"
                   checked={agreeTerms}
                   onChange={(event) => setAgreeTerms(event.target.checked)}
-                  className="mt-1 h-4 w-4 rounded border-slate-300"
+                  className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-slate-900"
                 />
-                <span>대출 상품 설명서 및 약관 내용을 확인했고 이에 동의합니다.</span>
+                대출 상품 설명서 및 약관 내용을 확인했고 이에 동의합니다.
               </label>
-              <label className="flex items-start gap-3 text-sm text-slate-700">
+              <label className="flex items-start gap-2.5 text-sm text-slate-600">
                 <input
                   type="checkbox"
                   checked={agreePrivacy}
                   onChange={(event) => setAgreePrivacy(event.target.checked)}
-                  className="mt-1 h-4 w-4 rounded border-slate-300"
+                  className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-slate-900"
                 />
-                <span>대출 심사를 위한 개인정보 수집 및 이용에 동의합니다.</span>
+                대출 심사를 위한 개인정보 수집 및 이용에 동의합니다.
               </label>
             </div>
-
-            {error && (
-              <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={isSubmitDisabled}
-              className={`w-full rounded-2xl py-4 font-semibold text-white shadow-md transition ${
-                    isSubmitDisabled
-                        ? "cursor-not-allowed bg-slate-300"
-                        : "bg-[#6d8ca6] hover:bg-[#5c7c97]"
-                }`}
-            >
-              {isSubmitting
-                  ? "대출 신청 처리 중..."
-                  : eligibility && !eligibility.eligible
-                      ? "대출 신청 불가"
-                      : "대출 신청 완료"}
-            </button>
-          </form>
-        </section>
-
-        <aside className="space-y-4">
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-blue-100 p-3 text-blue-600">
-                <FileText className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-slate-600">신청 절차</p>
-                <h2 className="text-lg font-bold text-slate-900">진행 순서</h2>
-              </div>
-            </div>
-            <div className="mt-5 space-y-3 text-sm leading-6 text-slate-700">
-              <p>1. 상품 조건 확인</p>
-              <p>2. 대출 가능 여부 확인</p>
-              <p>3. 신청 정보 입력 및 동의</p>
-              <p>4. 신청 완료 후 내 대출 관리에서 상태 확인</p>
-              {productId === "youth-loan" && <p>5. 자기계발 대출은 OCR 서류 제출 진행</p>}
-            </div>
           </div>
 
-          <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-emerald-100 p-3 text-emerald-600">
-                <CheckCircle2 className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-slate-600">확인 사항</p>
-                <h2 className="text-lg font-bold text-slate-900">안내</h2>
-              </div>
+          {/* 에러 */}
+          {error && (
+            <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600">
+              {error}
             </div>
-            <div className="mt-5 space-y-3 text-sm leading-6 text-slate-700">
-              <p>신청 후 실제 승인 여부는 심사 결과에 따라 달라질 수 있습니다.</p>
-              <p>자기계발 대출은 신청 후 내 대출 관리에서 OCR 인증을 진행합니다.</p>
-              <p>소비분석 대출은 신청 후 바로 심사 상태를 조회할 수 있습니다.</p>
-              <p>대출 가능 여부는 내부 신용점수를 기준으로 판단됩니다.</p>
-              <p>신용점수가 500점 이상이면 신청 버튼이 활성화됩니다.</p>
-              <p>신청 후에는 대출 관리 화면에서 상태를 확인할 수 있습니다.</p>
-            </div>
-          </div>
+          )}
 
-          <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="rounded-full bg-slate-200 p-3 text-slate-700">
-                <ShieldCheck className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-slate-600">보안 안내</p>
-                <h2 className="text-lg font-bold text-slate-900">개인정보 보호</h2>
-              </div>
-            </div>
-            <p className="mt-4 text-sm leading-6 text-slate-700">
-              신청 정보는 백엔드에 저장되며, 대출 관리 화면에서 실제 신청 상태를 확인할 수 있습니다.
-            </p>
-          </div>
-        </aside>
+          {/* 제출 버튼 */}
+          <button
+            type="submit"
+            disabled={isSubmitDisabled}
+            className={`mt-5 flex w-full items-center justify-center gap-1.5 rounded-full py-3.5 text-sm font-semibold transition-colors ${
+              isSubmitDisabled
+                ? "cursor-not-allowed bg-slate-200 text-slate-400"
+                : "bg-black hover:bg-gray-800"
+            }`}
+            style={isSubmitDisabled ? undefined : { color: "#ffffff" }}
+          >
+            {isSubmitting
+              ? "신청 처리 중..."
+              : eligibility && !eligibility.eligible
+                ? "대출 신청 불가"
+                : "대출 신청 완료"}
+            {!isSubmitDisabled && <ArrowRight className="h-4 w-4" style={{ color: "#ffffff" }} />}
+          </button>
+        </form>
+
       </div>
     </div>
   );

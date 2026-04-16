@@ -790,7 +790,7 @@ export default function MyLoanManagement() {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 md:px-6">
+    <div className="mx-auto max-w-6xl px-6 py-10">
       <div className="overflow-hidden rounded-[32px] border border-slate-200/80 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
         <div className="border-b border-slate-100 bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.14),_transparent_38%),linear-gradient(135deg,_#f8fbff_0%,_#ffffff_52%,_#f8fafc_100%)] px-6 py-6 md:px-8">
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-sky-600">

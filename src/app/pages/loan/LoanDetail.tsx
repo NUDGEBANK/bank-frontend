@@ -64,8 +64,8 @@ const loanDetails: Record<string, LoanDetailItem> = {
     target: "소비 흐름 관리가 필요한 고객",
     limit: "최소 50만원 ~ 최대 1,000만원",
     period: "6개월 ~ 18개월",
-    rate: "연 4.2% ~ 8.9%",
-    rateDisplay: { prefix: "연", main: "4.2", sep: "~", sub: "8.9", suffix: "%" },
+    rate: "연 5% ~ 12%",
+    rateDisplay: { prefix: "연", main: "5", sep: "~", sub: "12", suffix: "%" },
     guide: [
       "월별 소비 패턴을 기준으로 자금 운용 부담을 조절할 수 있도록 설계했습니다.",
       "지출 흐름을 함께 관리하는 상품으로 생활비 목적 자금에 적합합니다.",
@@ -257,7 +257,7 @@ export default function LoanDetail() {
   if (!product) {
     return (
       <div className="min-h-screen bg-slate-50">
-        <div className="mx-auto max-w-3xl px-6 py-20 text-center">
+        <div className="mx-auto max-w-6xl px-6 py-20 text-center">
           <h1 className="mb-4 text-2xl font-bold text-slate-900">상품을 찾을 수 없습니다</h1>
           <Link to="/loan/products" className="text-sm font-medium text-slate-500 hover:text-slate-700">
             대출 상품 목록으로 돌아가기
@@ -272,7 +272,7 @@ export default function LoanDetail() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* 메인 콘텐츠 */}
-      <div className="mx-auto max-w-3xl px-6 pt-10">
+      <div className="mx-auto max-w-6xl px-6 pt-10">
         {/* 네비게이션 */}
         <Link
           to="/loan/products"
@@ -308,7 +308,7 @@ export default function LoanDetail() {
             <span className="text-4xl font-extrabold tracking-tight text-slate-900">{rd.main}</span>
             {rd.sep && (
               <>
-                <span className="mx-0.5 text-xl text-slate-300">{rd.sep}</span>
+                <span className="mx-0.5 text-xl font-medium text-slate-500">{rd.sep}</span>
                 <span className="text-4xl font-extrabold tracking-tight text-slate-900">{rd.sub}</span>
               </>
             )}
