@@ -78,12 +78,26 @@ type MyLoanRepaymentSchedule = {
   overdueDays: number | null;
 };
 
+type Transaction = {
+  transactionId: number;
+  cardId: number | null;
+  marketId: number | null;
+  categoryId: number | null;
+  qrId: string | null;
+  amount: number;
+  transactionDatetime: string;
+  menuName: string | null;
+  quantity: number | null;
+};
+
 type MyLoanRepaymentHistory = {
   repaymentId: number;
   repaymentAmount: number;
   repaymentRate: number;
   repaymentDatetime: string;
   remainingBalance: number;
+  reason: string;
+  transaction: Transaction | null;
 };
 
 type LoanRepaymentExecuteResponse = {
@@ -983,6 +997,37 @@ export default function MyLoanManagement() {
                           상환 이력에서 별도 제공 예정
                         </p>
                       </div>
+                      {repayment.reason &&
+                          (<div>
+                        <p className="text-slate-500">자동상환 비율 산정 근거</p>
+                        <p className="mt-1 font-semibold text-slate-900">
+                          {repayment.reason}
+                        </p>
+                      </div>)}
+                      {repayment.transaction && (
+                          <div>
+                            <p className="text-slate-500">결제 상품명</p>
+                            <p className="mt-1 font-semibold text-slate-900">
+                              {repayment.transaction.menuName}
+                            </p>
+                          </div>
+                      )}
+                      {repayment.transaction && (
+                          <div>
+                            <p className="text-slate-500">결제 금액</p>
+                            <p className="mt-1 font-semibold text-slate-900">
+                              {repayment.transaction.amount}
+                            </p>
+                          </div>
+                      )}
+                      {repayment.transaction && (
+                          <div>
+                            <p className="text-slate-500">결제 시간</p>
+                            <p className="mt-1 font-semibold text-slate-900">
+                              {repayment.transaction.transactionDatetime}
+                            </p>
+                          </div>
+                      )}
                     </div>
                   </div>
                 ))}
