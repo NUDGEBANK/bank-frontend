@@ -6,15 +6,18 @@ import ChatBot from "./components/ChatBot";
 export default function Root() {
   const location = useLocation();
   const isChatHistoryPage = location.pathname === "/help/chat-history";
+  const isHomePage = location.pathname === "/";
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <div className="relative z-10 min-h-screen flex flex-col">
         <Header />
-        <main className="flex-1">
+        <main className={isHomePage ? "flex flex-col" : "flex-1 flex flex-col"}>
           <Outlet />
         </main>
-        <Footer />
+        <div>
+          <Footer />
+        </div>
         {!isChatHistoryPage ? <ChatBot /> : null}
       </div>
     </div>

@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
-import { LogIn, Menu, X } from "lucide-react";
+import { Link, useLocation } from "react-router";
+import { Menu, X } from "lucide-react";
 
 import { postJson } from "../lib/api";
 import { useAuthStatus } from "../hooks/useAuthStatus";
+import nudgeLogo from "../../assets/nudge.png";
 
 interface MenuItem {
   label: string;
@@ -26,8 +27,8 @@ const menuItems: MenuItem[] = [
     label: "예금·적금",
     description: "일상 자금 관리에 맞는 입출금 상품과 적금 상품을 안내합니다.",
     submenu: [
-      { label: "예적금 상품", path: "/deposit/products" },
-      { label: "예적금 관리", path: "/deposit/management" },
+      { label: "예금·적금 상품", path: "/deposit/products" },
+      { label: "예금·적금 관리", path: "/deposit/management" },
     ],
   },
   {
@@ -42,9 +43,9 @@ const menuItems: MenuItem[] = [
   },
   {
     label: "카드",
-    description: "똑개 카드 발급과 이용 내역, 소비 분석 서비스를 제공합니다.",
+    description: "넛지 카드 발급과 이용 내역, 소비 분석 서비스를 제공합니다.",
     submenu: [
-      { label: "똑개 카드", path: "/card/ddokgae" },
+      { label: "넛지 카드", path: "/card/ddokgae" },
       { label: "카드이용내역", path: "/card/history" },
       { label: "소비 분석", path: "/card/spending-analysis" },
     ],
@@ -55,11 +56,10 @@ const menuItems: MenuItem[] = [
     submenu: [{ label: "ANTMILLION", path: "#" }],
   },
   {
-    label: "고객센터",
+    label: "챗봇",
     path: "#",
     description: "이용 안내와 고객 지원 정보를 확인할 수 있습니다.",
     submenu: [
-      { label: "고객센터", path: "" },
       { label: "NUDGEBOT", path: "/help/chat-history" }
     ],
   },
@@ -69,6 +69,8 @@ export default function Header() {
   const [activeMenuLabel, setActiveMenuLabel] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { isAuthenticated } = useAuthStatus();
+  const location = useLocation();
+  const isHomePage = location.pathname === "/";
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(min-width: 1180px)");
@@ -112,17 +114,18 @@ export default function Header() {
   return (
     <>
       <div
-        className="sticky top-0 z-50"
+        className={isHomePage ? "absolute left-0 right-0 top-0 z-50" : "sticky top-0 z-50"}
         onMouseLeave={() => setActiveMenuLabel(null)}
       >
-        <header className="border-b border-white/20 bg-gray-900/80 shadow-lg backdrop-blur-md">
+        <header className={isHomePage ? "bg-transparent" : "border-b border-slate-200 bg-white"}>
           <div className="mx-auto max-w-7xl px-4">
             <div className="grid h-16 grid-cols-[1fr_auto] items-center gap-4 min-[1180px]:grid-cols-[150px_1fr_220px] min-[1280px]:grid-cols-[180px_1fr_280px]">
-              <Link to="/" className="text-2xl font-bold text-white drop-shadow-lg">
-                NUDGEBANK
+              <Link to="/" className="inline-flex items-center gap-3 text-slate-900">
+                <img src={nudgeLogo} alt="" className="h-16 w-16 object-contain" />
+                <span className="text-3xl font-bold">NUDGEBANK</span>
               </Link>
 
-              <nav className="hidden items-center justify-center min-[1180px]:flex">
+              <nav className="ml-34 hidden items-center justify-center min-[1180px]:flex">
                 <div
                     className="mx-auto flex w-full items-center justify-center gap-6 md:gap-10 lg:gap-14"
                     style={{ maxWidth: `${MENU_TRACK_WIDTH}px` }}
@@ -137,7 +140,7 @@ export default function Header() {
                         <Link
                           to={getPrimaryPath(item) || "#"}
                           onFocus={() => setActiveMenuLabel(item.label)}
-                          className="whitespace-nowrap py-2 text-sm font-semibold tracking-tight text-white/90 transition-colors hover:text-white md:text-base"
+                          className="whitespace-nowrap py-2 text-base font-semibold tracking-tight text-slate-900 transition-colors hover:text-slate-600 md:text-lg"
                         >
                           {item.label}
                         </Link>
@@ -152,14 +155,14 @@ export default function Header() {
                               current === item.label ? null : item.label,
                             )
                           }
-                          className="whitespace-nowrap py-2 text-sm font-semibold tracking-tight text-white/90 transition-colors hover:text-white md:text-base"
+                          className="whitespace-nowrap py-2 text-base font-semibold tracking-tight text-slate-900 transition-colors hover:text-slate-600 md:text-lg"
                         >
                           {item.label}
                         </button>
                       ) : (
                         <Link
                           to={item.path || "#"}
-                          className="whitespace-nowrap py-2 text-sm font-semibold tracking-tight text-white/90 transition-colors hover:text-white md:text-base"
+                          className="whitespace-nowrap py-2 text-base font-semibold tracking-tight text-slate-900 transition-colors hover:text-slate-600 md:text-lg"
                         >
                           {item.label}
                         </Link>
@@ -174,14 +177,14 @@ export default function Header() {
                   <>
                     <Link
                       to="/account/mypage"
-                      className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/40 bg-white/20 px-3 py-2 text-sm font-semibold leading-none text-white shadow-lg transition-all hover:bg-white/30 lg:px-4"
+                      className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-lg font-semibold leading-none text-slate-900 transition-all hover:bg-slate-50 lg:px-4"
                     >
                       마이페이지
                     </Link>
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/40 bg-white/20 px-3 py-2 text-sm font-semibold leading-none text-white shadow-lg transition-all hover:bg-white/30 lg:px-4"
+                      className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-lg font-semibold leading-none text-slate-900 transition-all hover:bg-slate-50 lg:px-4"
                     >
                       로그아웃
                     </button>
@@ -189,9 +192,8 @@ export default function Header() {
                 ) : (
                   <Link
                     to="/login"
-                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-white/40 bg-white/20 px-3 py-2 text-sm font-semibold leading-none text-white shadow-lg transition-all hover:bg-white/30 lg:px-4"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-lg font-semibold leading-none text-slate-900 transition-all hover:bg-slate-50 lg:px-4"
                   >
-                    <LogIn className="h-4 w-4" />
                     로그인
                   </Link>
                 )}
@@ -201,14 +203,14 @@ export default function Header() {
                 {isAuthenticated ? (
                   <Link
                     to="/account/mypage"
-                    className="inline-flex items-center justify-center rounded-lg border border-white/40 bg-white/20 px-3 py-2 text-sm font-semibold leading-none text-white transition-all hover:bg-white/30"
+                    className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-lg font-semibold leading-none text-slate-900 transition-all hover:bg-slate-50"
                   >
                     마이페이지
                   </Link>
                 ) : (
                   <Link
                     to="/login"
-                    className="inline-flex items-center justify-center rounded-lg border border-white/40 bg-white/20 px-3 py-2 text-sm font-semibold leading-none text-white transition-all hover:bg-white/30"
+                    className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-2 text-lg font-semibold leading-none text-slate-900 transition-all hover:bg-slate-50"
                   >
                     로그인
                   </Link>
@@ -216,7 +218,7 @@ export default function Header() {
                 <button
                   type="button"
                   onClick={() => setIsMobileMenuOpen((prev) => !prev)}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/40 bg-white/20 text-white transition-all hover:bg-white/30"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-900 transition-all hover:bg-slate-50"
                   aria-label="메뉴 열기"
                   aria-expanded={isMobileMenuOpen}
                 >
@@ -236,14 +238,14 @@ export default function Header() {
         )}
 
         {activeMenuLabel && (
-          <div className="absolute left-0 right-0 top-full z-40 hidden border-b border-white/20 bg-gray-800/50 shadow-2xl backdrop-blur-xl min-[1180px]:block">
-            <div className="mx-auto max-w-7xl px-4 py-6">
-              <div className="grid min-h-[116px] grid-cols-[180px_1fr_280px] items-start gap-4">
+          <div className="absolute left-0 right-0 top-full z-40 hidden border-b border-slate-200/70 bg-white/75 shadow-2xl backdrop-blur-md min-[1180px]:block">
+            <div className="mx-auto max-w-7xl px-4 py-8">
+              <div className="grid min-h-[150px] grid-cols-[180px_1fr_280px] items-start gap-4">
                 <div className="pt-1">
                   {activeMenu && (
                     <div className="space-y-2">
-                      <p className="text-base font-semibold tracking-tight text-white">{activeMenu.label}</p>
-                      <p className="text-sm leading-5 text-white/70">{activeMenu.description}</p>
+                      <p className="text-2xl font-semibold tracking-tight text-slate-900">{activeMenu.label}</p>
+                      <p className="text-base leading-6 text-slate-600">{activeMenu.description}</p>
                     </div>
                   )}
                 </div>
@@ -258,7 +260,7 @@ export default function Header() {
                             <Link
                               key={subItem.label}
                               to={subItem.path}
-                              className="whitespace-nowrap py-1 text-base font-medium text-white/90 transition-colors hover:text-white"
+                              className="whitespace-nowrap py-1 text-lg font-medium text-slate-900 transition-colors hover:text-slate-600"
                             >
                               {subItem.label}
                             </Link>
@@ -278,20 +280,20 @@ export default function Header() {
         )}
 
         {isMobileMenuOpen && (
-          <div className="border-b border-white/20 bg-gray-900/95 shadow-2xl backdrop-blur-md min-[1180px]:hidden">
+          <div className="border-b border-slate-200/70 bg-white/75 shadow-2xl backdrop-blur-md min-[1180px]:hidden">
             <div className="mx-auto max-w-7xl px-4 py-4">
               <div className="space-y-5">
                 {menuItems.map((item) => (
-                  <div key={item.label} className="border-b border-white/10 pb-4 last:border-b-0 last:pb-0">
+                  <div key={item.label} className="border-b border-slate-200 pb-4 last:border-b-0 last:pb-0">
                     <Link
                       to={getPrimaryPath(item) || "#"}
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="block text-base font-semibold text-white"
+                      className="block text-lg font-semibold text-slate-900"
                     >
                       {item.label}
                     </Link>
                     {item.description && (
-                      <p className="mt-2 text-sm leading-6 text-white/65">{item.description}</p>
+                      <p className="mt-2 text-base leading-7 text-slate-600">{item.description}</p>
                     )}
                     {item.submenu && item.submenu.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-3">
@@ -300,7 +302,7 @@ export default function Header() {
                             key={subItem.label}
                             to={subItem.path}
                             onClick={() => setIsMobileMenuOpen(false)}
-                            className="rounded-full border border-white/15 bg-white/5 px-3 py-2 text-sm text-white/85 transition hover:bg-white/10"
+                            className="rounded-full border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 transition hover:bg-slate-50"
                           >
                             {subItem.label}
                           </Link>
@@ -317,7 +319,7 @@ export default function Header() {
                       await handleLogout();
                       setIsMobileMenuOpen(false);
                     }}
-                    className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-left text-sm font-semibold text-white transition hover:bg-white/15"
+                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-left text-base font-semibold text-slate-900 transition hover:bg-slate-50"
                   >
                     로그아웃
                   </button>
