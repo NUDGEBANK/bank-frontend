@@ -283,7 +283,11 @@ export default function ChatBot() {
           value: "내가 받을 수 있는 대출 뭐 있어?",
         },
         { type: "navigate", label: "대출 상품 보기", href: "/loan/products" },
-        { type: "navigate", label: "신청 안내 보기", href: "/loan/apply-guide",},
+        {
+          type: "navigate",
+          label: "신청 안내 보기",
+          href: "/loan/apply-guide",
+        },
       ]);
       streamDoneRef.current = true;
     }
@@ -321,7 +325,7 @@ export default function ChatBot() {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-8 right-8 rounded-full border border-white/20 bg-gradient-to-r from-blue-600 to-blue-700 p-4 text-white shadow-2xl transition-all backdrop-blur-sm hover:from-blue-700 hover:to-blue-800 ${
+        className={`fixed bottom-8 right-8 rounded-full border border-white/20 bg-gradient-to-r from-[#dce9f8] to-[#c6dcf4] p-4 text-slate-800 shadow-2xl transition-all backdrop-blur-sm hover:from-[#c6dcf4] hover:to-[#b0cff0] ${
           isOpen ? "pointer-events-none opacity-0" : "opacity-100"
         }`}
       >
@@ -330,7 +334,7 @@ export default function ChatBot() {
 
       {isOpen && (
         <div className="fixed bottom-8 right-8 z-50 flex h-[560px] w-96 flex-col rounded-lg border border-white/20 bg-white/95 shadow-2xl backdrop-blur-md">
-          <div className="flex items-center justify-between rounded-t-lg bg-gradient-to-r from-blue-600 to-blue-700 p-4 text-white">
+          <div className="flex items-center justify-between rounded-t-lg bg-gradient-to-r from-[#dce9f8] to-[#c6dcf4] p-4 text-slate-800">
             <div className="flex items-center gap-2">
               <MessageCircle className="h-5 w-5" />
               <span className="font-semibold">NUDGEBOT</span>
@@ -338,7 +342,7 @@ export default function ChatBot() {
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="rounded-full p-1 transition-colors hover:bg-blue-800/50"
+              className="rounded-full p-1 transition-colors hover:bg-[#b0cff0]/50"
             >
               <X className="h-5 w-5" />
             </button>
@@ -373,7 +377,7 @@ export default function ChatBot() {
                 <div
                   className={`max-w-[80%] rounded-lg px-4 py-2 ${
                     message.sender === "user"
-                      ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md"
+                      ? "bg-gradient-to-r from-[#dce9f8] to-[#c6dcf4] text-slate-800 shadow-md"
                       : "border border-gray-200 bg-white/80 text-gray-800 backdrop-blur-sm"
                   }`}
                 >
@@ -399,7 +403,7 @@ export default function ChatBot() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          className="rounded-full border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                          className="rounded-full border-[#c6dcf4] bg-[#f4f8fd] text-slate-700 hover:bg-[#eaf2fb]"
                           onClick={() => void handleQuickReplyClick(reply)}
                           disabled={isStreaming}
                         >
@@ -428,13 +432,13 @@ export default function ChatBot() {
                 placeholder="메시지를 입력하세요..."
                 disabled={isStreaming}
                 rows={1}
-                className="flex-1 resize-none rounded-lg border border-gray-300 bg-white/90 px-3 py-2 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:bg-gray-100"
+                className="flex-1 resize-none rounded-lg border border-gray-300 bg-white/90 px-3 py-2 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-[#dce9f8] disabled:bg-gray-100"
               />
               <button
                 type="button"
                 onClick={() => void handleSend()}
                 disabled={isStreaming}
-                className="rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 p-2 text-white shadow-md transition-all hover:from-blue-700 hover:to-blue-800 disabled:opacity-50"
+                className="rounded-lg bg-gradient-to-r from-[#dce9f8] to-[#c6dcf4] p-2 text-slate-800 shadow-md transition-all hover:from-[#c6dcf4] hover:to-[#b0cff0] disabled:opacity-50"
               >
                 <Send className="h-5 w-5" />
               </button>
