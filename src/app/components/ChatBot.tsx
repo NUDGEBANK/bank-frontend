@@ -245,7 +245,7 @@ export default function ChatBot() {
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-8 right-8 rounded-full border border-white/20 bg-gradient-to-r from-blue-600 to-blue-700 p-4 text-white shadow-2xl transition-all hover:from-blue-700 hover:to-blue-800 ${
+        className={`fixed bottom-8 right-8 rounded-full border border-white/20 bg-gradient-to-r from-[#dce9f8] to-[#c6dcf4] p-4 text-slate-800 shadow-2xl transition-all hover:from-[#c6dcf4] hover:to-[#b4d0f0] ${
           isOpen ? "pointer-events-none opacity-0" : "opacity-100"
         }`}
       >
@@ -254,7 +254,7 @@ export default function ChatBot() {
 
       {isOpen && (
         <div className="fixed bottom-8 right-8 z-50 flex h-[560px] w-96 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
-          <div className="flex items-center justify-between bg-gradient-to-r from-blue-600 to-blue-700 p-4 text-white">
+          <div className="flex items-center justify-between bg-gradient-to-r from-[#dce9f8] to-[#c6dcf4] p-4 text-slate-800">
             <div className="flex items-center gap-2">
               <MessageCircle className="h-5 w-5" />
               <span className="font-semibold">NUDGEBOT</span>
@@ -262,13 +262,13 @@ export default function ChatBot() {
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="rounded-full p-1 transition hover:bg-blue-800/50"
+              className="rounded-full p-1 transition hover:bg-[#b4d0f0]/50"
             >
               <X className="h-5 w-5" />
             </button>
           </div>
 
-          <div className="flex-1 space-y-3 overflow-y-auto bg-[#fafcff] p-4">
+          <div className="flex-1 space-y-3 overflow-y-auto bg-[#f4f8fd] p-4">
             {messages.map((message, index) => (
               <div
                 key={index}
@@ -279,7 +279,7 @@ export default function ChatBot() {
                 <div
                   className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                     message.sender === "user"
-                      ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white"
+                      ? "bg-gradient-to-r from-[#dce9f8] to-[#c6dcf4] text-slate-800"
                       : "border border-slate-200 bg-white text-slate-800"
                   }`}
                 >
@@ -303,7 +303,7 @@ export default function ChatBot() {
                           type="button"
                           variant="outline"
                           size="sm"
-                          className="rounded-full border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                          className="rounded-full border-[#c6dcf4] bg-[#f4f8fd] text-slate-700 hover:bg-[#eaf2fb]"
                           onClick={() => void handleQuickReplyClick(reply)}
                           disabled={isStreaming}
                         >
@@ -332,13 +332,13 @@ export default function ChatBot() {
                 placeholder="메시지를 입력하세요..."
                 disabled={isStreaming}
                 rows={1}
-                className="flex-1 resize-none rounded-xl border border-slate-300 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-600 disabled:bg-slate-100"
+                className="flex-1 resize-none rounded-xl border border-slate-300 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dce9f8] disabled:bg-slate-100"
               />
               <button
                 type="button"
                 onClick={() => void submitMessage(inputValue)}
                 disabled={isStreaming || !inputValue.trim()}
-                className="rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 p-3 text-white transition hover:from-blue-700 hover:to-blue-800 disabled:opacity-50"
+                className="rounded-xl bg-gradient-to-r from-[#dce9f8] to-[#c6dcf4] p-3 text-slate-800 transition hover:from-[#c6dcf4] hover:to-[#b4d0f0] disabled:opacity-50"
               >
                 <Send className="h-5 w-5" />
               </button>
