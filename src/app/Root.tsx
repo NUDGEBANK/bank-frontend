@@ -6,6 +6,7 @@ import ChatBot from "./components/ChatBot";
 export default function Root() {
   const location = useLocation();
   const isChatHistoryPage = location.pathname === "/help/chat-history";
+  const isAdminPage = location.pathname.startsWith("/admin/");
   const isHomePage = location.pathname === "/";
 
   return (
@@ -18,7 +19,7 @@ export default function Root() {
         <div>
           <Footer />
         </div>
-        {!isChatHistoryPage ? <ChatBot /> : null}
+        {!isChatHistoryPage && !isAdminPage ? <ChatBot /> : null}
       </div>
     </div>
   );
