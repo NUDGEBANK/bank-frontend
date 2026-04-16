@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { CreditCard, Receipt, Wallet } from "lucide-react";
+import { useNavigate } from "react-router";
 
 import { getJson } from "../../lib/api";
 
@@ -30,6 +31,8 @@ type CardHistoryTransaction = {
   transactionDatetime: string;
   menuName: string | null;
   quantity: number | null;
+  autoRepaymentApplied: boolean;
+  repaymentAmount: number | null;
 };
 
 type DepositAccountSummary = {
@@ -131,6 +134,8 @@ function toDepositHistoryTransaction(
     transactionDatetime: transaction.transactionDatetime,
     menuName: formatDepositTransactionLabel(transaction.transactionType),
     quantity: null,
+    autoRepaymentApplied: false,
+    repaymentAmount: null,
     sourceType: "DEPOSIT",
   };
 }
@@ -149,6 +154,7 @@ function maskCardNumber(cardNumber: string | null) {
 }
 
 export default function CardHistory() {
+  const navigate = useNavigate();
   const [accounts, setAccounts] = useState<CardHistoryAccount[]>([]);
   const [depositDetails, setDepositDetails] = useState<DepositAccountDetail[]>([]);
   const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
@@ -228,6 +234,17 @@ export default function CardHistory() {
         new Date(right.transactionDatetime).getTime() - new Date(left.transactionDatetime).getTime(),
     );
   }, [depositDetails, selectedAccount]);
+
+  const isAutoRepaymentTransaction = (transaction: HistoryTransaction) =>
+    transaction.sourceType === "CARD" && transaction.autoRepaymentApplied;
+
+  const handleTransactionClick = (transaction: HistoryTransaction) => {
+    if (!isAutoRepaymentTransaction(transaction)) {
+      return;
+    }
+
+    navigate(`/loan/management?repaymentTransactionId=${transaction.transactionId}`);
+  };
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 md:px-6">
@@ -335,7 +352,24 @@ export default function CardHistory() {
                   isLoanDisbursementTransaction(transaction)
                     ? "bg-emerald-50/50 hover:bg-emerald-50"
                     : "hover:bg-slate-50"
-                }`}
+                } ${isAutoRepaymentTransaction(transaction) ? "cursor-pointer" : ""}`}
+                onClick={
+                  isAutoRepaymentTransaction(transaction)
+                    ? () => handleTransactionClick(transaction)
+                    : undefined
+                }
+                onKeyDown={
+                  isAutoRepaymentTransaction(transaction)
+                    ? (event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          handleTransactionClick(transaction);
+                        }
+                      }
+                    : undefined
+                }
+                role={isAutoRepaymentTransaction(transaction) ? "button" : undefined}
+                tabIndex={isAutoRepaymentTransaction(transaction) ? 0 : undefined}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex min-w-0 items-start gap-4">
@@ -364,7 +398,7 @@ export default function CardHistory() {
                     </div>
                   </div>
 
-  <div className="shrink-0 text-right">
+                  <div className="shrink-0 text-right">
                     <p
                       className={`text-lg font-bold md:text-xl ${
                         transaction.sourceType === "CARD"
@@ -385,6 +419,11 @@ export default function CardHistory() {
                           : "-"}
                       {formatAmount(Math.abs(transaction.amount))}
                     </p>
+                    {isAutoRepaymentTransaction(transaction) && transaction.repaymentAmount !== null ? (
+                      <p className="mt-1 text-xs font-medium text-slate-500">
+                        -{formatAmount(Math.abs(transaction.repaymentAmount))} 자동상환
+                      </p>
+                    ) : null}
                   </div>
                 </div>
               </div>
