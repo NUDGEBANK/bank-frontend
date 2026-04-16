@@ -1,12 +1,6 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router";
-import {
-  Bot,
-  MessageSquarePlus,
-  Pencil,
-  Send,
-  Trash2,
-} from "lucide-react";
+import { Bot, MessageSquarePlus, Pencil, Send, Trash2 } from "lucide-react";
 
 import {
   deleteChatSession,
@@ -68,100 +62,59 @@ type DeleteDialogState = {
 const UI_TEXT = {
   eyebrow: "NUDGEBOT",
   title: "상담 기록",
-  subtitle: "이전 상담을 이어서 확인하고, 새 질문을 바로 이어갈 수 있습니다.",
-  newChat: "새 대화",
+  subtitle: "이전 상담을 확인하고 이어서 질문할 수 있어요.",
+  newChat: "새 상담 시작",
   emptyList: "아직 저장된 상담이 없습니다.",
-  loadingList: "대화 목록을 불러오는 중입니다.",
-  loadingDetail: "대화를 불러오는 중입니다.",
+  loadingList: "상담 목록을 불러오는 중입니다.",
+  loadingDetail: "상담 내용을 불러오는 중입니다.",
   emptyThreadTitle: "새 상담을 시작해보세요",
-  emptyThreadBody:
-    "왼쪽 기록을 열거나 아래 입력창에서 바로 질문을 보내면 새 세션이 생성됩니다.",
-  inputPlaceholder: "대출, 신용점수, 상품 추천 등 궁금한 점을 입력하세요",
+  emptyThreadBody: "아래 입력창에 질문을 보내면 새 세션이 만들어집니다.",
+  inputPlaceholder: "궁금한 금융 정보를 입력해보세요.",
   unauthorized: "로그인 후 채팅 기록을 확인할 수 있습니다.",
   listError: "채팅 목록을 불러오지 못했습니다.",
-  detailError: "선택한 대화를 불러오지 못했습니다.",
-  streamingError: "답변을 생성하지 못했습니다. 잠시 후 다시 시도해주세요.",
+  detailError: "선택한 상담을 불러오지 못했습니다.",
+  streamingError: "응답을 생성하지 못했습니다. 잠시 후 다시 시도해주세요.",
 } as const;
 
-function buildQuickReplies(botText: string): ChatAction[] {
+function buildFallbackQuickReplies(botText: string): ChatAction[] {
   const text = botText.toLowerCase();
 
-  if (
-    text.includes("받을 수 있는 대출") ||
-    text.includes("추천") ||
-    text.includes("상품")
-  ) {
+  if (text.includes("대출")) {
     return [
+      { type: "navigate", label: "대출 상품 보기", href: "/loan/products" },
+      { type: "navigate", label: "신청 안내 보기", href: "/loan/apply-guide" },
       {
         type: "ask",
-        label: "상품 설명 보기",
-        value: "이 상품 설명 자세히 보여줘",
-      },
-      { type: "ask", label: "가능 여부 조회", value: "이 상품이 나한테 맞아?" },
-      {
-        type: "ask",
-        label: "신청 안내 보기",
-        value: "신청하려면 뭐가 필요해?",
+        label: "가능 여부 다시 묻기",
+        value: "내가 받을 수 있는 대출이 뭐야?",
       },
     ];
   }
 
-  if (text.includes("금리") || text.includes("기간") || text.includes("상환")) {
+  if (text.includes("카드") || text.includes("소비")) {
     return [
-      { type: "ask", label: "가능 여부 조회", value: "이 상품이 나한테 맞아?" },
-      { type: "ask", label: "심사 기준 보기", value: "심사 기준이 뭐야?" },
+      { type: "navigate", label: "똑개 카드 보기", href: "/card/ddokgae" },
       {
-        type: "ask",
-        label: "신청 안내 보기",
-        value: "신청하려면 뭐가 필요해?",
+        type: "navigate",
+        label: "소비 분석 보기",
+        href: "/card/spending-analysis",
       },
-    ];
-  }
-
-  if (text.includes("가능") || text.includes("대상") || text.includes("조건")) {
-    return [
-      { type: "ask", label: "내 한도 보기", value: "내 한도는 어느 정도야?" },
-      { type: "ask", label: "심사 기준 보기", value: "심사 기준이 뭐야?" },
-      { type: "ask", label: "신청 안내 보기", value: "신청은 어디서 해?" },
-    ];
-  }
-
-  if (
-    text.includes("서류") ||
-    text.includes("신청") ||
-    text.includes("어디서")
-  ) {
-    return [
-      {
-        type: "ask",
-        label: "필요 서류 다시 보기",
-        value: "신청하려면 뭐가 필요해?",
-      },
-      { type: "ask", label: "심사 기준 보기", value: "심사 기준이 뭐야?" },
-      { type: "navigate", label: "신청 페이지 이동", href: "/loan/apply" },
+      { type: "ask", label: "혜택 알려줘", value: "똑개 카드 혜택 알려줘" },
     ];
   }
 
   return [
-    {
-      type: "ask",
-      label: "대출 상품 보기",
-      value: "내가 받을 수 있는 대출 뭐 있어?",
-    },
-    { type: "ask", label: "가능 여부 조회", value: "이 상품이 나한테 맞아?" },
-    { type: "ask", label: "신청 안내 보기", value: "신청하려면 뭐가 필요해?" },
+    { type: "navigate", label: "대출 상품 보기", href: "/loan/products" },
+    { type: "navigate", label: "상담 기록 보기", href: "/help/chat-history" },
+    { type: "ask", label: "다시 질문하기", value: "추천 상품 알려줘" },
   ];
 }
 
 function formatRelativeLabel(value: string | null) {
-  if (!value) {
-    return "";
-  }
+  if (!value) return "";
 
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
+  if (Number.isNaN(date.getTime())) return "";
 
   return new Intl.DateTimeFormat("ko-KR", {
     month: "short",
@@ -171,24 +124,30 @@ function formatRelativeLabel(value: string | null) {
   }).format(date);
 }
 
-// 챗봇 API에서 받아온 메시지 데이터를 화면에 표시할 메시지 형태로 변환하는 함수
-function mapMessages(messages: ChatMessageItem[]): ViewMessage[] {
+function mapMessages(
+  messages: ChatMessageItem[],
+  liveQuickReplies: Record<string, ChatAction[]>,
+): ViewMessage[] {
   return messages.map((message) => {
     const sender = message.sender_type === "USER" ? "user" : "bot";
     const text = message.message_content;
+    const id = String(message.message_id);
 
     return {
-      id: String(message.message_id),
+      id,
       sender,
       text,
       createdAt: message.created_at,
-      quickReplies: sender === "bot" ? buildQuickReplies(text) : undefined,
+      quickReplies:
+        sender === "bot"
+          ? (liveQuickReplies[id] ?? buildFallbackQuickReplies(text))
+          : undefined,
     };
   });
 }
 
 export default function ChatHistory() {
-  const navigate = useNavigate(); // 챗봇 버튼에서 페이지 이동을 위해 추가
+  const navigate = useNavigate();
 
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -215,13 +174,20 @@ export default function ChatHistory() {
     open: false,
     session: null,
   });
+  const [liveQuickReplies, setLiveQuickReplies] = useState<
+    Record<string, ChatAction[]>
+  >({});
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
 
   const visibleMessages = useMemo(
-    () => (activeSession ? mapMessages(activeSession.messages) : []),
-    [activeSession],
+    () =>
+      activeSession
+        ? mapMessages(activeSession.messages, liveQuickReplies)
+        : [],
+    [activeSession, liveQuickReplies],
   );
 
   useEffect(() => {
@@ -240,9 +206,7 @@ export default function ChatHistory() {
   }, []);
 
   useEffect(() => {
-    if (composer.isStreaming) {
-      return;
-    }
+    if (composer.isStreaming) return;
 
     const frameId = window.requestAnimationFrame(() => {
       inputRef.current?.focus();
@@ -252,9 +216,7 @@ export default function ChatHistory() {
   }, [composer.isStreaming, activeSessionId]);
 
   useEffect(() => {
-    if (!renameDialog.open) {
-      return;
-    }
+    if (!renameDialog.open) return;
 
     const frameId = window.requestAnimationFrame(() => {
       renameInputRef.current?.focus();
@@ -355,12 +317,12 @@ export default function ChatHistory() {
 
   async function submitMessage(rawMessage: string) {
     const trimmed = rawMessage.trim();
-    if (!trimmed || composer.isStreaming) {
-      return;
-    }
+    if (!trimmed || composer.isStreaming) return;
 
     const draftSessionId = activeSessionId;
     const draftTitle = activeSession?.title ?? trimmed;
+    const userMessageId = Date.now();
+    const botMessageId = String(userMessageId + 1);
 
     setComposer({ value: "", isStreaming: true });
     setDetailError("");
@@ -373,13 +335,13 @@ export default function ChatHistory() {
       messages: [
         ...(current?.messages ?? []),
         {
-          message_id: Date.now(),
+          message_id: userMessageId,
           sender_type: "USER",
           message_content: trimmed,
           created_at: new Date().toISOString(),
         },
         {
-          message_id: Date.now() + 1,
+          message_id: Number(botMessageId),
           sender_type: "BOT",
           message_content: "",
           created_at: new Date().toISOString(),
@@ -388,17 +350,20 @@ export default function ChatHistory() {
     }));
 
     try {
-      const nextSessionId = await sendMessage(
+      const collectedChunks: string[] = [];
+
+      const result = await sendMessage(
         "web-user",
         trimmed,
         (chunk) => {
+          collectedChunks.push(chunk);
+
           setActiveSession((current) => {
-            if (!current) {
-              return current;
-            }
+            if (!current) return current;
 
             const messages = [...current.messages];
             const lastMessage = messages[messages.length - 1];
+
             if (lastMessage && lastMessage.sender_type === "BOT") {
               messages[messages.length - 1] = {
                 ...lastMessage,
@@ -412,7 +377,15 @@ export default function ChatHistory() {
         draftSessionId ?? undefined,
       );
 
-      await refreshSessions(nextSessionId ?? draftSessionId ?? null);
+      setLiveQuickReplies((current) => ({
+        ...current,
+        [botMessageId]:
+          result.quickReplies.length > 0
+            ? result.quickReplies
+            : buildFallbackQuickReplies(collectedChunks.join(" ").trim()),
+      }));
+
+      await refreshSessions(result.sessionId ?? draftSessionId ?? null);
     } catch (error) {
       console.error(error);
       setDetailError(UI_TEXT.streamingError);
@@ -427,7 +400,6 @@ export default function ChatHistory() {
   }
 
   const handleQuickReplyClick = async (reply: ChatAction) => {
-    // 재질문 또는 이동
     if (reply.type === "navigate") {
       navigate(reply.href);
       return;
@@ -435,14 +407,6 @@ export default function ChatHistory() {
 
     await submitMessage(reply.value);
   };
-
-  function openRenameDialog(session: ChatSessionSummary) {
-    setRenameDialog({
-      open: true,
-      session,
-      value: session.title,
-    });
-  }
 
   function closeRenameDialog() {
     setRenameDialog({
@@ -454,9 +418,7 @@ export default function ChatHistory() {
 
   async function handleRenameSession() {
     const session = renameDialog.session;
-    if (!session) {
-      return;
-    }
+    if (!session) return;
 
     const trimmedTitle = renameDialog.value.trim();
     if (!trimmedTitle || trimmedTitle === session.title) {
@@ -495,25 +457,9 @@ export default function ChatHistory() {
     }
   }
 
-  function openDeleteDialog(session: ChatSessionSummary) {
-    setDeleteDialog({
-      open: true,
-      session,
-    });
-  }
-
-  function closeDeleteDialog() {
-    setDeleteDialog({
-      open: false,
-      session: null,
-    });
-  }
-
   async function handleDeleteSession() {
     const session = deleteDialog.session;
-    if (!session) {
-      return;
-    }
+    if (!session) return;
 
     setPendingActionSessionId(session.session_id);
     setListError("");
@@ -535,7 +481,10 @@ export default function ChatHistory() {
         }
       }
 
-      closeDeleteDialog();
+      setDeleteDialog({
+        open: false,
+        session: null,
+      });
     } catch (error) {
       console.error(error);
       setListError("채팅을 삭제하지 못했습니다.");
@@ -559,7 +508,9 @@ export default function ChatHistory() {
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#7f9bb8]">
                   {UI_TEXT.eyebrow}
                 </p>
-                <h1 className="mt-1 text-xl font-semibold text-slate-900">{UI_TEXT.title}</h1>
+                <h1 className="mt-1 text-xl font-semibold text-slate-900">
+                  {UI_TEXT.title}
+                </h1>
               </div>
             </div>
             <p className="mt-4 text-sm leading-6 text-slate-600">
@@ -622,12 +573,15 @@ export default function ChatHistory() {
                         <div className="flex items-center gap-1">
                           <button
                             type="button"
-                            aria-label="이름 변경"
                             disabled={
                               pendingActionSessionId === session.session_id
                             }
                             onClick={() => {
-                              openRenameDialog(session);
+                              setRenameDialog({
+                                open: true,
+                                session,
+                                value: session.title,
+                              });
                             }}
                             className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-[#2a4b78] disabled:opacity-40"
                           >
@@ -635,12 +589,14 @@ export default function ChatHistory() {
                           </button>
                           <button
                             type="button"
-                            aria-label="삭제"
                             disabled={
                               pendingActionSessionId === session.session_id
                             }
                             onClick={() => {
-                              openDeleteDialog(session);
+                              setDeleteDialog({
+                                open: true,
+                                session,
+                              });
                             }}
                             className="rounded-lg p-1.5 text-slate-400 transition hover:bg-rose-50 hover:text-rose-500 disabled:opacity-40"
                           >
@@ -658,13 +614,9 @@ export default function ChatHistory() {
 
         <section className="flex min-h-[70vh] flex-1 flex-col overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 bg-white px-6 py-5 md:px-8">
-            <div className="flex items-center gap-4">
-              <div>
-                <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-                  {currentTitle}
-                </h2>
-              </div>
-            </div>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+              {currentTitle}
+            </h2>
           </div>
 
           <div className="flex-1 overflow-y-auto bg-[#fafcff] px-4 py-6 md:px-8">
@@ -712,15 +664,13 @@ export default function ChatHistory() {
                         <MessageMarkdown
                           content={message.text}
                           invert={message.sender === "user"}
-                          className={
-                            message.sender === "user"
-                              ? "[&_a]:text-[#2a4b78] [&_a]:decoration-[#2a4b78]/40 [&_blockquote]:border-[#bfd3eb] [&_blockquote]:text-[#36506f] [&_code]:bg-white/80 [&_code]:text-[#1f3654]"
-                              : "[&_a]:text-[#2a4b78] [&_a]:decoration-[#2a4b78]/40 [&_blockquote]:border-slate-200 [&_blockquote]:text-slate-600 [&_code]:bg-slate-100 [&_code]:text-slate-800"
-                          }
                         />
                       ) : composer.isStreaming && message.sender === "bot" ? (
-                        <p className="text-sm leading-7 text-slate-600">답변을 작성하는 중입니다...</p>
+                        <p className="text-sm leading-7 text-slate-600">
+                          응답 작성 중입니다...
+                        </p>
                       ) : null}
+
                       {message.createdAt ? (
                         <p
                           className={`mt-2 text-[11px] ${
@@ -786,7 +736,7 @@ export default function ChatHistory() {
                 rows={1}
                 disabled={composer.isStreaming}
                 placeholder={UI_TEXT.inputPlaceholder}
-                className="max-h-40 min-h-[48px] flex-1 resize-none rounded-[18px] border border-transparent bg-transparent px-5 py-3 text-sm leading-6 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-transparent focus:ring-0 disabled:cursor-not-allowed disabled:bg-slate-100"
+                className="max-h-40 min-h-[48px] flex-1 resize-none rounded-[18px] border border-transparent bg-transparent px-5 py-3 text-sm leading-6 text-slate-900 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100"
               />
               <button
                 type="submit"
@@ -814,7 +764,7 @@ export default function ChatHistory() {
               채팅 이름 변경
             </DialogTitle>
             <DialogDescription className="text-sm leading-6 text-slate-500">
-              이 대화를 구분하기 쉬운 이름으로 바꿔보세요.
+              구분하기 쉬운 이름으로 바꿔보세요.
             </DialogDescription>
           </DialogHeader>
 
@@ -836,17 +786,12 @@ export default function ChatHistory() {
                 }
               }}
               placeholder="채팅 이름을 입력하세요"
-              className="h-12 rounded-2xl border-slate-200 bg-white px-4 text-sm text-slate-900 focus-visible:border-[#bfd3eb] focus-visible:ring-[#e8f1fb]"
+              className="h-12 rounded-2xl border-slate-200 bg-white px-4 text-sm text-slate-900"
             />
           </div>
 
           <DialogFooter className="border-t border-slate-100 px-6 py-4 sm:justify-between">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={closeRenameDialog}
-              className="rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50"
-            >
+            <Button type="button" variant="outline" onClick={closeRenameDialog}>
               취소
             </Button>
             <Button
@@ -857,7 +802,7 @@ export default function ChatHistory() {
                 !renameDialog.value.trim() ||
                 pendingActionSessionId === renameDialog.session.session_id
               }
-              className="rounded-xl bg-[#dce9f8] text-[#2a4b78] hover:bg-[#cddff4]"
+              className="bg-[#dce9f8] text-[#2a4b78] hover:bg-[#cddff4]"
             >
               저장
             </Button>
@@ -869,7 +814,7 @@ export default function ChatHistory() {
         open={deleteDialog.open}
         onOpenChange={(open) => {
           if (!open) {
-            closeDeleteDialog();
+            setDeleteDialog({ open: false, session: null });
           }
         }}
       >
@@ -880,20 +825,16 @@ export default function ChatHistory() {
             </AlertDialogTitle>
             <AlertDialogDescription className="text-sm leading-6 text-slate-500">
               {deleteDialog.session
-                ? `"${deleteDialog.session.title}" 대화를 삭제할까요?`
-                : "이 대화를 삭제할까요?"}
+                ? `"${deleteDialog.session.title}" 상담을 삭제할까요?`
+                : "이 상담을 삭제할까요?"}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           <AlertDialogFooter className="border-t border-slate-100 px-6 py-4 sm:justify-between">
-            <AlertDialogCancel
-              className="rounded-xl border-slate-200 text-slate-600 hover:bg-slate-50"
-            >
-              취소
-            </AlertDialogCancel>
+            <AlertDialogCancel>취소</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => void handleDeleteSession()}
-              className="rounded-xl bg-rose-500 text-white hover:bg-rose-600"
+              className="bg-rose-500 text-white hover:bg-rose-600"
             >
               삭제
             </AlertDialogAction>
