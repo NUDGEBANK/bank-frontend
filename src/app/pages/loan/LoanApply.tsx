@@ -16,7 +16,7 @@ type LoanApplyConfig = {
 };
 
 const amountRanges: Record<string, { min: number; max: number }> = {
-  "consumption-loan": { min: 500000, max: 3000000 },
+  "consumption-loan": { min: 500000, max: 10000000 },
   "youth-loan": { min: 500000, max: 5000000 },
   "situate-loan": { min: 300000, max: 2000000 },
 };
@@ -63,12 +63,12 @@ const productConfigs: Record<string, LoanApplyConfig> = {
   "consumption-loan": {
     name: "소비분석 대출",
     subtitle: "소비 흐름을 기준으로 자금 운용 부담을 조절할 수 있는 상품입니다.",
-    limit: "최대 300만원",
+    limit: "최대 1,000만원",
     period: "6개월 ~ 18개월",
     rate: "연 4.2% ~ 8.9%",
     defaultAmount: "2000000",
     defaultPurpose: "생활비 및 소비 관리",
-    amountRange: { min: 500000, max: 3000000 },
+    amountRange: { min: 500000, max: 10000000 },
     termOptions: ["6개월", "12개월", "18개월"],
   },
   "youth-loan": {

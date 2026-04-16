@@ -544,7 +544,7 @@ export default function MyPage() {
                     <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 px-5 py-4">
                       <p className="text-sm text-slate-500">현재 금리</p>
                       <p className="mt-2 text-lg font-semibold text-slate-900">
-                        {loanSummary ? `연 ${(loanSummary.interestRate ?? 0).toFixed(1)}%` : "대출 정보 없음"}
+                        {loanSummary ? `연 ${(loanSummary.interestRate ?? 0).toFixed(2)}%` : "대출 정보 없음"}
                       </p>
                     </div>
                   </div>
@@ -575,7 +575,7 @@ export default function MyPage() {
                       <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
                         <p className="text-sm text-slate-500">기준 금리</p>
                         <p className="mt-2 text-lg font-semibold text-slate-900">
-                          연 {(loanSummary.baseInterestRate ?? 0).toFixed(1)}%
+                          연 {(loanSummary.baseInterestRate ?? 0).toFixed(2)}%
                         </p>
                       </div>
                       <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 px-5 py-4">
@@ -587,7 +587,7 @@ export default function MyPage() {
                       <div className="rounded-2xl border border-amber-100 bg-amber-50/70 px-5 py-4">
                         <p className="text-sm text-slate-500">최저 금리</p>
                         <p className="mt-2 text-lg font-semibold text-slate-900">
-                          연 {(loanSummary.minimumInterestRate ?? 0).toFixed(1)}%
+                          연 {(loanSummary.minimumInterestRate ?? 0).toFixed(2)}%
                         </p>
                       </div>
                     </div>

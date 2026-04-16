@@ -1,6 +1,6 @@
 export default function Footer() {
   return (
-    <footer className="bg-gray-900/90 backdrop-blur-md border-t border-white/10 mt-auto">
+    <footer className="bg-gray-900/90 backdrop-blur-md border-t border-white/10">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-6">
           <div>
@@ -28,7 +28,7 @@ export default function Footer() {
           </div>
           <div>
             <h4 className="font-semibold mb-3 text-white">정보</h4>
-            <p className="text-sm text-blue-200">대표이사: 홍길동</p>
+            <p className="text-sm text-blue-200">대표이사: 넛지</p>
             <p className="text-sm text-blue-200">
               사업자등록번호: 123-45-67890
             </p>

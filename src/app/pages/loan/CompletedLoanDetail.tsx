@@ -203,7 +203,7 @@ export default function CompletedLoanDetail() {
                     <div className="grid gap-4 sm:grid-cols-3">
                       <div className="rounded-2xl border border-white/20 bg-white/10 px-4 py-4 backdrop-blur-sm">
                         <p className="text-xs uppercase tracking-[0.18em] text-slate-100">최종 금리</p>
-                        <p className="mt-2 text-2xl font-bold">연 {summary.interestRate.toFixed(1)}%</p>
+                        <p className="mt-2 text-2xl font-bold">연 {summary.interestRate.toFixed(2)}%</p>
                       </div>
                       <div className="rounded-2xl border border-white/20 bg-white/10 px-4 py-4 backdrop-blur-sm">
                         <p className="text-xs uppercase tracking-[0.18em] text-slate-100">총 원금</p>
@@ -241,7 +241,7 @@ export default function CompletedLoanDetail() {
                   <div className="rounded-3xl border border-slate-200 bg-slate-50 px-5 py-5">
                     <p className="text-sm text-slate-500">금리</p>
                     <p className="mt-3 text-2xl font-bold text-slate-900">
-                      연 {summary.interestRate.toFixed(1)}%
+                      연 {summary.interestRate.toFixed(2)}%
                     </p>
                   </div>
                 </section>
@@ -307,7 +307,7 @@ export default function CompletedLoanDetail() {
                             <div>
                               <p className="text-slate-500">적용 금리</p>
                               <p className="mt-1 font-semibold text-slate-900">
-                                연 {repayment.repaymentRate.toFixed(1)}%
+                                연 {repayment.repaymentRate.toFixed(2)}%
                               </p>
                             </div>
                             <div>

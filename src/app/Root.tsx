@@ -7,6 +7,7 @@ export default function Root() {
   const location = useLocation();
   const isChatHistoryPage = location.pathname === "/help/chat-history";
   const isAdminPage = location.pathname.startsWith("/admin/ragdocs");
+  const isHomePage = location.pathname === "/";
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -17,6 +18,14 @@ export default function Root() {
         </main>
         {isAdminPage ? null : <Footer />}
         {!isChatHistoryPage && !isAdminPage ? <ChatBot /> : null}
+        <Header />
+        <main className={isHomePage ? "flex flex-col" : "flex-1 flex flex-col"}>
+          <Outlet />
+        </main>
+        <div>
+          <Footer />
+        </div>
+        {!isChatHistoryPage ? <ChatBot /> : null}
       </div>
     </div>
   );
