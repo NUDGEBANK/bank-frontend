@@ -4,6 +4,32 @@ import { CalendarDays, Lock, Phone, User } from "lucide-react";
 
 import { postJson } from "../lib/api";
 
+function getKoreaToday() {
+  const now = new Date();
+  const koreaTime = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Seoul" }));
+  const year = koreaTime.getFullYear();
+  const month = String(koreaTime.getMonth() + 1).padStart(2, "0");
+  const day = String(koreaTime.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+const today = getKoreaToday();
+
+function formatPhoneNumber(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+
+  if (digits.length <= 3) {
+    return digits;
+  }
+  if (digits.length === 10) {
+    return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+  }
+  if (digits.length <= 10) {
+    return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  }
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+}
+
 export default function Signup() {
   const [name, setName] = useState("");
   const [userId, setUserId] = useState("");
@@ -19,8 +45,20 @@ export default function Signup() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    const normalizedPhoneNumber = phoneNumber.replace(/\D/g, "");
+
     if (password !== confirmPassword) {
       setError("비밀번호가 일치하지 않습니다.");
+      return;
+    }
+
+    if (normalizedPhoneNumber.length < 10 || normalizedPhoneNumber.length > 11) {
+      setError("연락처는 10~11자리로 입력해주세요.");
+      return;
+    }
+
+    if (birth && birth > today) {
+      setError("생년월일은 오늘 이후로 선택할 수 없습니다.");
       return;
     }
 
@@ -34,7 +72,7 @@ export default function Signup() {
         password,
         birth: birth || null,
         gender,
-        phoneNumber,
+        phoneNumber: normalizedPhoneNumber,
       });
       window.dispatchEvent(new Event("auth-change"));
       navigate("/");
@@ -56,7 +94,7 @@ export default function Signup() {
           <div className="mb-8 text-center">
             <h1 className="text-3xl font-bold tracking-tight text-slate-900">회원가입</h1>
             <p className="mt-2 text-sm text-slate-500">
-              기본 정보를 입력하고 똑개뱅크를 시작해보세요.
+              기본 정보를 입력하고 NUDGEBANK를 시작해보세요.
             </p>
           </div>
 
@@ -153,8 +191,11 @@ export default function Signup() {
                   <input
                     className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-slate-900 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
                     id="phoneNumber"
-                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    inputMode="numeric"
+                    maxLength={13}
+                    onChange={(e) => setPhoneNumber(formatPhoneNumber(e.target.value))}
                     placeholder="연락처를 입력하세요"
+                    pattern="[0-9]{2,3}-[0-9]{3,4}-[0-9]{4}"
                     required
                     type="tel"
                     value={phoneNumber}
@@ -171,6 +212,7 @@ export default function Signup() {
                   <input
                     className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-slate-900 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
                     id="birth"
+                    max={today}
                     onChange={(e) => setBirth(e.target.value)}
                     required
                     type="date"
@@ -212,7 +254,7 @@ export default function Signup() {
             </div>
 
             <button
-              className="w-full rounded-2xl bg-[#2a4b78] py-3 text-sm font-semibold text-white transition hover:bg-[#223f64] disabled:cursor-not-allowed disabled:bg-slate-400"
+              className="w-full rounded-2xl bg-slate-900 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
               disabled={isSubmitting}
               type="submit"
             >
