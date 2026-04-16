@@ -443,12 +443,12 @@ export default function NudgeCard() {
                                     이어진다는 점입니다.
                                 </p>
                                 <p>
-                                    <span className="font-semibold text-slate-800">1차 결제 (물건 구매):</span>{" "}
-                                    일반 카드와 동일하게 상점에서 물건 값을 결제합니다.
+                                    <span className="font-semibold text-slate-800">1차 결제 (상품 구매):</span>{" "}
+                                    가상 결제 프로세스에서 카테고리별 상품을 결제합니다.
                                 </p>
                                 <p>
                                     <span className="font-semibold text-slate-800">2차 결제 (원금 상환):</span>{" "}
-                                    설정된 자동 상환 비율에 따라 계좌에서 추가 금액이 빠져나가며 대출 원금을 갚게 됩니다.
+                                    설정된 자동 상환 비율에 따라 계좌에서 추가 금액이 빠져나가며 대출 원금+이자를 갚게 됩니다.
                                 </p>
                                 <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
                                     <p className="font-semibold text-slate-800">실제 예시 (상환 비율 5% 가정)</p>
