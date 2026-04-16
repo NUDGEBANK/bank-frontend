@@ -947,7 +947,7 @@ export default function MyLoanManagement() {
             <div className="rounded-3xl border border-slate-200 bg-slate-50 px-5 py-5">
               <p className="text-sm text-slate-500">금리</p>
               <p className="mt-3 text-2xl font-bold text-slate-900">
-                연 {(summary?.interestRate ?? 0).toFixed(1)}%
+                연 {(summary?.interestRate ?? 0).toFixed(2)}%
               </p>
             </div>
           </section>
