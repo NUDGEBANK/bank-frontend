@@ -61,7 +61,7 @@ type CardHistoryAccount = {
 
 const productConfigs: Record<string, LoanApplyConfig> = {
   "consumption-loan": {
-    name: "소비분석 대출",
+    name: "넛지 대출",
     subtitle: "소비 흐름을 기준으로 자금 운용 부담을 조절할 수 있는 상품입니다.",
     limit: "최대 1,000만원",
     period: "6개월 ~ 18개월",
@@ -359,7 +359,7 @@ export default function LoanApply() {
               <li>· 자기계발 대출은 신청 후 내 대출 관리에서 OCR 인증을 진행합니다.</li>
             )}
             {productId === "consumption-loan" && (
-              <li>· 소비분석 대출은 신청 후 바로 심사 상태를 조회할 수 있습니다.</li>
+              <li>· 넛지 대출은 신청 후 바로 심사 상태를 조회할 수 있습니다.</li>
             )}
             <li>· 대출 가능 여부는 내부 신용점수를 기준으로 판단됩니다.</li>
             <li>· 신용점수가 500점 이상이면 신청 버튼이 활성화됩니다.</li>

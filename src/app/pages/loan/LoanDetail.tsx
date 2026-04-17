@@ -46,7 +46,7 @@ type DetailTab = "guide" | "rate" | "terms" | "caution";
 
 const loanDetails: Record<string, LoanDetailItem> = {
   "consumption-loan": {
-    name: "소비분석 대출",
+    name: "넛지 대출",
     description:
       "소비 흐름과 월별 지출 패턴을 기준으로 자금 운용 부담을 조절할 수 있도록 설계한 상품입니다.",
     badge: "분석 기반",
