@@ -22,6 +22,7 @@ type Message = {
   quickReplies?: ChatAction[];
 };
 
+<<<<<<< HEAD
 function getInitialMessages(isAuthenticated: boolean): Message[] {
   if (!isAuthenticated) {
     return [
@@ -97,6 +98,8 @@ function getSessionSortTime(session: ChatSessionSummary): number {
   return Number.isNaN(time) ? 0 : time;
 }
 
+=======
+>>>>>>> 5109a0418d53cd0b6b7a056de030265052affca9
 export default function ChatBot() {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading } = useAuthStatus();
@@ -106,9 +109,26 @@ export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+<<<<<<< HEAD
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
+=======
+  const [sessionId, setSessionId] = useState<string | null>(() =>
+    sessionStorage.getItem(CHAT_SESSION_ID_STORAGE_KEY),
+  );
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const saved = sessionStorage.getItem(CHAT_HISTORY_STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+
+    return [
+      {
+        text: "안녕하세요.\nNUDGEBANK 금융 상담 AI입니다.\n무엇을 도와드릴까요?",
+        sender: "bot",
+      },
+    ];
+  });
+>>>>>>> 5109a0418d53cd0b6b7a056de030265052affca9
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -291,9 +311,8 @@ export default function ChatBot() {
     startTypingEffect();
 
     try {
-      const collectedChunks: string[] = [];
-
       const result = await sendMessage(
+<<<<<<< HEAD
           "web-user",
           trimmed,
           (chunk) => {
@@ -301,32 +320,36 @@ export default function ChatBot() {
             bufferRef.current += chunk;
           },
           sessionId ?? undefined,
+=======
+        trimmed,
+        (chunk) => {
+          bufferRef.current += chunk;
+        },
+        sessionId ?? undefined,
+>>>>>>> 5109a0418d53cd0b6b7a056de030265052affca9
       );
 
       if (result.sessionId) {
         setSessionId(result.sessionId);
       }
 
+<<<<<<< HEAD
       const finalBotText = collectedChunks.join("").trim();
       attachQuickRepliesToLastBotMessage(
           result.quickReplies?.length
               ? result.quickReplies
               : buildFallbackQuickReplies(finalBotText),
       );
+=======
+      if (result.quickReplies && result.quickReplies.length > 0) {
+        attachQuickRepliesToLastBotMessage(result.quickReplies);
+      }
+>>>>>>> 5109a0418d53cd0b6b7a056de030265052affca9
 
       streamDoneRef.current = true;
     } catch (error) {
       console.error("챗봇 API 호출 실패:", error);
       bufferRef.current += "죄송합니다. 잠시 후 다시 시도해주세요.";
-      attachQuickRepliesToLastBotMessage([
-        { type: "ask", label: "다시 질문하기", value: trimmed },
-        { type: "navigate", label: "대출 상품 보기", href: "/loan/products" },
-        {
-          type: "navigate",
-          label: "상담 기록 보기",
-          href: "/help/chat-history",
-        },
-      ]);
       streamDoneRef.current = true;
     }
   };

@@ -377,7 +377,7 @@ export default function MyPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 md:px-6">
       <div className="overflow-hidden rounded-[32px] border border-slate-200/80 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
-        <div className="border-b border-slate-100 bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.14),_transparent_38%),linear-gradient(135deg,_#f8fbff_0%,_#ffffff_52%,_#f8fafc_100%)] px-6 py-6 md:px-8">
+        <div className="border-b border-slate-100 bg-slate-50/80 px-6 py-6 md:px-8">
           <div>
             <div>
               <h1 className="text-3xl font-bold tracking-tight text-slate-900">마이페이지</h1>
@@ -388,15 +388,15 @@ export default function MyPage() {
           </div>
 
           <div className="mt-6 grid gap-4 md:grid-cols-3">
-            <div className="rounded-3xl border border-sky-100 bg-[linear-gradient(135deg,_rgba(219,234,254,0.95)_0%,_rgba(239,246,255,0.98)_48%,_rgba(248,250,252,1)_100%)] px-5 py-5 text-slate-900 shadow-[0_20px_45px_rgba(148,163,184,0.18)]">
+            <div className="rounded-3xl border border-slate-200 bg-white px-5 py-5 text-slate-900 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
               <p className="text-sm text-slate-500">보유 계좌 · 카드</p>
               <p className="mt-3 text-3xl font-semibold">{accounts.length}개</p>
             </div>
-            <div className="rounded-3xl border border-blue-100 bg-blue-50/70 px-5 py-5">
+            <div className="rounded-3xl border border-slate-200 bg-white px-5 py-5 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
               <p className="text-sm text-slate-500">총 예금 잔액</p>
               <p className="mt-3 text-3xl font-semibold text-slate-900">{formatAmount(totalBalance)}</p>
             </div>
-            <div className="rounded-3xl border border-emerald-100 bg-emerald-50/70 px-5 py-5">
+            <div className="rounded-3xl border border-slate-200 bg-white px-5 py-5 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
               <p className="text-sm text-slate-500">보유 예적금</p>
               <p className="mt-3 text-3xl font-semibold text-slate-900">{activeDepositAccounts.length}개</p>
               <p className="mt-2 text-sm text-slate-500">{formatAmount(totalDepositBalance)}</p>
@@ -413,7 +413,8 @@ export default function MyPage() {
             <p className="text-sm font-medium text-rose-600">{errorMessage}</p>
             <Link
               to="/login"
-              className="mt-4 inline-flex rounded-xl bg-[#6d8ca6] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#5c7c97]"
+              className="mt-4 inline-flex rounded-xl bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+              style={{ color: "#ffffff" }}
             >
               로그인하러 가기
             </Link>
@@ -504,11 +505,12 @@ export default function MyPage() {
                             key={application.loanApplicationId}
                             type="button"
                             onClick={() => setSelectedProductKey(application.productKey)}
-                            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                            className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
                               isSelected
-                                ? "bg-sky-600 text-white shadow-sm"
-                                : "border border-slate-200 bg-white text-slate-600 hover:border-sky-200 hover:text-sky-700"
+                                ? "border-slate-900 bg-slate-900"
+                                : "border-slate-200 bg-white text-slate-700 hover:border-slate-500 hover:text-slate-900"
                             }`}
+                            style={isSelected ? { color: "#ffffff" } : undefined}
                           >
                             {application.productName}
                           </button>
@@ -530,18 +532,18 @@ export default function MyPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="mt-4 grid gap-4 md:grid-cols-3">
+                  <div className="hidden mt-4 grid gap-4 md:grid-cols-1">
                     <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
                       <p className="text-sm text-slate-500">상환 방식</p>
                       <p className="mt-2 text-lg font-semibold text-slate-900">{repaymentMethodLabel}</p>
                     </div>
-                    <div className="rounded-2xl border border-sky-100 bg-sky-50/70 px-5 py-4">
+                    <div className="hidden rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
                       <p className="text-sm text-slate-500">상환 가상계좌</p>
                       <p className="mt-2 text-lg font-semibold text-slate-900">
                         {loanSummary?.repaymentAccountNumber ?? "발급 예정"}
                       </p>
                     </div>
-                    <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 px-5 py-4">
+                    <div className="hidden rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
                       <p className="text-sm text-slate-500">현재 금리</p>
                       <p className="mt-2 text-lg font-semibold text-slate-900">
                         {loanSummary ? `연 ${(loanSummary.interestRate ?? 0).toFixed(2)}%` : "대출 정보 없음"}
@@ -578,13 +580,13 @@ export default function MyPage() {
                           연 {(loanSummary.baseInterestRate ?? 0).toFixed(2)}%
                         </p>
                       </div>
-                      <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 px-5 py-4">
+                      <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
                         <p className="text-sm text-slate-500">누적 우대금리</p>
                         <p className="mt-2 text-lg font-semibold text-slate-900">
                           -{(loanSummary.preferentialRateDiscount ?? 0).toFixed(1)}%p
                         </p>
                       </div>
-                      <div className="rounded-2xl border border-amber-100 bg-amber-50/70 px-5 py-4">
+                      <div className="rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
                         <p className="text-sm text-slate-500">최저 금리</p>
                         <p className="mt-2 text-lg font-semibold text-slate-900">
                           연 {(loanSummary.minimumInterestRate ?? 0).toFixed(2)}%
@@ -609,7 +611,7 @@ export default function MyPage() {
                     </div>
                   )}
                   {selectedLoanApplication?.productKey === "youth-loan" && (
-                    <div className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50/70 px-5 py-4">
+                    <div className="hidden mt-4 rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
                       <p className="text-sm text-slate-500">자기계발 우대금리</p>
                       <p className="mt-2 text-sm font-semibold text-slate-900">
                         자격증 OCR 인증이 완료되면 현재 금리에 우대금리가 반영됩니다.
@@ -617,13 +619,18 @@ export default function MyPage() {
                     </div>
                   )}
                   {activeLoanApplications.length > 0 && (
-                    <div className="mt-4 rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
+                    <div className="hidden mt-4 rounded-2xl border border-slate-100 bg-slate-50/80 px-5 py-4">
                       <p className="text-sm text-slate-500">신청 상품</p>
-                      <div className="mt-3 flex flex-wrap gap-2">
+                      <div className="mt-3 flex flex-wrap gap-3">
                         {activeLoanApplications.map((application) => (
                           <span
                             key={application.loanApplicationId}
-                            className="rounded-full border border-sky-100 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700"
+                            className="inline-flex items-center justify-center rounded-full border px-5 py-3 text-sm font-semibold"
+                            style={{
+                              backgroundColor: "#000000",
+                              borderColor: "#000000",
+                              color: "#ffffff",
+                            }}
                           >
                             {application.productName}
                           </span>
@@ -674,7 +681,7 @@ export default function MyPage() {
                             >
                               <div className="flex items-start justify-between gap-4">
                                 <div className="flex items-start gap-3">
-                                  <div className="rounded-2xl bg-white p-3 text-sky-700 shadow-sm">
+                                  <div className="rounded-2xl bg-white p-3 text-slate-700 shadow-sm">
                                     <Icon className="h-5 w-5" />
                                   </div>
                                   <div>
@@ -727,7 +734,8 @@ export default function MyPage() {
                       <p className="text-sm text-slate-500">현재 가입한 예적금이 없습니다.</p>
                       <Link
                         to="/deposit/products"
-                        className="mt-4 inline-flex rounded-xl bg-[#6d8ca6] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#5c7c97]"
+                        className="mt-4 inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold leading-none [color:#ffffff] [background-color:#020617]"
+                        style={{ color: "#ffffff", backgroundColor: "#020617", textDecoration: "none" }}
                       >
                         예적금 상품 보러 가기
                       </Link>
@@ -750,7 +758,7 @@ export default function MyPage() {
               </button>
 
               {isBankingOpen && (
-                <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+                <div className="mt-6 grid gap-5 lg:grid-cols-2">
                   <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
                     <div className="mb-6">
                       <h3 className="text-2xl font-bold text-slate-900">계좌</h3>
@@ -789,7 +797,8 @@ export default function MyPage() {
                         <p className="text-sm text-slate-500">현재 보유한 계좌가 없습니다.</p>
                         <Link
                           to="/account/nudgecard"
-                          className="mt-4 inline-flex rounded-xl bg-[#6d8ca6] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#5c7c97]"
+className="mt-4 inline-flex rounded-xl bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+                          style={{ color: "#ffffff" }}
                         >
                           계좌 개설하러 가기
                         </Link>
@@ -848,7 +857,8 @@ export default function MyPage() {
                                 type="button"
                                 onClick={handleConfirmReveal}
                                 disabled={isVerifyingPassword}
-                                className="rounded-xl bg-[#6d8ca6] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#5c7c97] disabled:cursor-not-allowed disabled:opacity-60"
+className="rounded-xl bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
+                                style={isVerifyingPassword ? undefined : { color: "#ffffff" }}
                               >
                                 {isVerifyingPassword ? "확인 중" : "확인"}
                               </button>
@@ -899,7 +909,8 @@ export default function MyPage() {
                         <p className="text-sm text-slate-500">현재 발급된 카드가 없습니다.</p>
                         <Link
                           to="/card/nudgecard"
-                          className="mt-4 inline-flex rounded-xl bg-[#6d8ca6] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#5c7c97]"
+className="mt-4 inline-flex rounded-xl bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+                          style={{ color: "#ffffff" }}
                         >
                           카드 신청하러 가기
                         </Link>
@@ -910,7 +921,7 @@ export default function MyPage() {
               )}
             </section>
 
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
+            <section className="hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.05)]">
               <button
                 type="button"
                 onClick={() => setIsQuickMenuOpen((prev) => !prev)}
@@ -929,7 +940,7 @@ export default function MyPage() {
                       to={to}
                       className="rounded-2xl border border-slate-100 bg-slate-50/80 p-5 transition hover:border-slate-200 hover:bg-white"
                     >
-                      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-600">
+                      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-700">
                         <Icon className="h-6 w-6" />
                       </div>
                       <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
