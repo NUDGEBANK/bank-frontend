@@ -11,13 +11,13 @@ export default function NudgeCardAccount() {
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 py-12">
-        <h1 className="text-3xl font-bold mb-8 text-white drop-shadow-lg">똑개 통장</h1>
+        <h1 className="text-3xl font-bold mb-8 text-white drop-shadow-lg">넛지 통장</h1>
 
         {/* 계좌 카드 */}
         <div className="bg-white/15 backdrop-blur-lg text-white p-8 rounded-xl shadow-2xl mb-8 border-2 border-white/30">
           <div className="flex justify-between items-start mb-6">
             <div>
-              <p className="text-blue-100 mb-2">똑개 체크카드 연동 계좌</p>
+              <p className="text-blue-100 mb-2">넛지 체크카드 연동 계좌</p>
               <p className="text-sm text-blue-200">123-456-789012</p>
             </div>
             <div className="bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full text-sm border border-white/30">메인 계좌</div>
