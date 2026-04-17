@@ -18,13 +18,11 @@ type LoanApplyConfig = {
 const amountRanges: Record<string, { min: number; max: number }> = {
   "consumption-loan": { min: 500000, max: 10000000 },
   "youth-loan": { min: 500000, max: 5000000 },
-  "situate-loan": { min: 300000, max: 2000000 },
 };
 
 const termOptionsByProduct: Record<string, string[]> = {
   "consumption-loan": ["6개월", "12개월", "18개월"],
   "youth-loan": ["12개월", "18개월", "24개월"],
-  "situate-loan": ["1개월", "3개월", "6개월", "12개월"],
 };
 
 type LoanApplicationSummary = {
@@ -81,17 +79,6 @@ const productConfigs: Record<string, LoanApplyConfig> = {
     defaultPurpose: "자격증 및 직무 교육 준비",
     amountRange: { min: 500000, max: 5000000 },
     termOptions: ["12개월", "18개월", "24개월"],
-  },
-  "situate-loan": {
-    name: "비상금 대출",
-    subtitle: "갑작스러운 지출에 빠르게 대응할 수 있는 소액 단기 상품입니다.",
-    limit: "최대 200만원",
-    period: "1개월 ~ 12개월",
-    rate: "연 5.1% ~ 9.9%",
-    defaultAmount: "1000000",
-    defaultPurpose: "단기 긴급 자금",
-    amountRange: { min: 300000, max: 2000000 },
-    termOptions: ["1개월", "3개월", "6개월", "12개월"],
   },
 };
 
