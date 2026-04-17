@@ -76,40 +76,6 @@ const UI_TEXT = {
   streamingError: "응답을 생성하지 못했습니다. 잠시 후 다시 시도해주세요.",
 } as const;
 
-function buildFallbackQuickReplies(botText: string): ChatAction[] {
-  const text = botText.toLowerCase();
-
-  if (text.includes("대출")) {
-    return [
-      { type: "navigate", label: "대출 상품 보기", href: "/loan/products" },
-      { type: "navigate", label: "신청 안내 보기", href: "/loan/apply-guide" },
-      {
-        type: "ask",
-        label: "가능 여부 다시 묻기",
-        value: "내가 받을 수 있는 대출이 뭐야?",
-      },
-    ];
-  }
-
-  if (text.includes("카드") || text.includes("소비")) {
-    return [
-      { type: "navigate", label: "똑개 카드 보기", href: "/card/ddokgae" },
-      {
-        type: "navigate",
-        label: "소비 분석 보기",
-        href: "/card/spending-analysis",
-      },
-      { type: "ask", label: "혜택 알려줘", value: "똑개 카드 혜택 알려줘" },
-    ];
-  }
-
-  return [
-    { type: "navigate", label: "대출 상품 보기", href: "/loan/products" },
-    { type: "navigate", label: "상담 기록 보기", href: "/help/chat-history" },
-    { type: "ask", label: "다시 질문하기", value: "추천 상품 알려줘" },
-  ];
-}
-
 function formatRelativeLabel(value: string | null) {
   if (!value) return "";
 
@@ -139,9 +105,7 @@ function mapMessages(
       text,
       createdAt: message.created_at,
       quickReplies:
-        sender === "bot"
-          ? (liveQuickReplies[id] ?? buildFallbackQuickReplies(text))
-          : undefined,
+        sender === "bot" ? liveQuickReplies[id] : undefined,
     };
   });
 }
@@ -350,14 +314,9 @@ export default function ChatHistory() {
     }));
 
     try {
-      const collectedChunks: string[] = [];
-
       const result = await sendMessage(
-        "web-user",
         trimmed,
         (chunk) => {
-          collectedChunks.push(chunk);
-
           setActiveSession((current) => {
             if (!current) return current;
 
@@ -377,13 +336,12 @@ export default function ChatHistory() {
         draftSessionId ?? undefined,
       );
 
-      setLiveQuickReplies((current) => ({
-        ...current,
-        [botMessageId]:
-          result.quickReplies.length > 0
-            ? result.quickReplies
-            : buildFallbackQuickReplies(collectedChunks.join(" ").trim()),
-      }));
+      if (result.quickReplies.length > 0) {
+        setLiveQuickReplies((current) => ({
+          ...current,
+          [botMessageId]: result.quickReplies,
+        }));
+      }
 
       await refreshSessions(result.sessionId ?? draftSessionId ?? null);
     } catch (error) {

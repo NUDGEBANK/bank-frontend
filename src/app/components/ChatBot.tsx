@@ -16,40 +16,6 @@ type Message = {
   quickReplies?: ChatAction[];
 };
 
-function buildFallbackQuickReplies(botText: string): ChatAction[] {
-  const text = botText.toLowerCase();
-
-  if (text.includes("대출")) {
-    return [
-      { type: "navigate", label: "대출 상품 보기", href: "/loan/products" },
-      { type: "navigate", label: "신청 안내 보기", href: "/loan/apply-guide" },
-      {
-        type: "ask",
-        label: "가능 여부 다시 묻기",
-        value: "내가 받을 수 있는 대출이 뭐야?",
-      },
-    ];
-  }
-
-  if (text.includes("카드") || text.includes("소비")) {
-    return [
-      { type: "navigate", label: "똑개 카드 보기", href: "/card/ddokgae" },
-      {
-        type: "navigate",
-        label: "소비 분석 보기",
-        href: "/card/spending-analysis",
-      },
-      { type: "ask", label: "혜택 알려줘", value: "똑개 카드 혜택 알려줘" },
-    ];
-  }
-
-  return [
-    { type: "navigate", label: "대출 상품 보기", href: "/loan/products" },
-    { type: "navigate", label: "상담 기록 보기", href: "/help/chat-history" },
-    { type: "ask", label: "다시 질문하기", value: "추천 상품 알려줘" },
-  ];
-}
-
 export default function ChatBot() {
   const navigate = useNavigate();
 
@@ -67,19 +33,6 @@ export default function ChatBot() {
       {
         text: "안녕하세요.\nNUDGEBANK 금융 상담 AI입니다.\n무엇을 도와드릴까요?",
         sender: "bot",
-        quickReplies: [
-          { type: "navigate", label: "대출 상품 보기", href: "/loan/products" },
-          {
-            type: "navigate",
-            label: "상담 기록 보기",
-            href: "/help/chat-history",
-          },
-          {
-            type: "ask",
-            label: "추천 상품 알려줘",
-            value: "내게 맞는 금융 상품 추천해줘",
-          },
-        ],
       },
     ];
   });
@@ -194,13 +147,9 @@ export default function ChatBot() {
     startTypingEffect();
 
     try {
-      const collectedChunks: string[] = [];
-
       const result = await sendMessage(
-        "user-123",
         trimmed,
         (chunk) => {
-          collectedChunks.push(chunk);
           bufferRef.current += chunk;
         },
         sessionId ?? undefined,
@@ -210,26 +159,14 @@ export default function ChatBot() {
         setSessionId(result.sessionId);
       }
 
-      const finalBotText = collectedChunks.join("").trim();
-      attachQuickRepliesToLastBotMessage(
-        result.quickReplies.length
-          ? result.quickReplies
-          : buildFallbackQuickReplies(finalBotText),
-      );
+      if (result.quickReplies && result.quickReplies.length > 0) {
+        attachQuickRepliesToLastBotMessage(result.quickReplies);
+      }
 
       streamDoneRef.current = true;
     } catch (error) {
       console.error("챗봇 API 호출 실패:", error);
       bufferRef.current += "죄송합니다. 잠시 후 다시 시도해주세요.";
-      attachQuickRepliesToLastBotMessage([
-        { type: "ask", label: "다시 질문하기", value: trimmed },
-        { type: "navigate", label: "대출 상품 보기", href: "/loan/products" },
-        {
-          type: "navigate",
-          label: "상담 기록 보기",
-          href: "/help/chat-history",
-        },
-      ]);
       streamDoneRef.current = true;
     }
   };
