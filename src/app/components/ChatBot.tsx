@@ -13,6 +13,7 @@ import {
 import { useAuthStatus } from "../hooks/useAuthStatus";
 import MessageMarkdown from "./MessageMarkdown";
 import { Button } from "./ui/button";
+import {CHAT_HISTORY_STORAGE_KEY, CHAT_SESSION_ID_STORAGE_KEY} from "../lib/chatStorage";
 
 const FORCE_FRESH_CHATBOT_SESSION_KEY = "force_fresh_chatbot_session";
 
@@ -22,7 +23,6 @@ type Message = {
   quickReplies?: ChatAction[];
 };
 
-<<<<<<< HEAD
 function getInitialMessages(isAuthenticated: boolean): Message[] {
   if (!isAuthenticated) {
     return [
@@ -98,8 +98,6 @@ function getSessionSortTime(session: ChatSessionSummary): number {
   return Number.isNaN(time) ? 0 : time;
 }
 
-=======
->>>>>>> 5109a0418d53cd0b6b7a056de030265052affca9
 export default function ChatBot() {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading } = useAuthStatus();
@@ -109,11 +107,7 @@ export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
-<<<<<<< HEAD
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [messages, setMessages] = useState<Message[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
-=======
   const [sessionId, setSessionId] = useState<string | null>(() =>
     sessionStorage.getItem(CHAT_SESSION_ID_STORAGE_KEY),
   );
@@ -128,7 +122,6 @@ export default function ChatBot() {
       },
     ];
   });
->>>>>>> 5109a0418d53cd0b6b7a056de030265052affca9
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -312,7 +305,6 @@ export default function ChatBot() {
 
     try {
       const result = await sendMessage(
-<<<<<<< HEAD
           "web-user",
           trimmed,
           (chunk) => {
@@ -320,31 +312,20 @@ export default function ChatBot() {
             bufferRef.current += chunk;
           },
           sessionId ?? undefined,
-=======
-        trimmed,
-        (chunk) => {
-          bufferRef.current += chunk;
-        },
-        sessionId ?? undefined,
->>>>>>> 5109a0418d53cd0b6b7a056de030265052affca9
       );
 
       if (result.sessionId) {
         setSessionId(result.sessionId);
       }
 
-<<<<<<< HEAD
       const finalBotText = collectedChunks.join("").trim();
-      attachQuickRepliesToLastBotMessage(
-          result.quickReplies?.length
-              ? result.quickReplies
-              : buildFallbackQuickReplies(finalBotText),
-      );
-=======
       if (result.quickReplies && result.quickReplies.length > 0) {
-        attachQuickRepliesToLastBotMessage(result.quickReplies);
-      }
->>>>>>> 5109a0418d53cd0b6b7a056de030265052affca9
+        attachQuickRepliesToLastBotMessage(
+            result.quickReplies?.length
+                ? result.quickReplies
+                : buildFallbackQuickReplies(finalBotText),
+        );
+    }
 
       streamDoneRef.current = true;
     } catch (error) {

@@ -106,13 +106,9 @@ function mapMessages(
       text,
       createdAt: message.created_at,
       quickReplies:
-<<<<<<< HEAD
           sender === "bot"
               ? (liveQuickReplies[id] ?? buildFallbackQuickReplies(text))
               : undefined,
-=======
-        sender === "bot" ? liveQuickReplies[id] : undefined,
->>>>>>> 5109a0418d53cd0b6b7a056de030265052affca9
     };
   });
 }
@@ -348,7 +344,6 @@ export default function ChatHistory() {
 
     try {
       const result = await sendMessage(
-<<<<<<< HEAD
           "web-user",
           trimmed,
           (chunk) => {
@@ -356,12 +351,6 @@ export default function ChatHistory() {
 
             setActiveSession((current) => {
               if (!current) return current;
-=======
-        trimmed,
-        (chunk) => {
-          setActiveSession((current) => {
-            if (!current) return current;
->>>>>>> 5109a0418d53cd0b6b7a056de030265052affca9
 
               const messages = [...current.messages];
               const lastMessage = messages[messages.length - 1];
@@ -379,22 +368,15 @@ export default function ChatHistory() {
           draftSessionId ?? undefined,
       );
 
-<<<<<<< HEAD
-      setLiveQuickReplies((current) => ({
+    if (result.quickReplies.length > 0) {
+        setLiveQuickReplies((current) => ({
         ...current,
         [botMessageId]:
             result.quickReplies?.length
                 ? result.quickReplies
                 : buildFallbackQuickReplies(collectedChunks.join(" ").trim()),
       }));
-=======
-      if (result.quickReplies.length > 0) {
-        setLiveQuickReplies((current) => ({
-          ...current,
-          [botMessageId]: result.quickReplies,
-        }));
-      }
->>>>>>> 5109a0418d53cd0b6b7a056de030265052affca9
+    }
 
       await refreshSessions(result.sessionId ?? draftSessionId ?? null);
     } catch (error) {
