@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router";
 import { Menu, X } from "lucide-react";
 
 import { postJson } from "../lib/api";
+import { clearChatStorage } from "../lib/chatStorage";
 import { useAuthStatus } from "../hooks/useAuthStatus";
 import nudgeLogo from "../../assets/nudge.png";
 
@@ -93,6 +94,7 @@ export default function Header() {
     } catch {
       // Ignore logout errors so local auth state is always cleared.
     } finally {
+      clearChatStorage();
       window.dispatchEvent(new Event("auth-change"));
       window.location.reload();
     }
