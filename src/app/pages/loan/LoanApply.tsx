@@ -101,6 +101,7 @@ export default function LoanApply() {
   const [selectedCardId, setSelectedCardId] = useState<number | "">("");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
+  const [agreeAutomaticRepayment, setAgreeAutomaticRepayment] = useState(false) // 자동 상환 여부
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -455,6 +456,15 @@ export default function LoanApply() {
                   className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-slate-900"
                 />
                 대출 심사를 위한 개인정보 수집 및 이용에 동의합니다.
+              </label>
+              <label className="flex items-start gap-2.5 text-sm text-slate-600">
+                <input
+                    type="checkbox"
+                    checked={agreeAutomaticRepayment}
+                    onChange={(event) => setAgreeAutomaticRepayment(event.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-slate-900"
+                />
+                자동 상환 서비스 이용에 동의합니다.
               </label>
             </div>
           </div>
