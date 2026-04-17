@@ -11,11 +11,11 @@ import homeBanner3 from "../../assets/home/card.png";
 
 const heroSlides = [
     {
-        title: "하루 금융을 가볍게",
-        subtitle: "입출금 통장부터 카드까지 한 번에 시작하는 생활 금융",
-        actionLabel: "통장 개설하기",
-        actionTo: "/account/nudgecard",
-        image: homeBanner1,
+        title: "카드 쓰고, 소비 흐름까지 보기",
+        subtitle: "체크카드 이용 내역과 AI 소비 분석을 함께 관리",
+        actionLabel: "카드 신청하기",
+        actionTo: "/card/nudgecard",
+        image: homeBanner3,
     },
     {
         title: "내 조건에 맞는 대출 찾기",
@@ -25,11 +25,11 @@ const heroSlides = [
         image: homeBanner2,
     },
     {
-        title: "카드 쓰고, 소비 흐름까지 보기",
-        subtitle: "체크카드 이용 내역과 AI 소비 분석을 함께 관리",
-        actionLabel: "카드 신청하기",
-        actionTo: "/card/nudgecard",
-        image: homeBanner3,
+        title: "하루 금융을 가볍게",
+        subtitle: "입출금 통장부터 카드까지 한 번에 시작하는 생활 금융",
+        actionLabel: "통장 개설하기",
+        actionTo: "/account/nudgecard",
+        image: homeBanner1,
     },
 ] as const;
 
