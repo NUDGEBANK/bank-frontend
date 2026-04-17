@@ -41,7 +41,7 @@ export default function Login() {
           {/* 헤더 */}
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-white mb-2">로그인</h1>
-            <p className="text-blue-100">똑개뱅크에 오신 것을 환영합니다</p>
+            <p className="text-blue-100">NUDGEBANK에 오신 것을 환영합니다</p>
           </div>
 
           {/* 로그인 폼 */}
@@ -96,7 +96,7 @@ export default function Login() {
             {/* 로그인 버튼 */}
             <button
               type="submit"
-              className="w-full rounded-lg border border-[#2a4b78] bg-[#2a4b78] py-3 font-bold text-white transition-all hover:bg-[#223f64] disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-lg border border-slate-900 bg-slate-900 py-3 font-bold text-white transition-all hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={isSubmitting}
             >
               <span style={{ color: "#fff" }}>{isSubmitting ? "로그인 중..." : "로그인"}</span>
