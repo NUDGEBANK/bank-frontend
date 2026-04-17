@@ -1,7 +1,5 @@
 export interface ChatRequest {
-  user_id: string;
   message: string;
-  user_info: Record<string, any>;
   session_id?: string;
 }
 
@@ -16,15 +14,6 @@ export type ChatAction =
       label: string;
       href: string;
     };
-
-export interface ChatResponsePayload {
-  answer: string;
-  quickReplies?: ChatAction[];
-}
-
-export interface ChatResponse {
-  answer: string;
-}
 
 export interface ChatSessionSummary {
   session_id: string;
@@ -50,11 +39,10 @@ export interface ChatSessionDetail {
 
 // 반환 타입을 sessionId와 quickReplies를 모두 포함하는 객체로 변경했습니다.
 export async function sendMessage(
-  userId: string,
   message: string,
   onChunk: (chunk: string) => void,
   sessionId?: string,
-): Promise<{ sessionId: string | null; quickReplies?: ChatAction[] }> {
+): Promise<{ sessionId: string | null; quickReplies: ChatAction[] }> {
   const response = await fetch("/chat-api/chat", {
     method: "POST",
     headers: {
@@ -62,9 +50,7 @@ export async function sendMessage(
     },
     credentials: "include",
     body: JSON.stringify({
-      user_id: userId,
       message,
-      user_info: {},
       session_id: sessionId,
     } as ChatRequest),
   });
@@ -83,7 +69,7 @@ export async function sendMessage(
   const nextSessionId = response.headers.get("X-Chat-Session-Id");
 
   let buffer = "";
-  let finalQuickReplies: ChatAction[] | undefined = undefined;
+  let finalQuickReplies: ChatAction[] = [];
 
   while (true) {
     const { done, value } = await reader.read();
@@ -123,7 +109,7 @@ export async function sendMessage(
             onChunk(data.text);
           } else if (eventType === "done") {
             // 스트리밍 종료 및 퀵 리플라이 수신
-            if (data.quickReplies) {
+            if (Array.isArray(data.quickReplies)) {
               finalQuickReplies = data.quickReplies;
             }
           } else if (eventType === "error") {
