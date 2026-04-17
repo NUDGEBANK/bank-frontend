@@ -259,7 +259,6 @@ export default function MyLoanManagement() {
   const [repaymentAmountInput, setRepaymentAmountInput] = useState("");
   const [repaymentActionMessage, setRepaymentActionMessage] = useState<string | null>(null);
   const [isRepaymentSubmitting, setIsRepaymentSubmitting] = useState(false);
-  const [isRepaymentHistoryExpanded, setIsRepaymentHistoryExpanded] = useState(false);
   const [isScheduleExpanded, setIsScheduleExpanded] = useState(false);
   const [highlightedRepaymentId, setHighlightedRepaymentId] = useState<number | null>(null);
   const repaymentTransactionIdFromQuery = useMemo(() => {
@@ -498,7 +497,32 @@ export default function MyLoanManagement() {
     (summary?.remainingPrincipal ?? 0) - normalizedSimulationAmount,
     0,
   );
-  const remainingInterestAmount = summary?.remainingInterestAmount ?? 0;
+  const currentInstallmentSchedule = useMemo(() => {
+    if (!repaymentSchedules.length) {
+      return null;
+    }
+
+    if (summary?.nextPaymentDate) {
+      const matchedSchedule = repaymentSchedules.find(
+        (schedule) => schedule.dueDate === summary.nextPaymentDate,
+      );
+      if (matchedSchedule) {
+        return matchedSchedule;
+      }
+    }
+
+    const unsettledSchedules = repaymentSchedules
+      .filter((schedule) => !schedule.settled)
+      .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+
+    return unsettledSchedules[0] ?? repaymentSchedules[0] ?? null;
+  }, [repaymentSchedules, summary?.nextPaymentDate]);
+  const currentPlannedPrincipal = summary?.nextPaymentPrincipal ?? 0;
+  const currentPlannedInterest = summary?.nextPaymentInterest ?? 0;
+  const currentPaidPrincipal = currentInstallmentSchedule?.paidPrincipal ?? 0;
+  const currentPaidInterest = currentInstallmentSchedule?.paidInterest ?? 0;
+  const currentRemainingPrincipal = Math.max(currentPlannedPrincipal - currentPaidPrincipal, 0);
+  const currentRemainingInterest = Math.max(currentPlannedInterest - currentPaidInterest, 0);
   const hasLoanData = !!summary;
   const showLoanLoadingState = isLoanDataLoading && !hasLoanData;
   const shouldShowLoanEmptyState = !isLoanDataLoading && activeApplications.length === 0;
@@ -610,23 +634,6 @@ export default function MyLoanManagement() {
     );
   }, [repaymentHistories, repaymentTransactionIdFromQuery]);
 
-  useEffect(() => {
-    if (!targetRepaymentHistory) {
-      return;
-    }
-
-    const targetIndex = repaymentHistories.findIndex(
-      (repayment) => repayment.repaymentId === targetRepaymentHistory.repaymentId,
-    );
-    if (targetIndex >= 5 && !isRepaymentHistoryExpanded) {
-      setIsRepaymentHistoryExpanded(true);
-    }
-  }, [isRepaymentHistoryExpanded, repaymentHistories, targetRepaymentHistory]);
-
-  const visibleRepaymentHistories = isRepaymentHistoryExpanded
-    ? repaymentHistories
-    : repaymentHistories.slice(0, 5);
-
   const visibleSchedules = isScheduleExpanded
     ? repaymentSchedules
     : repaymentSchedules.slice(0, 5);
@@ -648,7 +655,7 @@ export default function MyLoanManagement() {
 
     targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
     scrolledRepaymentIdRef.current = targetRepaymentHistory.repaymentId;
-  }, [targetRepaymentHistory, visibleRepaymentHistories]);
+  }, [repaymentHistories, targetRepaymentHistory]);
 
   useEffect(() => {
     if (!targetRepaymentHistory) {
@@ -821,7 +828,7 @@ export default function MyLoanManagement() {
           <div>
             <h1 className="text-2xl font-bold text-slate-800">내 대출 관리</h1>
             <p className="mt-2 text-sm text-slate-600">
-              상환 현황, 조기 상환 시뮬레이션, 신청 중인 상품 상태를 한 곳에서 확인할 수 있습니다.
+              상환 현황, 신청 중인 상품 상태를 한 곳에서 확인할 수 있습니다.
             </p>
           </div>
 
@@ -1001,120 +1008,123 @@ export default function MyLoanManagement() {
 
               {/* 최근 상환 내역 + 이자 정보 */}
               <section className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.9fr)]">
-                <div className="rounded-2xl bg-white px-6 py-6 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
+                <div className="rounded-2xl bg-white px-6 py-6 shadow-[0_2px_20px_rgba(0,0,0,0.06)] lg:flex lg:min-h-0 lg:flex-col">
                   <div className="flex items-center justify-between">
                     <h2 className="text-sm font-bold text-slate-900">최근 상환 내역</h2>
-                    {repaymentHistories.length > 5 && (
-                      <button
-                        type="button"
-                        onClick={() => setIsRepaymentHistoryExpanded((prev) => !prev)}
-                        className="inline-flex items-center gap-1 text-sm font-medium text-slate-700 transition hover:text-slate-900"
-                      >
-                        {isRepaymentHistoryExpanded ? "접기" : "더보기"}
-                        {isRepaymentHistoryExpanded ? (
-                          <ChevronUp className="h-4 w-4" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4" />
-                        )}
-                      </button>
-                    )}
                   </div>
-                  <div className="mt-4 space-y-3">
-                    {visibleRepaymentHistories.map((repayment) => (
-                      <div
-                        key={repayment.repaymentId}
-                        ref={(element) => {
-                          repaymentHistoryItemRefs.current[repayment.repaymentId] = element;
-                        }}
-                        id={`repayment-history-${repayment.repaymentId}`}
-                        className={`rounded-xl border px-4 py-3 ${
-                          highlightedRepaymentId === repayment.repaymentId
-                            ? "border-slate-400 bg-slate-50"
-                            : "border-slate-100"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <p className="text-xs font-medium text-slate-600">{repayment.repaymentDatetime.slice(0, 10)}</p>
-                          <p className="text-sm font-bold text-slate-900">
-                            {formatAmount(repayment.repaymentAmount)}
-                          </p>
-                        </div>
-                        <div className="mt-2 space-y-1 text-xs text-slate-600">
-                          <div className="flex justify-between">
-                            <span>원금</span>
-                            <span className="font-semibold text-slate-900">상환 이력에서 별도 제공 예정</span>
+                  <div className="mt-4 max-h-[30rem] overflow-y-auto pr-1 lg:min-h-0 lg:flex-1">
+                    <div className="space-y-3">
+                      {repaymentHistories.map((repayment) => (
+                        <div
+                          key={repayment.repaymentId}
+                          ref={(element) => {
+                            repaymentHistoryItemRefs.current[repayment.repaymentId] = element;
+                          }}
+                          id={`repayment-history-${repayment.repaymentId}`}
+                          className={`rounded-xl border px-4 py-3 ${
+                            highlightedRepaymentId === repayment.repaymentId
+                              ? "border-slate-400 bg-slate-50"
+                              : "border-slate-100"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <p className="text-xs font-medium text-slate-600">{repayment.repaymentDatetime.slice(0, 10)}</p>
+                            <p className="text-sm font-bold text-slate-900">
+                              {formatAmount(repayment.repaymentAmount)}
+                            </p>
                           </div>
-                          <div className="flex justify-between">
-                            <span>이자</span>
-                            <span className="font-semibold text-slate-900">상환 이력에서 별도 제공 예정</span>
-                          </div>
-                          {repayment.reason && (
+                          <div className="mt-2 space-y-1 text-xs text-slate-600">
                             <div className="flex justify-between">
-                              <span>자동상환 비율 산정 근거</span>
-                              <span className="font-semibold text-slate-900">{repayment.reason}</span>
+                              <span>원금</span>
+                              <span className="font-semibold text-slate-900">상환 이력에서 별도 제공 예정</span>
                             </div>
-                          )}
-                          {repayment.transaction && (
-                            <>
+                            <div className="flex justify-between">
+                              <span>이자</span>
+                              <span className="font-semibold text-slate-900">상환 이력에서 별도 제공 예정</span>
+                            </div>
+                            {repayment.reason && (
                               <div className="flex justify-between">
-                                <span>결제 상품명</span>
-                                <span className="font-semibold text-slate-900">{repayment.transaction.menuName}</span>
+                                <span>자동상환 비율 산정 근거</span>
+                                <span className="font-semibold text-slate-900">{repayment.reason}</span>
                               </div>
-                              <div className="flex justify-between">
-                                <span>결제 금액</span>
-                                <span className="font-semibold text-slate-900">{repayment.transaction.amount}</span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span>결제 시간</span>
-                                <span className="font-semibold text-slate-900">{repayment.transaction.transactionDatetime}</span>
-                              </div>
-                            </>
-                          )}
+                            )}
+                            {repayment.transaction && (
+                              <>
+                                <div className="flex justify-between">
+                                  <span>결제 상품명</span>
+                                  <span className="font-semibold text-slate-900">{repayment.transaction.menuName}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>결제 금액</span>
+                                  <span className="font-semibold text-slate-900">{repayment.transaction.amount}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span>결제 시간</span>
+                                  <span className="font-semibold text-slate-900">{repayment.transaction.transactionDatetime}</span>
+                                </div>
+                              </>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                    {repaymentHistories.length === 0 && (
-                      <div className="rounded-xl border border-dashed border-slate-200 px-4 py-5 text-center text-sm text-slate-600">
-                        상환 내역이 없습니다.
-                      </div>
-                    )}
+                      ))}
+                      {repaymentHistories.length === 0 && (
+                        <div className="rounded-xl border border-dashed border-slate-200 px-4 py-5 text-center text-sm text-slate-600">
+                          상환 내역이 없습니다.
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
                 <div className="rounded-2xl bg-white px-6 py-6 shadow-[0_2px_20px_rgba(0,0,0,0.06)]">
-                  <h2 className="text-sm font-bold text-slate-900">이자 정보</h2>
+                  <h2 className="text-sm font-bold text-slate-900">이번 회차 정보</h2>
                   <div className="mt-4 space-y-3">
                     <div className="rounded-xl border border-slate-100 px-4 py-4">
-                      <p className="text-xs font-medium text-slate-600">누적 납입 이자</p>
-                      <p className="mt-2 text-xl font-bold text-slate-900">
-                        {formatAmount(summary?.cumulativeInterest ?? 0)}
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-slate-100 px-4 py-4">
-                      <p className="text-xs font-medium text-slate-600">잔여 예상 이자</p>
-                      <p className="mt-2 text-xl font-bold text-slate-900">
-                        {formatAmount(remainingInterestAmount)}
-                      </p>
-                    </div>
-                    {summary && (
-                      <div className="rounded-xl border border-slate-100 px-4 py-4">
-                        <p className="text-xs font-medium text-slate-600">다음 회차 이자 정보</p>
-                        <div className="mt-2 space-y-1 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-slate-600">예정 원금</span>
-                            <span className="font-semibold text-slate-900">
-                              {formatAmount(summary.nextPaymentPrincipal)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-slate-600">예정 이자</span>
-                            <span className="font-semibold text-slate-900">
-                              {formatAmount(summary.nextPaymentInterest)}
-                            </span>
-                          </div>
+                      <p className="text-xs font-medium text-slate-600">원금</p>
+                      <div className="mt-2 space-y-1 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-slate-600">예정 원금</span>
+                          <span className="font-semibold text-slate-900">
+                            {formatAmount(currentPlannedPrincipal)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-600">납입 원금</span>
+                          <span className="font-semibold text-slate-900">
+                            {formatAmount(currentPaidPrincipal)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between rounded-md bg-rose-50 px-2 py-1.5">
+                          <span className="font-bold text-rose-700">남은 원금</span>
+                          <span className="text-base font-extrabold text-rose-800">
+                            {formatAmount(currentRemainingPrincipal)}
+                          </span>
                         </div>
                       </div>
-                    )}
+                    </div>
+                    <div className="rounded-xl border border-slate-100 px-4 py-4">
+                      <p className="text-xs font-medium text-slate-600">이자</p>
+                      <div className="mt-2 space-y-1 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-slate-600">예정 이자</span>
+                          <span className="font-semibold text-slate-900">
+                            {formatAmount(currentPlannedInterest)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-600">납입 이자</span>
+                          <span className="font-semibold text-slate-900">
+                            {formatAmount(currentPaidInterest)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between rounded-md bg-rose-50 px-2 py-1.5">
+                          <span className="font-bold text-rose-700">남은 이자</span>
+                          <span className="text-base font-extrabold text-rose-800">
+                            {formatAmount(currentRemainingInterest)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </section>
