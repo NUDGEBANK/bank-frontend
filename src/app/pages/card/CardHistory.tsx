@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { CreditCard, Receipt, Wallet } from "lucide-react";
+import { CreditCard, Receipt, Wallet, ChevronDown, Info } from "lucide-react";
 import { useNavigate } from "react-router";
 
 import { getJson } from "../../lib/api";
 
+// --- Types & Utils (기존 로직 동일) ---
 type CardHistoryResponse = {
   ok: boolean;
   message: string;
@@ -60,28 +61,28 @@ type HistoryTransaction = CardHistoryTransaction & {
 };
 
 const UI_TEXT = {
-  title: "\uCE74\uB4DC \uC774\uC6A9 \uB0B4\uC5ED",
-  subtitle: "\uCE74\uB4DC \uC794\uC561\uACFC \uCD5C\uADFC \uACB0\uC81C \uB0B4\uC5ED\uC744 \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
-  selectAccount: "\uC5F0\uACB0 \uACC4\uC88C \uC120\uD0DD",
-  noAccount: "\uD45C\uC2DC\uD560 \uACC4\uC88C\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4",
-  availableBalance: "\uC0AC\uC6A9 \uAC00\uB2A5\uD55C \uC794\uC561",
-  noBankAccount: "\uACC4\uC88C \uC5C6\uC74C",
-  monthlySpent: "\uC774\uBC88 \uB2EC \uC0AC\uC6A9\uC561",
-  monthlySpentHint: "\uCE74\uB4DC \uAC70\uB798 \uAE30\uC900 \uB204\uC801 \uAE08\uC561",
-  cardInfo: "\uCE74\uB4DC \uC815\uBCF4",
-  noCardInfo: "\uCE74\uB4DC \uC815\uBCF4 \uC5C6\uC74C",
-  noCardIssued: "\uBBF8\uBC1C\uAE09",
-  activeCard: "\uC815\uC0C1 \uC0AC\uC6A9 \uAC00\uB2A5",
-  noLinkedCard: "\uC5F0\uACB0\uB41C \uCE74\uB4DC \uC5C6\uC74C",
-  loading: "\uCE74\uB4DC \uC774\uC6A9 \uB0B4\uC5ED\uC744 \uBD88\uB7EC\uC624\uB294 \uC911\uC785\uB2C8\uB2E4.",
-  unauthorized: "\uB85C\uADF8\uC778 \uD6C4 \uCE74\uB4DC \uC774\uC6A9 \uB0B4\uC5ED\uC744 \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
-  requestFailed: "\uCE74\uB4DC \uC774\uC6A9 \uB0B4\uC5ED\uC744 \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.",
-  emptyTitle: "\uC774\uC6A9 \uB0B4\uC5ED\uC774 \uC5C6\uC2B5\uB2C8\uB2E4",
-  emptyBody: "\uCE74\uB4DC \uACB0\uC81C\uAC00 \uBC1C\uC0DD\uD558\uBA74 \uCD5C\uADFC \uAC70\uB798 \uB0B4\uC5ED\uC774 \uC774\uACF3\uC5D0 \uD45C\uC2DC\uB429\uB2C8\uB2E4.",
+  title: "카드 이용 내역",
+  subtitle: "카드 잔액과 최근 결제 내역을 확인할 수 있습니다.",
+  selectAccount: "연결 계좌 선택",
+  noAccount: "표시할 계좌가 없습니다",
+  availableBalance: "사용 가능한 잔액",
+  noBankAccount: "계좌 없음",
+  monthlySpent: "이번 달 사용액",
+  monthlySpentHint: "카드 거래 기준 누적 금액",
+  cardInfo: "카드 정보",
+  noCardInfo: "카드 정보 없음",
+  noCardIssued: "미발급",
+  activeCard: "정상 사용 가능",
+  noLinkedCard: "연결된 카드 없음",
+  loading: "카드 이용 내역을 불러오는 중입니다.",
+  unauthorized: "로그인 후 카드 이용 내역을 확인할 수 있습니다.",
+  requestFailed: "카드 이용 내역을 불러오지 못했습니다.",
+  emptyTitle: "이용 내역이 없습니다",
+  emptyBody: "카드 결제가 발생하면 최근 거래 내역이 이곳에 표시됩니다.",
 } as const;
 
 function formatAmount(amount: number) {
-  return `${amount.toLocaleString("ko-KR")}\uC6D0`;
+  return `${amount.toLocaleString("ko-KR")}원`;
 }
 
 function isSavingsTransaction(transaction: HistoryTransaction) {
@@ -90,8 +91,8 @@ function isSavingsTransaction(transaction: HistoryTransaction) {
 
 function isLoanDisbursementTransaction(transaction: CardHistoryTransaction) {
   return (
-    transaction.marketName === "NudgeBank 대출 실행" ||
-    transaction.categoryName === "대출"
+      transaction.marketName === "NudgeBank 대출 실행" ||
+      transaction.categoryName === "대출"
   );
 }
 
@@ -101,16 +102,11 @@ function isIncomingTransaction(transaction: HistoryTransaction) {
 
 function formatDepositTransactionLabel(type: string) {
   switch (type) {
-    case "OPEN":
-      return "예적금 가입";
-    case "PAY":
-      return "적금 납입";
-    case "MATURITY":
-      return "만기해지";
-    case "EARLY_CLOSE":
-      return "중도해지";
-    default:
-      return "예적금 거래";
+    case "OPEN": return "예적금 가입";
+    case "PAY": return "적금 납입";
+    case "MATURITY": return "만기해지";
+    case "EARLY_CLOSE": return "중도해지";
+    default: return "예적금 거래";
   }
 }
 
@@ -119,12 +115,12 @@ function isDepositIncomingTransaction(type: string) {
 }
 
 function toDepositHistoryTransaction(
-  detail: DepositAccountDetail,
-  transaction: DepositTransaction,
+    detail: DepositAccountDetail,
+    transaction: DepositTransaction,
 ): HistoryTransaction {
   const signedAmount = isDepositIncomingTransaction(transaction.transactionType)
-    ? Math.abs(transaction.amount)
-    : -Math.abs(transaction.amount);
+      ? Math.abs(transaction.amount)
+      : -Math.abs(transaction.amount);
 
   return {
     transactionId: -transaction.depositTransactionId,
@@ -141,15 +137,9 @@ function toDepositHistoryTransaction(
 }
 
 function maskCardNumber(cardNumber: string | null) {
-  if (!cardNumber) {
-    return UI_TEXT.noCardInfo;
-  }
-
+  if (!cardNumber) return UI_TEXT.noCardInfo;
   const parts = cardNumber.split("-");
-  if (parts.length !== 4) {
-    return cardNumber;
-  }
-
+  if (parts.length !== 4) return cardNumber;
   return `${parts[0]}-****-****-${parts[3]}`;
 }
 
@@ -163,274 +153,173 @@ export default function CardHistory() {
 
   useEffect(() => {
     let isMounted = true;
-
     async function loadHistory() {
       setIsLoading(true);
-      setErrorMessage("");
-
       try {
         const [response, depositAccounts] = await Promise.all([
           getJson<CardHistoryResponse>("/api/cards/history"),
           getJson<DepositAccountSummary[]>("/api/deposit-accounts/me").catch(() => []),
         ]);
-
         const details = await Promise.all(
-          depositAccounts.map((account) =>
-            getJson<DepositAccountDetail>(`/api/deposit-accounts/me/${account.depositAccountId}`).catch(() => null),
-          ),
+            depositAccounts.map((account) =>
+                getJson<DepositAccountDetail>(`/api/deposit-accounts/me/${account.depositAccountId}`).catch(() => null),
+            ),
         );
-
-        if (!isMounted) {
-          return;
-        }
-
+        if (!isMounted) return;
         setAccounts(response.accounts);
         setDepositDetails(details.filter((detail): detail is DepositAccountDetail => detail !== null));
         setSelectedAccountId((current) => current ?? response.accounts[0]?.accountId ?? null);
       } catch (error) {
-        if (!isMounted) {
-          return;
-        }
-
+        if (!isMounted) return;
         const message = error instanceof Error ? error.message : "REQUEST_FAILED";
         setErrorMessage(message === "UNAUTHORIZED" ? UI_TEXT.unauthorized : UI_TEXT.requestFailed);
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        if (isMounted) setIsLoading(false);
       }
     }
-
     void loadHistory();
-
-    return () => {
-      isMounted = false;
-    };
+    return () => { isMounted = false; };
   }, []);
 
   const selectedAccount = useMemo(
-    () => accounts.find((account) => account.accountId === selectedAccountId) ?? accounts[0] ?? null,
-    [accounts, selectedAccountId],
+      () => accounts.find((account) => account.accountId === selectedAccountId) ?? accounts[0] ?? null,
+      [accounts, selectedAccountId],
   );
 
   const mergedTransactions = useMemo(() => {
-    if (!selectedAccount) {
-      return [];
-    }
-
+    if (!selectedAccount) return [];
     const cardTransactions: HistoryTransaction[] = selectedAccount.transactions.map((transaction) => ({
-      ...transaction,
-      sourceType: "CARD",
+      ...transaction, sourceType: "CARD",
     }));
-
     const depositTransactions = depositDetails
-      .filter((detail) => detail.linkedAccountId === selectedAccount.accountId)
-      .flatMap((detail) =>
-        detail.transactions.map((transaction) => toDepositHistoryTransaction(detail, transaction)),
-      );
+        .filter((detail) => detail.linkedAccountId === selectedAccount.accountId)
+        .flatMap((detail) => detail.transactions.map((transaction) => toDepositHistoryTransaction(detail, transaction)));
 
     return [...cardTransactions, ...depositTransactions].sort(
-      (left, right) =>
-        new Date(right.transactionDatetime).getTime() - new Date(left.transactionDatetime).getTime(),
+        (left, right) => new Date(right.transactionDatetime).getTime() - new Date(left.transactionDatetime).getTime()
     );
   }, [depositDetails, selectedAccount]);
 
   const isAutoRepaymentTransaction = (transaction: HistoryTransaction) =>
-    transaction.sourceType === "CARD" && transaction.autoRepaymentApplied;
+      transaction.sourceType === "CARD" && transaction.autoRepaymentApplied;
 
   const handleTransactionClick = (transaction: HistoryTransaction) => {
-    if (!isAutoRepaymentTransaction(transaction)) {
-      return;
+    if (isAutoRepaymentTransaction(transaction)) {
+      navigate(`/loan/management?repaymentTransactionId=${transaction.transactionId}`);
     }
-
-    navigate(`/loan/management?repaymentTransactionId=${transaction.transactionId}`);
   };
 
+  if (isLoading) return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-500 text-sm">{UI_TEXT.loading}</div>
+  );
+
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 md:px-6">
-      <div className="overflow-hidden rounded-[32px] border border-slate-200/80 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.08)]">
-        <div className="border-b border-slate-100 bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.14),_transparent_38%),linear-gradient(135deg,_#f8fbff_0%,_#ffffff_52%,_#f8fafc_100%)] px-6 py-6 md:px-8">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-blue-500">
-                Card History
-              </p>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">{UI_TEXT.title}</h1>
-              <p className="mt-2 text-sm text-slate-500">{UI_TEXT.subtitle}</p>
-            </div>
-
-            <div className="w-full lg:max-w-sm">
-              <label
-                htmlFor="card-history-account-select"
-                className="mb-2 block text-sm font-medium text-slate-500"
-              >
-                {UI_TEXT.selectAccount}
-              </label>
-              <select
-                id="card-history-account-select"
-                value={selectedAccountId ?? ""}
-                onChange={(event) => setSelectedAccountId(Number(event.target.value))}
-                disabled={accounts.length === 0 || isLoading}
-                className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50"
-              >
-                {accounts.length === 0 ? (
-                  <option value="">{UI_TEXT.noAccount}</option>
-                ) : (
-                  accounts.map((account) => (
-                    <option key={account.accountId} value={account.accountId}>
-                      {account.accountName} {account.accountNumber}
-                    </option>
-                  ))
-                )}
-              </select>
-            </div>
-          </div>
-
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
-            <div className="rounded-3xl border border-sky-100 bg-[linear-gradient(135deg,_rgba(219,234,254,0.95)_0%,_rgba(239,246,255,0.98)_48%,_rgba(248,250,252,1)_100%)] px-5 py-5 text-slate-900 shadow-[0_20px_45px_rgba(148,163,184,0.18)]">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-xs tracking-[0.12em] text-sky-700/70">{UI_TEXT.availableBalance}</p>
-                  <p className="mt-3 text-3xl font-semibold">
-                    {selectedAccount ? formatAmount(selectedAccount.balance) : "-"}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-white/80 p-3 text-sky-600 shadow-sm">
-                  <Wallet className="h-5 w-5" />
-                </div>
-              </div>
-              <div className="mt-6 flex items-center justify-between text-sm text-slate-500">
-                <span>{selectedAccount?.accountName ?? UI_TEXT.noBankAccount}</span>
-                <span>{selectedAccount?.accountNumber ?? "-"}</span>
-              </div>
-            </div>
-
-            <div className="rounded-3xl border border-blue-100 bg-blue-50/70 px-5 py-5">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-slate-500">{UI_TEXT.monthlySpent}</p>
-                <CreditCard className="h-4 w-4 text-blue-500" />
-              </div>
-              <p className="mt-4 text-2xl font-bold text-slate-900">
-                {selectedAccount ? formatAmount(selectedAccount.spentThisMonth) : "-"}
-              </p>
-              <p className="mt-2 text-sm text-slate-500">{UI_TEXT.monthlySpentHint}</p>
-            </div>
-
-            <div className="rounded-3xl border border-emerald-100 bg-emerald-50/80 px-5 py-5">
-              <p className="text-sm font-medium text-slate-500">{UI_TEXT.cardInfo}</p>
-              <p className="mt-4 text-lg font-semibold text-slate-900">
-                {maskCardNumber(selectedAccount?.cardNumber ?? null)}
-              </p>
-              <p className="mt-1 text-sm text-slate-500">{selectedAccount?.cardStatus ?? UI_TEXT.noCardIssued}</p>
-              <p className="mt-4 text-sm font-medium text-emerald-700">
-                {selectedAccount?.cardId ? UI_TEXT.activeCard : UI_TEXT.noLinkedCard}
-              </p>
-            </div>
-          </div>
+      <div className="min-h-screen bg-slate-50">
+        <div className="mx-auto max-w-6xl px-6 pt-12 pb-6">
+          <h1 className="text-2xl font-bold text-slate-800">{UI_TEXT.title}</h1>
+          <p className="mt-2 text-sm text-slate-400">{UI_TEXT.subtitle}</p>
         </div>
 
-        {isLoading ? (
-          <div className="px-6 py-16 text-center text-sm text-slate-500 md:px-8">{UI_TEXT.loading}</div>
-        ) : errorMessage ? (
-          <div className="px-6 py-16 text-center md:px-8">
-            <p className="text-sm font-medium text-rose-600">{errorMessage}</p>
-          </div>
-        ) : !selectedAccount || mergedTransactions.length === 0 ? (
-          <div className="px-6 py-16 text-center md:px-8">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400">
-              <Receipt className="h-6 w-6" />
-            </div>
-            <p className="mt-4 text-base font-semibold text-slate-900">{UI_TEXT.emptyTitle}</p>
-            <p className="mt-2 text-sm text-slate-500">{UI_TEXT.emptyBody}</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-100">
-            {mergedTransactions.map((transaction) => (
-              <div
-                key={transaction.transactionId}
-                className={`px-6 py-5 transition-colors md:px-8 ${
-                  isLoanDisbursementTransaction(transaction)
-                    ? "bg-emerald-50/50 hover:bg-emerald-50"
-                    : "hover:bg-slate-50"
-                } ${isAutoRepaymentTransaction(transaction) ? "cursor-pointer" : ""}`}
-                onClick={
-                  isAutoRepaymentTransaction(transaction)
-                    ? () => handleTransactionClick(transaction)
-                    : undefined
-                }
-                onKeyDown={
-                  isAutoRepaymentTransaction(transaction)
-                    ? (event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
-                          handleTransactionClick(transaction);
-                        }
-                      }
-                    : undefined
-                }
-                role={isAutoRepaymentTransaction(transaction) ? "button" : undefined}
-                tabIndex={isAutoRepaymentTransaction(transaction) ? 0 : undefined}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex min-w-0 items-start gap-4">
-                    <div
-                      className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border ${
-                        isLoanDisbursementTransaction(transaction)
-                          ? "border-emerald-100 bg-emerald-50 text-emerald-600"
-                          : "border-blue-100 bg-blue-50 text-blue-500"
-                      }`}
-                    >
-                      <Receipt className="h-5 w-5" />
-                    </div>
-
-                    <div className="min-w-0">
-                      <p className="truncate text-base font-semibold text-slate-900">
-                        {transaction.marketName}
-                      </p>
-                      <p className="mt-1 text-xs font-medium text-slate-500">
-                        {isLoanDisbursementTransaction(transaction)
-                          ? "대출 실행 입금"
-                          : isSavingsTransaction(transaction)
-                            ? transaction.menuName ?? "예적금 거래"
-                          : transaction.categoryName}
-                      </p>
-                      <p className="mt-1 text-xs text-slate-400">{transaction.transactionDatetime}</p>
-                    </div>
-                  </div>
-
-                  <div className="shrink-0 text-right">
-                    <p
-                      className={`text-lg font-bold md:text-xl ${
-                        transaction.sourceType === "CARD"
-                          ? isLoanDisbursementTransaction(transaction)
-                            ? "text-emerald-600"
-                            : "text-rose-600"
-                          : isIncomingTransaction(transaction)
-                          ? "text-emerald-600"
-                          : "text-rose-600"
-                      }`}
-                    >
-                      {transaction.sourceType === "CARD"
-                        ? isLoanDisbursementTransaction(transaction)
-                          ? "+"
-                          : "-"
-                        : isIncomingTransaction(transaction)
-                          ? "+"
-                          : "-"}
-                      {formatAmount(Math.abs(transaction.amount))}
-                    </p>
-                    {isAutoRepaymentTransaction(transaction) && transaction.repaymentAmount !== null ? (
-                      <p className="mt-1 text-xs font-medium text-slate-500">
-                        -{formatAmount(Math.abs(transaction.repaymentAmount))} 자동상환
-                      </p>
-                    ) : null}
-                  </div>
+        <div className="mx-auto max-w-6xl px-6 pb-14">
+          {/* 계좌 선택 및 요약 카드 */}
+          <div className="mb-8 rounded-2xl bg-white p-6 shadow-[0_2px_20px_rgba(0,0,0,0.08)]">
+            <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="w-full md:max-w-xs">
+                <label className="mb-2 block text-sm font-bold text-slate-400 uppercase tracking-wider">{UI_TEXT.selectAccount}</label>
+                <div className="relative">
+                  <select
+                      value={selectedAccountId ?? ""}
+                      onChange={(e) => setSelectedAccountId(Number(e.target.value))}
+                      className="h-12 w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 pr-10 text-sm font-semibold text-slate-700 outline-none focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
+                  >
+                    {accounts.map((acc) => (
+                        <option key={acc.accountId} value={acc.accountId}>{acc.accountName} {acc.accountNumber}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-3.5 h-5 w-5 text-slate-400 pointer-events-none" />
                 </div>
               </div>
-            ))}
+            </div>
+
+            <div className="grid grid-cols-1 divide-y divide-slate-100 md:grid-cols-3 md:divide-x md:divide-y-0">
+              <div className="py-4 md:px-6 md:py-2">
+                <h3 className="text-sm font-bold text-sky-600 uppercase tracking-wider">{UI_TEXT.availableBalance}</h3>
+                <p className="mt-2 text-2xl font-bold text-slate-900">{selectedAccount ? formatAmount(selectedAccount.balance) : "-"}</p>
+                <p className="mt-1 text-sm text-slate-400">{selectedAccount?.accountNumber}</p>
+              </div>
+              <div className="py-4 md:px-6 md:py-2">
+                <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider">{UI_TEXT.monthlySpent}</h3>
+                <p className="mt-2 text-2xl font-bold text-slate-900">{selectedAccount ? formatAmount(selectedAccount.spentThisMonth) : "-"}</p>
+                <p className="mt-1 text-sm text-slate-400">{UI_TEXT.monthlySpentHint}</p>
+              </div>
+              <div className="py-4 md:px-6 md:py-2">
+                <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider">{UI_TEXT.cardInfo}</h3>
+                <p className="mt-2 text-lg font-bold text-slate-900">{maskCardNumber(selectedAccount?.cardNumber ?? null)}</p>
+                <div className="mt-1 flex items-center gap-2">
+                <span className="text-sm font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                  {selectedAccount?.cardId ? UI_TEXT.activeCard : UI_TEXT.noLinkedCard}
+                </span>
+                </div>
+              </div>
+            </div>
           </div>
-        )}
+
+          {/* 안내 문구 추가 */}
+          <div className="mb-6 flex items-center gap-3 rounded-xl bg-white shadow-[0_2px_20px_rgba(0,0,0,0.08)] px-4 py-3.5">
+            <Info className="h-5 w-5 text-rose-500 shrink-0" />
+            <p className="text-lg font-medium text-rose-500 font-medium leading-relaxed">
+              자동상환된 카드내역을 누르면 해당 대출 관리페이지에 최근상환내역으로 이동합니다.
+            </p>
+          </div>
+
+          {/* 거래 내역 리스트 */}
+          <div className="rounded-2xl bg-white shadow-[0_2px_20px_rgba(0,0,0,0.08)] overflow-hidden">
+            {errorMessage ? (
+                <div className="py-20 text-center text-rose-500 font-medium">{errorMessage}</div>
+            ) : mergedTransactions.length === 0 ? (
+                <div className="py-20 text-center">
+                  <Receipt className="mx-auto h-12 w-12 text-slate-200 mb-4" />
+                  <p className="text-slate-900 font-bold">{UI_TEXT.emptyTitle}</p>
+                  <p className="text-slate-400 text-sm mt-1">{UI_TEXT.emptyBody}</p>
+                </div>
+            ) : (
+                <div className="divide-y divide-slate-50">
+                  {mergedTransactions.map((tx) => (
+                      <div
+                          key={tx.transactionId}
+                          onClick={() => handleTransactionClick(tx)}
+                          className={`group flex items-center justify-between p-6 transition-all hover:bg-slate-50/80 ${isAutoRepaymentTransaction(tx) ? "cursor-pointer" : ""}`}
+                      >
+                        <div className="flex items-center gap-4">
+                          <div>
+                            <p className="text-base font-bold text-slate-900">{tx.marketName}</p>
+                            <p className="text-sm font-semibold text-slate-400 mt-0.5">
+                              {isLoanDisbursementTransaction(tx) ? "대출 실행 입금" : isSavingsTransaction(tx) ? tx.menuName : tx.categoryName}
+                              <span className="mx-2 text-slate-200">|</span>
+                              {tx.transactionDatetime}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className={`text-lg font-extrabold ${
+                              (tx.sourceType === "CARD" && isLoanDisbursementTransaction(tx)) || (tx.sourceType === "DEPOSIT" && isIncomingTransaction(tx))
+                                  ? "text-emerald-500" : "text-slate-900"
+                          }`}>
+                            {((tx.sourceType === "CARD" && isLoanDisbursementTransaction(tx)) || (tx.sourceType === "DEPOSIT" && isIncomingTransaction(tx))) ? "+" : "-"}
+                            {formatAmount(Math.abs(tx.amount))}
+                          </p>
+                          {isAutoRepaymentTransaction(tx) && tx.repaymentAmount !== null && (
+                              <p className="text-sm font-bold text-red-500 mt-1 bg-violet-50 px-2 py-0.5 rounded-md inline-block">
+                                {formatAmount(Math.abs(tx.repaymentAmount))} 자동상환
+                              </p>
+                          )}
+                        </div>
+                      </div>
+                  ))}
+                </div>
+            )}
+          </div>
+        </div>
       </div>
-    </div>
   );
 }
