@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { MessageCircle, Send, X } from "lucide-react";
 
 import { sendMessage, type ChatAction } from "../api/chat";
+import { useAuthStatus } from "../hooks/useAuthStatus";
 import {
   CHAT_HISTORY_STORAGE_KEY,
   CHAT_SESSION_ID_STORAGE_KEY,
@@ -15,6 +16,17 @@ type Message = {
   sender: "user" | "bot";
   quickReplies?: ChatAction[];
 };
+
+function getInitialMessages(isAuthenticated: boolean): Message[] {
+  if (!isAuthenticated) {
+    return [
+      {
+        text: "안녕하세요.\nNUDGEBANK 금융 상담 AI입니다.\n로그인 후에 이용해주세요.",
+        sender: "bot",
+      },
+    ];
+  }
+}
 
 function buildFallbackQuickReplies(botText: string): ChatAction[] {
   const text = botText.toLowerCase();
@@ -52,36 +64,22 @@ function buildFallbackQuickReplies(botText: string): ChatAction[] {
 
 export default function ChatBot() {
   const navigate = useNavigate();
+  const { isAuthenticated, isLoading } = useAuthStatus();
+
+  // 비로그인 상태를 따로 계산해서 입력/전송 차단에 사용
+  const isGuest = !isLoading && !isAuthenticated;
 
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(() =>
-    sessionStorage.getItem(CHAT_SESSION_ID_STORAGE_KEY),
+      sessionStorage.getItem(CHAT_SESSION_ID_STORAGE_KEY),
   );
   const [messages, setMessages] = useState<Message[]>(() => {
     const saved = sessionStorage.getItem(CHAT_HISTORY_STORAGE_KEY);
     if (saved) return JSON.parse(saved);
 
-    return [
-      {
-        text: "안녕하세요.\nNUDGEBANK 금융 상담 AI입니다.\n무엇을 도와드릴까요?",
-        sender: "bot",
-        quickReplies: [
-          { type: "navigate", label: "대출 상품 보기", href: "/loan/products" },
-          {
-            type: "navigate",
-            label: "상담 기록 보기",
-            href: "/help/chat-history",
-          },
-          {
-            type: "ask",
-            label: "추천 상품 알려줘",
-            value: "내게 맞는 금융 상품 추천해줘",
-          },
-        ],
-      },
-    ];
+    return [];
   });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -89,6 +87,23 @@ export default function ChatBot() {
   const bufferRef = useRef("");
   const typingIntervalRef = useRef<number | null>(null);
   const streamDoneRef = useRef(false);
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (!isAuthenticated) {
+      setMessages(getInitialMessages(false));
+      return;
+    }
+
+    const saved = sessionStorage.getItem(CHAT_HISTORY_STORAGE_KEY);
+    if (saved) {
+      setMessages(JSON.parse(saved));
+      return;
+    }
+
+    setMessages(getInitialMessages(true));
+  }, [isAuthenticated, isLoading]);
 
   useEffect(() => {
     sessionStorage.setItem(CHAT_HISTORY_STORAGE_KEY, JSON.stringify(messages));
@@ -109,10 +124,11 @@ export default function ChatBot() {
   }, [messages, isOpen]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    // 비로그인 상태에서는 입력창 포커스를 주지 않음
+    if (!isOpen || isGuest) return;
     const id = requestAnimationFrame(() => inputRef.current?.focus());
     return () => cancelAnimationFrame(id);
-  }, [isOpen]);
+  }, [isOpen, isGuest]);
 
   useEffect(() => {
     return () => {
@@ -171,12 +187,19 @@ export default function ChatBot() {
           typingIntervalRef.current = null;
         }
         setIsStreaming(false);
-        requestAnimationFrame(() => inputRef.current?.focus());
+
+        // 비로그인 상태에서는 응답 후에도 입력창 포커스를 주지 않음
+        if (!isGuest) {
+          requestAnimationFrame(() => inputRef.current?.focus());
+        }
       }
     }, 20);
   };
 
   const submitMessage = async (rawMessage: string) => {
+    // 비로그인 상태면 아예 전송 함수 진입 차단
+    if (isGuest) return;
+
     const trimmed = rawMessage.trim();
     if (!trimmed || isStreaming) return;
 
@@ -197,13 +220,13 @@ export default function ChatBot() {
       const collectedChunks: string[] = [];
 
       const result = await sendMessage(
-        "user-123",
-        trimmed,
-        (chunk) => {
-          collectedChunks.push(chunk);
-          bufferRef.current += chunk;
-        },
-        sessionId ?? undefined,
+          "user-123",
+          trimmed,
+          (chunk) => {
+            collectedChunks.push(chunk);
+            bufferRef.current += chunk;
+          },
+          sessionId ?? undefined,
       );
 
       if (result.sessionId) {
@@ -212,9 +235,9 @@ export default function ChatBot() {
 
       const finalBotText = collectedChunks.join("").trim();
       attachQuickRepliesToLastBotMessage(
-        result.quickReplies.length
-          ? result.quickReplies
-          : buildFallbackQuickReplies(finalBotText),
+          result.quickReplies?.length
+              ? result.quickReplies
+              : buildFallbackQuickReplies(finalBotText),
       );
 
       streamDoneRef.current = true;
@@ -241,115 +264,129 @@ export default function ChatBot() {
       return;
     }
 
+    // 비로그인 상태에서는 quick reply 질문도 막음
+    if (isGuest) return;
+
     await submitMessage(reply.value);
   };
 
   return (
-    <>
-      <button
-        type="button"
-        onClick={() => setIsOpen(true)}
-        className={`fixed bottom-8 right-8 rounded-full border border-white/20 bg-gradient-to-r from-[#dce9f8] to-[#c6dcf4] p-4 text-slate-800 shadow-2xl transition-all hover:from-[#c6dcf4] hover:to-[#b4d0f0] ${
-          isOpen ? "pointer-events-none opacity-0" : "opacity-100"
-        }`}
-      >
-        <MessageCircle className="h-6 w-6" />
-      </button>
+      <>
+        <button
+            type="button"
+            onClick={() => setIsOpen(true)}
+            className={`fixed bottom-8 right-8 rounded-full border border-white/20 bg-gradient-to-r from-[#dce9f8] to-[#c6dcf4] p-4 text-slate-800 shadow-2xl transition-all hover:from-[#c6dcf4] hover:to-[#b4d0f0] ${
+                isOpen ? "pointer-events-none opacity-0" : "opacity-100"
+            }`}
+        >
+          <MessageCircle className="h-6 w-6" />
+        </button>
 
-      {isOpen && (
-        <div className="fixed bottom-8 right-8 z-50 flex h-[560px] w-96 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
-          <div className="flex items-center justify-between bg-gradient-to-r from-[#dce9f8] to-[#c6dcf4] p-4 text-slate-800">
-            <div className="flex items-center gap-2">
-              <MessageCircle className="h-5 w-5" />
-              <span className="font-semibold">NUDGEBOT</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsOpen(false)}
-              className="rounded-full p-1 transition hover:bg-[#b4d0f0]/50"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-
-          <div className="flex-1 space-y-3 overflow-y-auto bg-[#f4f8fd] p-4">
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex flex-col ${
-                  message.sender === "user" ? "items-end" : "items-start"
-                }`}
-              >
-                <div
-                  className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                    message.sender === "user"
-                      ? "bg-gradient-to-r from-[#dce9f8] to-[#c6dcf4] text-slate-800"
-                      : "border border-slate-200 bg-white text-slate-800"
-                  }`}
-                >
-                  {message.text ? (
-                    <MessageMarkdown
-                      content={message.text}
-                      invert={message.sender === "user"}
-                    />
-                  ) : message.sender === "bot" && isStreaming ? (
-                    "응답 작성 중..."
-                  ) : null}
+        {isOpen && (
+            <div className="fixed bottom-8 right-8 z-50 flex h-[560px] w-96 flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+              <div className="flex items-center justify-between bg-gradient-to-r from-[#dce9f8] to-[#c6dcf4] p-4 text-slate-800">
+                <div className="flex items-center gap-2">
+                  <MessageCircle className="h-5 w-5" />
+                  <span className="font-semibold">NUDGEBOT</span>
                 </div>
-
-                {message.sender === "bot" && message.quickReplies?.length ? (
-                  <div className="mt-2 flex max-w-[80%] flex-wrap gap-2">
-                    {message.quickReplies
-                      .slice(0, 3)
-                      .map((reply, replyIndex) => (
-                        <Button
-                          key={`${reply.label}-${replyIndex}`}
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="rounded-full border-[#c6dcf4] bg-[#f4f8fd] text-slate-700 hover:bg-[#eaf2fb]"
-                          onClick={() => void handleQuickReplyClick(reply)}
-                          disabled={isStreaming}
-                        >
-                          {reply.label}
-                        </Button>
-                      ))}
-                  </div>
-                ) : null}
+                <button
+                    type="button"
+                    onClick={() => setIsOpen(false)}
+                    className="rounded-full p-1 transition hover:bg-[#b4d0f0]/50"
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
 
-          <div className="border-t border-slate-200 bg-white p-4">
-            <div className="flex items-end gap-2">
+              <div className="flex-1 space-y-3 overflow-y-auto bg-[#f4f8fd] p-4">
+                {messages.map((message, index) => (
+                    <div
+                        key={index}
+                        className={`flex flex-col ${
+                            message.sender === "user" ? "items-end" : "items-start"
+                        }`}
+                    >
+                      <div
+                          className={`max-w-[80%] rounded-2xl px-4 py-3 ${
+                              message.sender === "user"
+                                  ? "bg-gradient-to-r from-[#dce9f8] to-[#c6dcf4] text-slate-800"
+                                  : "border border-slate-200 bg-white text-slate-800"
+                          }`}
+                      >
+                        {message.text ? (
+                            <MessageMarkdown
+                                content={message.text}
+                                invert={message.sender === "user"}
+                            />
+                        ) : message.sender === "bot" && isStreaming ? (
+                            "응답 작성 중..."
+                        ) : null}
+                      </div>
+
+                      {message.sender === "bot" && message.quickReplies?.length ? (
+                          <div className="mt-2 flex max-w-[80%] flex-wrap gap-2">
+                            {message.quickReplies
+                            .slice(0, 3)
+                            .map((reply, replyIndex) => (
+                                <Button
+                                    key={`${reply.label}-${replyIndex}`}
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    className="rounded-full border-[#c6dcf4] bg-[#f4f8fd] text-slate-700 hover:bg-[#eaf2fb]"
+                                    onClick={() => void handleQuickReplyClick(reply)}
+                                    // 비로그인 상태에서는 quick reply 버튼도 비활성화
+                                    disabled={isStreaming || isGuest}
+                                >
+                                  {reply.label}
+                                </Button>
+                            ))}
+                          </div>
+                      ) : null}
+                    </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
+
+              <div className="border-t border-slate-200 bg-white p-4">
+                <div className="flex items-end gap-2">
               <textarea
-                ref={inputRef}
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    void submitMessage(inputValue);
+                  ref={inputRef}
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={(e) => {
+                    // 비로그인 상태에서는 엔터 입력 전송도 막음
+                    if (isGuest) return;
+
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      void submitMessage(inputValue);
+                    }
+                  }}
+                  // 비로그인 상태일 때 안내용 placeholder 표시
+                  placeholder={
+                    isGuest
+                        ? "로그인 후에 이용해주세요."
+                        : "메시지를 입력하세요..."
                   }
-                }}
-                placeholder="메시지를 입력하세요..."
-                disabled={isStreaming}
-                rows={1}
-                className="flex-1 resize-none rounded-xl border border-slate-300 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dce9f8] disabled:bg-slate-100"
+                  // 비로그인 상태에서는 입력창 자체를 비활성화
+                  disabled={isStreaming || isGuest}
+                  rows={1}
+                  className="flex-1 resize-none rounded-xl border border-slate-300 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dce9f8] disabled:bg-slate-100"
               />
-              <button
-                type="button"
-                onClick={() => void submitMessage(inputValue)}
-                disabled={isStreaming || !inputValue.trim()}
-                className="rounded-xl bg-gradient-to-r from-[#dce9f8] to-[#c6dcf4] p-3 text-slate-800 transition hover:from-[#c6dcf4] hover:to-[#b4d0f0] disabled:opacity-50"
-              >
-                <Send className="h-5 w-5" />
-              </button>
+                  <button
+                      type="button"
+                      onClick={() => void submitMessage(inputValue)}
+                      // 비로그인 상태에서는 전송 버튼도 비활성화
+                      disabled={isStreaming || isGuest || !inputValue.trim()}
+                      className="rounded-xl bg-gradient-to-r from-[#dce9f8] to-[#c6dcf4] p-3 text-slate-800 transition hover:from-[#c6dcf4] hover:to-[#b4d0f0] disabled:opacity-50"
+                  >
+                    <Send className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
-    </>
+        )}
+      </>
   );
 }
