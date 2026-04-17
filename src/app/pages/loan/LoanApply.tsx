@@ -457,15 +457,17 @@ export default function LoanApply() {
                 />
                 대출 심사를 위한 개인정보 수집 및 이용에 동의합니다.
               </label>
-              <label className="flex items-start gap-2.5 text-sm text-slate-600">
-                <input
-                    type="checkbox"
-                    checked={agreeAutomaticRepayment}
-                    onChange={(event) => setAgreeAutomaticRepayment(event.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-slate-900"
-                />
-                자동 상환 서비스 이용에 동의합니다.
-              </label>
+              {productId === "consumption-loan" && (
+                  <label className="flex items-start gap-2.5 text-sm text-slate-600">
+                    <input
+                        type="checkbox"
+                        checked={agreeAutomaticRepayment}
+                        onChange={(event) => setAgreeAutomaticRepayment(event.target.checked)}
+                        className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-slate-900"
+                    />
+                    자동 상환 서비스 이용에 동의합니다.
+                  </label>
+              )}
             </div>
           </div>
 
@@ -491,7 +493,7 @@ export default function LoanApply() {
               ? "신청 처리 중..."
               : eligibility && !eligibility.eligible
                 ? "대출 신청 불가"
-                : "대출 신청 완료"}
+                : "대출 신청"}
             {!isSubmitDisabled && <ArrowRight className="h-4 w-4" style={{ color: "#ffffff" }} />}
           </button>
         </form>
