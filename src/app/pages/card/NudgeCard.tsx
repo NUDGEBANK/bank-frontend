@@ -517,14 +517,14 @@ export default function NudgeCard() {
                 open={isApplyDialogOpen}
             >
                 <DialogContent
-                    className="sm:max-w-5xl border-white/50 bg-gradient-to-br from-blue-50/95 via-white/95 to-sky-100/95 p-0 text-slate-800 shadow-2xl">
+                    className="sm:max-w-5xl border-slate-200 bg-white p-0 text-slate-800 shadow-[0_20px_60px_rgba(15,23,42,0.18)]">
                     {issueResult ? (
                         <div>
                             <div
-                                className="border-b border-blue-200/80 bg-gradient-to-r from-blue-200/70 via-sky-100/80 to-purple-100/70 px-8 py-6">
+                                className="border-b border-slate-200 bg-slate-50 px-8 py-6">
                                 <DialogHeader className="text-left">
-                                    <DialogTitle className="text-2xl text-slate-800">가상카드 발급이 완료되었습니다</DialogTitle>
-                                    <DialogDescription className="text-sm text-slate-600">
+                                    <DialogTitle className="text-2xl text-slate-900">가상카드 발급이 완료되었습니다</DialogTitle>
+                                    <DialogDescription className="text-sm text-slate-500">
                                         계좌 생성과 카드 발급이 모두 완료되었습니다. 아래 정보를 확인해주세요.
                                     </DialogDescription>
                                 </DialogHeader>
@@ -532,43 +532,43 @@ export default function NudgeCard() {
 
                             <div className="space-y-6 px-8 py-6">
                                 <div className="grid gap-4 md:grid-cols-2">
-                                    <div className="rounded-xl border border-blue-200/80 bg-white/80 p-5 shadow-sm">
-                                        <p className="mb-3 text-sm font-semibold text-blue-700">생성된 계좌 정보</p>
-                                        <div className="space-y-3 text-sm text-slate-600">
+                                    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                                        <p className="mb-3 text-sm font-semibold text-slate-900">생성된 계좌 정보</p>
+                                        <div className="space-y-3 text-sm text-slate-700">
                                             <div>
-                                                <p className="text-slate-800">계좌명</p>
+                                                <p className="text-slate-900">계좌명</p>
                                                 <p>{issueResult.accountName}</p>
                                             </div>
                                             <div>
-                                                <p className="text-slate-800">계좌번호</p>
+                                                <p className="text-slate-900">계좌번호</p>
                                                 <p>{issueResult.accountNumber}</p>
                                             </div>
                                             <div>
-                                                <p className="text-slate-800">시작 잔고</p>
+                                                <p className="text-slate-900">시작 잔고</p>
                                                 <p>{issueResult.balance?.toLocaleString("ko-KR")}원</p>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="rounded-xl border border-blue-200/80 bg-white/80 p-5 shadow-sm">
-                                        <p className="mb-3 text-sm font-semibold text-blue-700">발급된 카드 정보</p>
-                                        <div className="space-y-3 text-sm text-slate-600">
+                                    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                                        <p className="mb-3 text-sm font-semibold text-slate-900">발급된 카드 정보</p>
+                                        <div className="space-y-3 text-sm text-slate-700">
                                             <div>
-                                                <p className="text-slate-800">카드번호</p>
+                                                <p className="text-slate-900">카드번호</p>
                                                 <p>{issueResult.cardNumber}</p>
                                             </div>
                                             <div className="grid grid-cols-2 gap-4">
                                                 <div>
-                                                    <p className="text-slate-800">유효기간</p>
+                                                    <p className="text-slate-900">유효기간</p>
                                                     <p>{issueResult.expiredYm}</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-slate-800">CVC</p>
+                                                    <p className="text-slate-900">CVC</p>
                                                     <p>{issueResult.cvc}</p>
                                                 </div>
                                             </div>
                                             <div>
-                                                <p className="text-slate-800">상태</p>
+                                                <p className="text-slate-900">상태</p>
                                                 <p>{issueResult.status}</p>
                                             </div>
                                         </div>
@@ -576,9 +576,9 @@ export default function NudgeCard() {
                                 </div>
                             </div>
 
-                            <DialogFooter className="border-t border-blue-200/80 bg-white/50 px-8 py-5">
+                            <DialogFooter className="border-t border-slate-200 bg-slate-50 px-8 py-5">
                                 <button
-                                    className="rounded-lg bg-[#2a4b78] px-5 py-2.5 font-semibold text-white transition-all hover:bg-[#223f64]"
+                                    className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold transition-colors hover:bg-gray-800"
                                     onClick={closeDialog} type="button">
                                     <span style={{color: "#fff"}}>확인</span>
                                 </button>
@@ -587,10 +587,10 @@ export default function NudgeCard() {
                     ) : (
                         <form onSubmit={handleSubmit}>
                             <div
-                                className="border-b border-blue-200/80 bg-gradient-to-r from-blue-200/70 via-sky-100/80 to-purple-100/70 px-8 py-6">
+                                className="border-b border-slate-200 bg-slate-50 px-8 py-6">
                                 <DialogHeader className="text-left">
-                                    <DialogTitle className="text-2xl text-slate-800">계좌 생성 및 카드 발급 신청</DialogTitle>
-                                    <DialogDescription className="text-sm text-slate-600">
+                                    <DialogTitle className="text-2xl text-slate-900">계좌 생성 및 카드 발급 신청</DialogTitle>
+                                    <DialogDescription className="text-sm text-slate-500">
                                         입력한 계좌명으로 계좌가 생성되고, 해당 계좌에 연결된 가상카드가 발급됩니다.
                                     </DialogDescription>
                                 </DialogHeader>
@@ -598,37 +598,37 @@ export default function NudgeCard() {
 
                             <div className="space-y-6 px-8 py-6">
                                 <div className="grid gap-4 md:grid-cols-2">
-                                    <div className="rounded-xl border border-blue-200/80 bg-white/80 p-5 shadow-sm">
-                                        <p className="mb-3 text-sm font-semibold text-blue-700">계좌 생성 정보</p>
-                                        <div className="space-y-3 text-sm text-slate-600">
+                                    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                                        <p className="mb-3 text-sm font-semibold text-slate-900">계좌 생성 정보</p>
+                                        <div className="space-y-3 text-sm text-slate-700">
                                             <div>
-                                                <p className="text-slate-800">계좌명</p>
+                                                <p className="text-slate-900">계좌명</p>
                                                 <p>입력한 계좌명으로 계좌가 생성됩니다.</p>
                                             </div>
                                             <div>
-                                                <p className="text-slate-800">계좌번호</p>
+                                                <p className="text-slate-900">계좌번호</p>
                                                 <p>14자리 번호가 자동 발급됩니다.</p>
                                             </div>
                                             <div>
-                                                <p className="text-slate-800">초기 정보</p>
+                                                <p className="text-slate-900">초기 정보</p>
                                                 <p>잔고 0원으로 생성됩니다.</p>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="rounded-xl border border-blue-200/80 bg-white/80 p-5 shadow-sm">
-                                        <p className="mb-3 text-sm font-semibold text-blue-700">카드 생성 정보</p>
-                                        <div className="space-y-3 text-sm text-slate-600">
+                                    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                                        <p className="mb-3 text-sm font-semibold text-slate-900">카드 생성 정보</p>
+                                        <div className="space-y-3 text-sm text-slate-700">
                                             <div>
-                                                <p className="text-slate-800">카드번호</p>
+                                                <p className="text-slate-900">카드번호</p>
                                                 <p>카드번호가 자동 생성됩니다.</p>
                                             </div>
                                             <div>
-                                                <p className="text-slate-800">유효기간 / CVC</p>
+                                                <p className="text-slate-900">유효기간 / CVC</p>
                                                 <p>발급 시 자동 생성되며 완료 화면에서 바로 확인할 수 있습니다.</p>
                                             </div>
                                             <div>
-                                                <p className="text-slate-800">발급 상태</p>
+                                                <p className="text-slate-900">발급 상태</p>
                                                 <p>발급 완료 직후 ACTIVE 상태로 사용할 수 있습니다.</p>
                                             </div>
                                         </div>
@@ -636,14 +636,14 @@ export default function NudgeCard() {
                                 </div>
 
                                 <div className="grid gap-4 md:grid-cols-2">
-                                    <div className="rounded-xl border border-blue-200/80 bg-white/80 p-5 shadow-sm">
-                                        <p className="mb-3 text-sm font-semibold text-blue-700">계좌 정보 입력</p>
-                                        <div className="space-y-3 text-sm text-slate-600">
+                                    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                                        <p className="mb-3 text-sm font-semibold text-slate-900">계좌 정보 입력</p>
+                                        <div className="space-y-3 text-sm text-slate-700">
                                             <div>
-                                                <label className="mb-1 block text-slate-800"
+                                                <label className="mb-1 block text-slate-900"
                                                        htmlFor="account-name">계좌명</label>
                                                 <input
-                                                    className="w-full rounded-lg border border-blue-200 bg-white px-3 py-2 text-slate-800 outline-none focus:border-blue-400"
+                                                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
                                                     id="account-name"
                                                     onChange={(event) => setAccountName(event.target.value)}
                                                     value={accountName}
@@ -652,14 +652,14 @@ export default function NudgeCard() {
                                         </div>
                                     </div>
 
-                                    <div className="rounded-xl border border-blue-200/80 bg-white/80 p-5 shadow-sm">
-                                        <p className="mb-3 text-sm font-semibold text-blue-700">카드 정보 입력</p>
-                                        <div className="space-y-3 text-sm text-slate-600">
+                                    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                                        <p className="mb-3 text-sm font-semibold text-slate-900">카드 정보 입력</p>
+                                        <div className="space-y-3 text-sm text-slate-700">
                                             <div>
-                                                <label className="mb-1 block text-slate-800" htmlFor="card-password">카드
+                                                <label className="mb-1 block text-slate-900" htmlFor="card-password">카드
                                                     비밀번호</label>
                                                 <input
-                                                    className="w-full rounded-lg border border-blue-200 bg-white px-3 py-2 text-slate-800 outline-none focus:border-blue-400"
+                                                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-900 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
                                                     id="card-password"
                                                     inputMode="numeric"
                                                     maxLength={4}
@@ -673,17 +673,17 @@ export default function NudgeCard() {
                                 </div>
 
                                 {submitError &&
-                                    <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{submitError}</p>}
+                                    <p className="rounded-lg border border-slate-300 bg-slate-100 px-4 py-3 text-sm text-slate-800">{submitError}</p>}
                             </div>
 
-                            <DialogFooter className="border-t border-blue-200/80 bg-white/50 px-8 py-5">
+                            <DialogFooter className="border-t border-slate-200 bg-slate-50 px-8 py-5">
                                 <button
-                                    className="rounded-lg border border-blue-200 bg-white px-5 py-2.5 text-slate-700 transition-colors hover:bg-blue-50"
+                                    className="rounded-full border border-slate-200 bg-white px-6 py-2.5 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-50"
                                     onClick={closeDialog} type="button">
                                     닫기
                                 </button>
                                 <button
-                                    className="rounded-lg bg-[#2a4b78] px-5 py-2.5 font-semibold text-white transition-all hover:bg-[#223f64] disabled:cursor-not-allowed disabled:bg-slate-400"
+                                    className="rounded-full bg-black px-6 py-2.5 text-sm font-semibold transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-slate-400"
                                     disabled={isSubmitting}
                                     type="submit"
                                 >
