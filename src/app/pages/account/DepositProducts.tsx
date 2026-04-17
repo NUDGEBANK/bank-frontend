@@ -122,8 +122,8 @@ export default function DepositProducts() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="mx-auto max-w-6xl px-6 pb-14 pt-12">
+    <div className="bg-slate-50">
+      <div className="mx-auto max-w-6xl px-6 pb-6 pt-12">
         <h1 className="text-2xl font-bold text-slate-800">예적금 상품</h1>
         <p className="mt-2 text-sm text-slate-400">
           예금과 적금 상품을 비교하고 바로 가입해보세요
