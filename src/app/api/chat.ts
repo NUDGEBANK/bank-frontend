@@ -19,12 +19,11 @@ export type ChatAction =
 
 export interface ChatResponsePayload {
   answer: string;
-  quickReplies?: ChatAction[]; // 버튼형 다음 질문 데이터
+  quickReplies?: ChatAction[];
 }
 
-export interface SendMessageResult {
-  sessionId: string | null;
-  quickReplies: ChatAction[];
+export interface ChatResponse {
+  answer: string;
 }
 
 export interface ChatSessionSummary {
@@ -49,59 +48,13 @@ export interface ChatSessionDetail {
   messages: ChatMessageItem[];
 }
 
-function parseSseBuffer(
-  buffer: string,
-  onChunk: (chunk: string) => void,
-  onDone: (payload: ChatResponsePayload) => void,
-): string {
-  let rest = buffer;
-
-  while (true) {
-    const boundary = rest.indexOf("\n\n");
-    if (boundary < 0) break;
-
-    const rawEvent = rest.slice(0, boundary);
-    rest = rest.slice(boundary + 2);
-
-    const lines = rawEvent.split("\n");
-    let eventName = "message";
-    const dataLines: string[] = [];
-
-    for (const line of lines) {
-      if (line.startsWith("event:")) {
-        eventName = line.slice(6).trim();
-      } else if (line.startsWith("data:")) {
-        dataLines.push(line.slice(5).trim());
-      }
-    }
-
-    const rawData = dataLines.join("\n");
-    if (!rawData) continue;
-
-    const payload = JSON.parse(rawData);
-
-    if (eventName === "chunk") {
-      onChunk(payload.text ?? "");
-    }
-
-    if (eventName === "done") {
-      onDone(payload);
-    }
-
-    if (eventName === "error") {
-      throw new Error(payload.message || "챗봇 응답 생성에 실패했습니다.");
-    }
-  }
-
-  return rest;
-}
-
+// 반환 타입을 sessionId와 quickReplies를 모두 포함하는 객체로 변경했습니다.
 export async function sendMessage(
   userId: string,
   message: string,
   onChunk: (chunk: string) => void,
   sessionId?: string,
-): Promise<SendMessageResult> {
+): Promise<{ sessionId: string | null; quickReplies?: ChatAction[] }> {
   const response = await fetch("/chat-api/chat", {
     method: "POST",
     headers: {
@@ -122,7 +75,7 @@ export async function sendMessage(
   }
 
   if (!response.body) {
-    throw new Error("스트림 응답 본문이 없습니다.");
+    throw new Error("스트리밍 응답 본문이 없습니다.");
   }
 
   const reader = response.body.getReader();
@@ -130,27 +83,60 @@ export async function sendMessage(
   const nextSessionId = response.headers.get("X-Chat-Session-Id");
 
   let buffer = "";
-  let finalQuickReplies: ChatAction[] = [];
+  let finalQuickReplies: ChatAction[] | undefined = undefined;
 
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
 
+    // 받아온 chunk를 버퍼에 추가
     buffer += decoder.decode(value, { stream: true });
-    buffer = parseSseBuffer(buffer, onChunk, (payload) => {
-      finalQuickReplies = payload.quickReplies ?? [];
-    });
+    
+    // SSE는 \n\n 으로 이벤트 단위가 끝납니다.
+    const parts = buffer.split('\n\n');
+    
+    // 마지막 요소는 아직 불완전한 청크일 수 있으므로 버퍼에 남겨둡니다.
+    buffer = parts.pop() || "";
+
+    for (const part of parts) {
+      if (!part.trim()) continue;
+
+      const lines = part.split('\n');
+      let eventType = "";
+      let dataStr = "";
+
+      // 각 줄에서 event와 data 추출
+      for (const line of lines) {
+        if (line.startsWith("event:")) {
+          eventType = line.replace("event:", "").trim();
+        } else if (line.startsWith("data:")) {
+          dataStr = line.replace("data:", "").trim();
+        }
+      }
+
+      if (dataStr) {
+        try {
+          const data = JSON.parse(dataStr);
+
+          if (eventType === "chunk" && data.text) {
+            // 일반 텍스트 스트리밍
+            onChunk(data.text);
+          } else if (eventType === "done") {
+            // 스트리밍 종료 및 퀵 리플라이 수신
+            if (data.quickReplies) {
+              finalQuickReplies = data.quickReplies;
+            }
+          } else if (eventType === "error") {
+            console.error("서버 에러:", data.message);
+          }
+        } catch (e) {
+          console.error("JSON 파싱 에러:", e, "원본 데이터:", dataStr);
+        }
+      }
+    }
   }
 
-  buffer += decoder.decode();
-  buffer = parseSseBuffer(buffer, onChunk, (payload) => {
-    finalQuickReplies = payload.quickReplies ?? [];
-  });
-
-  return {
-    sessionId: nextSessionId,
-    quickReplies: finalQuickReplies,
-  };
+  return { sessionId: nextSessionId, quickReplies: finalQuickReplies };
 }
 
 export async function getChatSessions(): Promise<ChatSessionSummary[]> {
@@ -167,8 +153,7 @@ export async function getChatSessions(): Promise<ChatSessionSummary[]> {
   return response.json();
 }
 
-export async function getChatSession(
-  sessionId: string,
+export async function getChatSession(sessionId: string,
 ): Promise<ChatSessionDetail> {
   const response = await fetch(`/chat-api/chat/sessions/${sessionId}`, {
     method: "GET",
