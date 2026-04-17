@@ -1,4 +1,4 @@
-import { AlertCircle, CalendarDays, Landmark, RefreshCcw, Wallet } from "lucide-react";
+import { AlertCircle, ArrowRight, CalendarDays, Landmark, RefreshCcw, Wallet } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router";
 
@@ -416,7 +416,8 @@ export default function DepositManagement() {
             </p>
             <Link
               to="/deposit/products"
-              className="mt-6 inline-flex items-center justify-center rounded-full bg-black px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
+              className="mt-6 inline-flex items-center justify-center gap-1.5 rounded-full bg-black px-5 py-3 text-sm font-semibold transition-colors hover:bg-gray-800"
+              style={{ color: "#ffffff" }}
             >
               예적금 상품 보기
             </Link>
@@ -656,7 +657,8 @@ export default function DepositManagement() {
                           type="button"
                           onClick={handleWithdraw}
                           disabled={isClosing || detail.status !== "ACTIVE"}
-                          className="rounded-full border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="rounded-full bg-black px-5 py-3 text-sm font-semibold transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
+                          style={isClosing || detail.status !== "ACTIVE" ? undefined : { color: "#ffffff" }}
                         >
                           {isClosing ? "해지 처리 중..." : "해지하기"}
                         </button>
