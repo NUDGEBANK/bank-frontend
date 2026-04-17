@@ -50,7 +50,7 @@ const homeCards = [
     },
     {
         badge: "추천 상품",
-        title: "소비 분석 대출",
+        title: "넛지 대출",
         description: "카드 사용 패턴과 월별 지출 흐름을 정밀한 AI 분석으로 확인해 보세요.",
         to: "/loan/products/consumption-loan/apply",
         badgeClassName: "bg-sky-200/80 text-sky-900",
