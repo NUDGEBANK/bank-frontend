@@ -121,7 +121,7 @@ export default function LoanProducts() {
   const youthInUse = isProductInUse("youth-loan");
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="bg-slate-50">
       {/* 헤더 */}
       <div className="mx-auto max-w-6xl px-6 pt-12 pb-6">
         <h1 className="text-2xl font-bold text-slate-800">대출 상품</h1>
