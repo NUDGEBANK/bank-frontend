@@ -2,12 +2,19 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router";
 import { MessageCircle, Send, X } from "lucide-react";
 
-import { sendMessage, type ChatAction } from "../api/chat";
-import { useAuthStatus } from "../hooks/useAuthStatus";
 import {
   CHAT_HISTORY_STORAGE_KEY,
   CHAT_SESSION_ID_STORAGE_KEY,
 } from "../lib/chatStorage";
+import {
+  getChatSession,
+  getChatSessions,
+  sendMessage,
+  type ChatAction,
+  type ChatMessageItem,
+  type ChatSessionSummary,
+} from "../api/chat";
+import { useAuthStatus } from "../hooks/useAuthStatus";
 import MessageMarkdown from "./MessageMarkdown";
 import { Button } from "./ui/button";
 
@@ -26,6 +33,25 @@ function getInitialMessages(isAuthenticated: boolean): Message[] | undefined {
       },
     ];
   }
+}
+function mapSessionMessages(messages: ChatMessageItem[]): Message[] {
+  return messages.map((message) => {
+    const sender = message.sender_type === "USER" ? "user" : "bot";
+    const text = message.message_content;
+
+    return {
+      text,
+      sender,
+    };
+  });
+}
+
+function getSessionSortTime(session: ChatSessionSummary): number {
+  const value = session.updated_at ?? session.created_at;
+  if (!value) return 0;
+
+  const time = new Date(value).getTime();
+  return Number.isNaN(time) ? 0 : time;
 }
 
 export default function ChatBot() {
@@ -52,7 +78,7 @@ export default function ChatBot() {
       },
     ];
   });
-
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const bufferRef = useRef("");
@@ -60,46 +86,84 @@ export default function ChatBot() {
   const streamDoneRef = useRef(false);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (!isOpen) return;
 
-    if (!isAuthenticated) {
-      setMessages(getInitialMessages(false) ?? []);
-      return;
-    }
-
+    let isMounted = true;
     const saved = sessionStorage.getItem(CHAT_HISTORY_STORAGE_KEY);
     if (saved) {
       setMessages(JSON.parse(saved));
       return;
     }
+    async function syncLatestSession() {
+      if (isLoading) return;
 
-    setMessages(getInitialMessages(true) ?? []);
-  }, [isAuthenticated, isLoading]);
+      setIsHistoryLoading(true);
 
-  useEffect(() => {
-    sessionStorage.setItem(CHAT_HISTORY_STORAGE_KEY, JSON.stringify(messages));
-  }, [messages]);
+      if (!isAuthenticated) {
+        if (!isMounted) return;
+        setSessionId(null);
+        setMessages(getInitialMessages(false) ?? []);
+        setIsHistoryLoading(false);
+        return;
+      }
+          if (!isMounted) return;
+      setSessionId(null);
+      setMessages(getInitialMessages(true) ?? []);
 
-  useEffect(() => {
-    if (sessionId) {
-      sessionStorage.setItem(CHAT_SESSION_ID_STORAGE_KEY, sessionId);
-      return;
+      try {
+        const sessions = await getChatSessions();
+        if (!isMounted) return;
+
+        const latestSession = [...sessions].sort(
+            (a, b) => getSessionSortTime(b) - getSessionSortTime(a),
+        )[0];
+
+        if (!latestSession) {
+          setSessionId(null);
+          setMessages(getInitialMessages(true) ?? []);
+          return;
+        }
+
+        const detail = await getChatSession(latestSession.session_id);
+        if (!isMounted) return;
+
+        setSessionId(detail.session_id);
+        setMessages(
+            detail.messages.length
+                ? mapSessionMessages(detail.messages)
+                : getInitialMessages(true) ?? [],
+        );
+      } catch (error) {
+        if (!isMounted) return;
+
+        console.error("최신 상담 기록 불러오기 실패:", error);
+        setSessionId(null);
+        setMessages(getInitialMessages(true) ?? []);
+      } finally {
+        if (isMounted) {
+          setIsHistoryLoading(false);
+        }
+      }
     }
-    sessionStorage.removeItem(CHAT_SESSION_ID_STORAGE_KEY);
-  }, [sessionId]);
+    void syncLatestSession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, isAuthenticated, isLoading]);
 
   useEffect(() => {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages, isOpen]);
+  }, [messages, isOpen, isHistoryLoading]);
 
   useEffect(() => {
     // 비로그인 상태에서는 입력창 포커스를 주지 않음
-    if (!isOpen || isGuest) return;
+    if (!isOpen || isGuest || isHistoryLoading) return;
     const id = requestAnimationFrame(() => inputRef.current?.focus());
     return () => cancelAnimationFrame(id);
-  }, [isOpen, isGuest]);
+  }, [isOpen, isGuest, isHistoryLoading]);
 
   useEffect(() => {
     return () => {
@@ -160,7 +224,7 @@ export default function ChatBot() {
         setIsStreaming(false);
 
         // 비로그인 상태에서는 응답 후에도 입력창 포커스를 주지 않음
-        if (!isGuest) {
+        if (!isGuest && !isHistoryLoading) {
           requestAnimationFrame(() => inputRef.current?.focus());
         }
       }
@@ -169,7 +233,7 @@ export default function ChatBot() {
 
   const submitMessage = async (rawMessage: string) => {
     // 비로그인 상태면 아예 전송 함수 진입 차단
-    if (isGuest) return;
+    if (isGuest || isHistoryLoading) return;
 
     const trimmed = rawMessage.trim();
     if (!trimmed || isStreaming) return;
@@ -220,7 +284,7 @@ export default function ChatBot() {
     }
 
     // 비로그인 상태에서는 quick reply 질문도 막음
-    if (isGuest) return;
+    if (isGuest || isHistoryLoading) return;
 
     await submitMessage(reply.value);
   };
@@ -307,7 +371,7 @@ export default function ChatBot() {
                           className="rounded-full border-[#c6dcf4] bg-[#f4f8fd] text-slate-700 hover:bg-[#eaf2fb]"
                           onClick={() => void handleQuickReplyClick(reply)}
                           // 비로그인 상태에서는 quick reply 버튼도 비활성화
-                          disabled={isStreaming || isGuest}
+                          disabled={isStreaming || isGuest || isHistoryLoading}
                         >
                           {reply.label}
                         </Button>
@@ -328,6 +392,7 @@ export default function ChatBot() {
                 onKeyDown={(e) => {
                   // 비로그인 상태에서는 엔터 입력 전송도 막음
                   if (isGuest) return;
+                  if (isGuest || isHistoryLoading) return;
 
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
@@ -338,10 +403,12 @@ export default function ChatBot() {
                 placeholder={
                   isGuest
                     ? "로그인 후에 이용해주세요."
-                    : "메시지를 입력하세요..."
+                    : isHistoryLoading
+                      ? "상담 기록을 불러오는 중입니다..."
+                      : "메시지를 입력하세요..."
                 }
                 // 비로그인 상태에서는 입력창 자체를 비활성화
-                disabled={isStreaming || isGuest}
+                disabled={isStreaming || isGuest || isHistoryLoading}
                 rows={1}
                 className="flex-1 resize-none rounded-xl border border-slate-300 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#dce9f8] disabled:bg-slate-100"
               />
@@ -349,7 +416,12 @@ export default function ChatBot() {
                 type="button"
                 onClick={() => void submitMessage(inputValue)}
                 // 비로그인 상태에서는 전송 버튼도 비활성화
-                disabled={isStreaming || isGuest || !inputValue.trim()}
+                disabled={
+                  isStreaming ||
+                  isGuest ||
+                  isHistoryLoading ||
+                  !inputValue.trim()
+                }
                 className="rounded-xl bg-gradient-to-r from-[#dce9f8] to-[#c6dcf4] p-3 text-slate-800 transition hover:from-[#c6dcf4] hover:to-[#b4d0f0] disabled:opacity-50"
               >
                 <Send className="h-5 w-5" />
