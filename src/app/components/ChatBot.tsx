@@ -18,6 +18,8 @@ import { useAuthStatus } from "../hooks/useAuthStatus";
 import MessageMarkdown from "./MessageMarkdown";
 import { Button } from "./ui/button";
 
+const FORCE_FRESH_CHATBOT_SESSION_KEY = "force_fresh_chatbot_session";
+
 type Message = {
   text: string;
   sender: "user" | "bot";
@@ -33,6 +35,12 @@ function getInitialMessages(isAuthenticated: boolean): Message[] | undefined {
       },
     ];
   }
+  return [
+    {
+      text: "안녕하세요.\nNUDGEBANK 금융 상담 AI입니다.\n무엇을 도와드릴까요?",
+      sender: "bot",
+    },
+  ];
 }
 function mapSessionMessages(messages: ChatMessageItem[]): Message[] {
   return messages.map((message) => {
@@ -101,24 +109,36 @@ export default function ChatBot() {
 
       if (!isAuthenticated) {
         if (!isMounted) return;
+        setInputValue("");
         setSessionId(null);
         setMessages(getInitialMessages(false) ?? []);
         setIsHistoryLoading(false);
         return;
       }
-          if (!isMounted) return;
+      if (!isMounted) return;
       setSessionId(null);
-      setMessages(getInitialMessages(true) ?? []);
+      const shouldStartFresh =
+        sessionStorage.getItem(FORCE_FRESH_CHATBOT_SESSION_KEY) === "true";
+
+      if (shouldStartFresh) {
+        sessionStorage.removeItem(FORCE_FRESH_CHATBOT_SESSION_KEY);
+        setInputValue("");
+        setSessionId(null);
+        setMessages(getInitialMessages(true) ?? []);
+        setIsHistoryLoading(false);
+        return;
+      }
 
       try {
         const sessions = await getChatSessions();
         if (!isMounted) return;
 
         const latestSession = [...sessions].sort(
-            (a, b) => getSessionSortTime(b) - getSessionSortTime(a),
+          (a, b) => getSessionSortTime(b) - getSessionSortTime(a),
         )[0];
 
         if (!latestSession) {
+          setInputValue("");
           setSessionId(null);
           setMessages(getInitialMessages(true) ?? []);
           return;
@@ -129,14 +149,15 @@ export default function ChatBot() {
 
         setSessionId(detail.session_id);
         setMessages(
-            detail.messages.length
-                ? mapSessionMessages(detail.messages)
-                : getInitialMessages(true) ?? [],
+          detail.messages.length
+            ? mapSessionMessages(detail.messages)
+            : (getInitialMessages(true) ?? []),
         );
       } catch (error) {
         if (!isMounted) return;
 
         console.error("최신 상담 기록 불러오기 실패:", error);
+        setInputValue("");
         setSessionId(null);
         setMessages(getInitialMessages(true) ?? []);
       } finally {
