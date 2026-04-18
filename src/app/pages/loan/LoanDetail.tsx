@@ -46,7 +46,7 @@ type DetailTab = "guide" | "rate" | "terms" | "caution";
 
 const loanDetails: Record<string, LoanDetailItem> = {
   "consumption-loan": {
-    name: "넛지 대출",
+    name: "소비분석 대출",
     description:
       "소비 흐름과 월별 지출 패턴을 기준으로 자금 운용 부담을 조절할 수 있도록 설계한 상품입니다.",
     badge: "분석 기반",
@@ -60,7 +60,6 @@ const loanDetails: Record<string, LoanDetailItem> = {
       "최대 1,000만원 한도",
       "자동이체 연계 가능",
       "중도상환수수료 없음",
-      "원리금균등분할상환",
     ],
     target: "소비 흐름 관리가 필요한 고객",
     limit: "최소 50만원 ~ 최대 1,000만원",
@@ -98,7 +97,6 @@ const loanDetails: Record<string, LoanDetailItem> = {
       "최대 500만원 한도",
       "최대 24개월 상환",
       "신청 후 내 대출 관리에서 OCR 서류 제출",
-      "만기일시상환",
     ],
     target: "만 19세 ~ 29세 청년 고객",
     limit: "최소 50만원 ~ 최대 500만원",
@@ -119,6 +117,38 @@ const loanDetails: Record<string, LoanDetailItem> = {
       "대출 신청 후 자기계발 증빙 서류를 제출해야 심사가 진행됩니다.",
       "서류 제출 및 OCR 인증 결과에 따라 추가 확인이 필요할 수 있습니다.",
       "개인의 신용도와 심사 결과에 따라 최종 승인 여부가 달라질 수 있습니다.",
+    ],
+  },
+  "situate-loan": {
+    name: "비상금 대출",
+    description:
+      "갑작스러운 지출에 빠르게 대응할 수 있도록 소액 한도를 제공하는 단기 자금 상품입니다.",
+    badge: "소액 특화",
+    heroStyle: {
+      bg: "bg-gradient-to-br from-zinc-800 via-zinc-700 to-zinc-600",
+      accent: "bg-zinc-400/15",
+      ring: "border-zinc-400/10",
+    },
+    features: ["최대 200만원", "단기 자금 대응", "모바일 신청", "빠른 실행"],
+    target: "소액 단기 자금이 필요한 고객",
+    limit: "최소 30만원 ~ 최대 200만원",
+    period: "1개월 ~ 12개월",
+    rate: "연 5.1% ~ 9.9%",
+    rateDisplay: { prefix: "연", main: "5.1", sep: "~", sub: "9.9", suffix: "%" },
+    guide: [
+      "갑작스러운 생활비와 긴급 자금 수요에 대응하기 위한 상품입니다.",
+      "짧은 기간 안에 빠르게 실행할 수 있도록 단순한 구조로 설계했습니다.",
+      "모바일 신청 후 상태를 바로 확인할 수 있습니다.",
+    ],
+    terms: [
+      "실행 한도와 금리는 심사 결과에 따라 달라질 수 있습니다.",
+      "상환 일정과 계좌는 승인 후 확정됩니다.",
+      "약정 전 상품 설명서와 약관을 반드시 확인해 주세요.",
+    ],
+    caution: [
+      "필요 이상으로 반복 사용하면 상환 부담이 커질 수 있습니다.",
+      "연체 시 개인 신용점수에 부정적인 영향이 발생할 수 있습니다.",
+      "약정 전 상품 설명서와 유의사항을 반드시 확인해 주세요.",
     ],
   },
 };
