@@ -794,7 +794,7 @@ export default function MyLoanManagement() {
     if (manualRepaymentLimit <= 0) {
       setRepaymentActionMessage(
         isConsumptionLoanSelected
-          ? "현재 상환 가능한 회차가 없습니다. 소비분석 대출은 다음 달 1회차까지만 선납할 수 있습니다."
+          ? "현재 상환 가능한 회차가 없습니다. 넛지 대출은 다음 달 1회차까지만 선납할 수 있습니다."
           : "현재 상환 가능한 회차가 없습니다.",
       );
       return;
@@ -962,12 +962,12 @@ export default function MyLoanManagement() {
                 아직 진행 중인 대출이 없습니다
               </h2>
               <p className="mt-2 text-sm text-slate-600">
-                소비분석 대출과 자기계발 대출 상품을 비교하고, 지금 필요한 대출을 바로 신청할 수 있습니다.
+                넛지 대출과 자기계발 대출 상품을 비교하고, 지금 필요한 대출을 바로 신청할 수 있습니다.
                 완납한 상품은 위의 이전 상품 내역에서 다시 확인할 수 있습니다.
               </p>
               <div className="mt-6 grid gap-3 md:grid-cols-3">
                 <div className="rounded-xl border border-slate-100 px-4 py-4">
-                  <p className="text-xs font-medium text-slate-600">소비분석 대출</p>
+                  <p className="text-xs font-medium text-slate-600">넛지 대출</p>
                   <p className="mt-2 text-lg font-bold text-slate-900">최대 300만원</p>
                   <p className="mt-1 text-sm text-slate-600">
                     소비 패턴 기반으로 한도와 상환 계획을 확인할 수 있습니다.
