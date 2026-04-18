@@ -103,9 +103,9 @@ export default function MessageMarkdown({
                     return;
                   }
 
-                  if (isInternalLink && onNavigateClick) {
+                  if (isInternalLink) {
                     event.preventDefault();
-                    onNavigateClick(linkHref);
+                    onNavigateClick?.(linkHref);
                   }
                 }}
               >
