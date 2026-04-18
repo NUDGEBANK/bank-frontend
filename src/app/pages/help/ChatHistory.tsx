@@ -232,6 +232,7 @@ export default function ChatHistory() {
       return;
     }
 
+    const sessionId = activeSessionId;
     let isMounted = true;
 
     async function loadSessionDetail() {
@@ -239,7 +240,7 @@ export default function ChatHistory() {
       setDetailError("");
 
       try {
-        const data = await getChatSession(activeSessionId);
+        const data = await getChatSession(sessionId);
         if (!isMounted) return;
         setActiveSession(data);
       } catch (error) {
