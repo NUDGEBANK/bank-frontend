@@ -94,7 +94,6 @@ export default function Header() {
     } catch {
       // Ignore logout errors so local auth state is always cleared.
     } finally {
-      sessionStorage.setItem("force_fresh_chatbot_session", "true");
       clearChatStorage();
       window.dispatchEvent(new Event("auth-change"));
       window.location.reload();
