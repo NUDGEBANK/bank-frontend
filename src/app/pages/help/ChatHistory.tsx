@@ -205,6 +205,11 @@ export default function ChatHistory() {
       setDetailLoading(false);
       setListError(UI_TEXT.unauthorized);
       setDetailError("");
+      setPendingActionSessionId(null);
+      setComposer({ value: "", isStreaming: false });
+      setRenameDialog({ open: false, session: null, value: "" });
+      setDeleteDialog({ open: false, session: null });
+      setLiveQuickReplies({});
       return;
     }
 
@@ -521,7 +526,7 @@ export default function ChatHistory() {
           <div className="max-h-[48vh] overflow-y-auto px-3 py-3 lg:h-[calc(100%-210px)] lg:max-h-none">
             {listLoading ? (
               <p className="mt-4 text-sm leading-6 text-slate-600">
-                {UI_TEXT.subtitle}
+                {UI_TEXT.loadingList}
               </p>
             ) : listError ? (
               <p className="px-3 py-4 text-sm text-rose-500">{listError}</p>
