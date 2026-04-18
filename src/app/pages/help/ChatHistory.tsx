@@ -622,21 +622,6 @@ export default function ChatHistory() {
                         <MessageMarkdown
                           content={message.text}
                           invert={message.sender === "user"}
-                          disabledLinks={composer.isStreaming}
-                          onAskClick={
-                            message.sender === "bot"
-                              ? (nextMessage) => {
-                                  void submitMessage(nextMessage);
-                                }
-                              : undefined
-                          }
-                          onNavigateClick={
-                            message.sender === "bot"
-                              ? (href) => {
-                                  navigate(href);
-                                }
-                              : undefined
-                          }
                         />
                       ) : composer.isStreaming && message.sender === "bot" ? (
                         <p className="text-sm leading-7 text-slate-600">

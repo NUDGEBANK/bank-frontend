@@ -228,22 +228,6 @@ export default function ChatBot() {
                     <MessageMarkdown
                       content={message.text}
                       invert={message.sender === "user"}
-                      disabledLinks={isStreaming}
-                      onAskClick={
-                        message.sender === "bot"
-                          ? (nextMessage) => {
-                              void submitMessage(nextMessage);
-                            }
-                          : undefined
-                      }
-                      onNavigateClick={
-                        message.sender === "bot"
-                          ? (href) => {
-                              setIsOpen(false);
-                              navigate(href);
-                            }
-                          : undefined
-                      }
                     />
                   ) : message.sender === "bot" && isStreaming ? (
                     "응답 작성 중..."
