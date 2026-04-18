@@ -18,13 +18,11 @@ type LoanApplyConfig = {
 const amountRanges: Record<string, { min: number; max: number }> = {
   "consumption-loan": { min: 500000, max: 10000000 },
   "youth-loan": { min: 500000, max: 5000000 },
-  "situate-loan": { min: 300000, max: 2000000 },
 };
 
 const termOptionsByProduct: Record<string, string[]> = {
   "consumption-loan": ["6개월", "12개월", "18개월"],
   "youth-loan": ["12개월", "18개월", "24개월"],
-  "situate-loan": ["1개월", "3개월", "6개월", "12개월"],
 };
 
 type LoanApplicationSummary = {
@@ -61,7 +59,7 @@ type CardHistoryAccount = {
 
 const productConfigs: Record<string, LoanApplyConfig> = {
   "consumption-loan": {
-    name: "소비분석 대출",
+    name: "넛지 대출",
     subtitle: "소비 흐름을 기준으로 자금 운용 부담을 조절할 수 있는 상품입니다.",
     limit: "최대 1,000만원",
     period: "6개월 ~ 18개월",
@@ -81,17 +79,6 @@ const productConfigs: Record<string, LoanApplyConfig> = {
     defaultPurpose: "자격증 및 직무 교육 준비",
     amountRange: { min: 500000, max: 5000000 },
     termOptions: ["12개월", "18개월", "24개월"],
-  },
-  "situate-loan": {
-    name: "비상금 대출",
-    subtitle: "갑작스러운 지출에 빠르게 대응할 수 있는 소액 단기 상품입니다.",
-    limit: "최대 200만원",
-    period: "1개월 ~ 12개월",
-    rate: "연 5.1% ~ 9.9%",
-    defaultAmount: "1000000",
-    defaultPurpose: "단기 긴급 자금",
-    amountRange: { min: 300000, max: 2000000 },
-    termOptions: ["1개월", "3개월", "6개월", "12개월"],
   },
 };
 
@@ -114,6 +101,7 @@ export default function LoanApply() {
   const [selectedCardId, setSelectedCardId] = useState<number | "">("");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
+  const [agreeAutomaticRepayment, setAgreeAutomaticRepayment] = useState(false) // 자동 상환 여부
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -359,7 +347,7 @@ export default function LoanApply() {
               <li>· 자기계발 대출은 신청 후 내 대출 관리에서 OCR 인증을 진행합니다.</li>
             )}
             {productId === "consumption-loan" && (
-              <li>· 소비분석 대출은 신청 후 바로 심사 상태를 조회할 수 있습니다.</li>
+              <li>· 넛지 대출은 신청 후 바로 심사 상태를 조회할 수 있습니다.</li>
             )}
             <li>· 대출 가능 여부는 내부 신용점수를 기준으로 판단됩니다.</li>
             <li>· 신용점수가 500점 이상이면 신청 버튼이 활성화됩니다.</li>
@@ -469,6 +457,17 @@ export default function LoanApply() {
                 />
                 대출 심사를 위한 개인정보 수집 및 이용에 동의합니다.
               </label>
+              {productId === "consumption-loan" && (
+                  <label className="flex items-start gap-2.5 text-sm text-slate-600">
+                    <input
+                        type="checkbox"
+                        checked={agreeAutomaticRepayment}
+                        onChange={(event) => setAgreeAutomaticRepayment(event.target.checked)}
+                        className="mt-0.5 h-4 w-4 rounded border-slate-300 accent-slate-900"
+                    />
+                    자동 상환 서비스 이용에 동의합니다.
+                  </label>
+              )}
             </div>
           </div>
 
@@ -494,7 +493,7 @@ export default function LoanApply() {
               ? "신청 처리 중..."
               : eligibility && !eligibility.eligible
                 ? "대출 신청 불가"
-                : "대출 신청 완료"}
+                : "대출 신청"}
             {!isSubmitDisabled && <ArrowRight className="h-4 w-4" style={{ color: "#ffffff" }} />}
           </button>
         </form>
