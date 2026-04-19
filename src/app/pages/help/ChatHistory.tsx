@@ -13,6 +13,7 @@ import {
   type ChatSessionDetail,
   type ChatSessionSummary,
 } from "../../api/chat";
+import { useAuthStatus } from "../../hooks/useAuthStatus";
 import MessageMarkdown from "../../components/MessageMarkdown";
 import { Button } from "../../components/ui/button";
 import {
@@ -70,7 +71,7 @@ const UI_TEXT = {
   emptyThreadTitle: "새 상담을 시작해보세요",
   emptyThreadBody: "아래 입력창에 질문을 보내면 새 세션이 만들어집니다.",
   inputPlaceholder: "궁금한 금융 정보를 입력해보세요.",
-  unauthorized: "로그인 후 채팅 기록을 확인할 수 있습니다.",
+  unauthorized: "로그인 후 채팅 기록을 확인할 수 있어요.",
   listError: "채팅 목록을 불러오지 못했습니다.",
   detailError: "선택한 상담을 불러오지 못했습니다.",
   streamingError: "응답을 생성하지 못했습니다. 잠시 후 다시 시도해주세요.",
@@ -104,14 +105,15 @@ function mapMessages(
       sender,
       text,
       createdAt: message.created_at,
-      quickReplies:
-        sender === "bot" ? liveQuickReplies[id] : undefined,
+      quickReplies: sender === "bot" ? liveQuickReplies[id] : undefined,
     };
   });
 }
 
 export default function ChatHistory() {
   const navigate = useNavigate();
+  const { isAuthenticated, isLoading: authLoading } = useAuthStatus();
+  const isGuest = !authLoading && !isAuthenticated;
 
   const [sessions, setSessions] = useState<ChatSessionSummary[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -162,22 +164,24 @@ export default function ChatHistory() {
   }, [visibleMessages, composer.isStreaming]);
 
   useEffect(() => {
+    if (isGuest) return;
+
     const frameId = window.requestAnimationFrame(() => {
       inputRef.current?.focus();
     });
 
     return () => window.cancelAnimationFrame(frameId);
-  }, []);
+  }, [isGuest]);
 
   useEffect(() => {
-    if (composer.isStreaming) return;
+    if (composer.isStreaming || isGuest) return;
 
     const frameId = window.requestAnimationFrame(() => {
       inputRef.current?.focus();
     });
 
     return () => window.cancelAnimationFrame(frameId);
-  }, [composer.isStreaming, activeSessionId]);
+  }, [composer.isStreaming, activeSessionId, isGuest]);
 
   useEffect(() => {
     if (!renameDialog.open) return;
@@ -191,6 +195,24 @@ export default function ChatHistory() {
   }, [renameDialog.open]);
 
   useEffect(() => {
+    if (authLoading) return;
+
+    if (isGuest) {
+      setSessions([]);
+      setActiveSessionId(null);
+      setActiveSession(null);
+      setListLoading(false);
+      setDetailLoading(false);
+      setListError(UI_TEXT.unauthorized);
+      setDetailError("");
+      setPendingActionSessionId(null);
+      setComposer({ value: "", isStreaming: false });
+      setRenameDialog({ open: false, session: null, value: "" });
+      setDeleteDialog({ open: false, session: null });
+      setLiveQuickReplies({});
+      return;
+    }
+
     let isMounted = true;
 
     async function loadSessions() {
@@ -222,9 +244,16 @@ export default function ChatHistory() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [authLoading, isGuest]);
 
   useEffect(() => {
+    if (isGuest) {
+      setActiveSession(null);
+      setDetailError("");
+      setDetailLoading(false);
+      return;
+    }
+
     if (!activeSessionId) {
       setActiveSession(null);
       setDetailError("");
@@ -263,7 +292,7 @@ export default function ChatHistory() {
     return () => {
       isMounted = false;
     };
-  }, [activeSessionId]);
+  }, [activeSessionId, isGuest]);
 
   async function refreshSessions(preferredSessionId: string | null) {
     const data = await getChatSessions();
@@ -281,6 +310,8 @@ export default function ChatHistory() {
   }
 
   async function submitMessage(rawMessage: string) {
+    if (isGuest) return;
+
     const trimmed = rawMessage.trim();
     if (!trimmed || composer.isStreaming) return;
 
@@ -364,6 +395,7 @@ export default function ChatHistory() {
       return;
     }
 
+    if (isGuest) return;
     await submitMessage(reply.value);
   };
 
@@ -377,7 +409,7 @@ export default function ChatHistory() {
 
   async function handleRenameSession() {
     const session = renameDialog.session;
-    if (!session) return;
+    if (!session || isGuest) return;
 
     const trimmedTitle = renameDialog.value.trim();
     if (!trimmedTitle || trimmedTitle === session.title) {
@@ -418,7 +450,7 @@ export default function ChatHistory() {
 
   async function handleDeleteSession() {
     const session = deleteDialog.session;
-    if (!session) return;
+    if (!session || isGuest) return;
 
     setPendingActionSessionId(session.session_id);
     setListError("");
@@ -478,10 +510,12 @@ export default function ChatHistory() {
             <button
               type="button"
               onClick={() => {
+                if (isGuest) return;
                 setActiveSessionId(null);
                 setActiveSession(null);
                 setDetailError("");
               }}
+              disabled={isGuest}
               className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#dce9f8] px-4 py-3 text-sm font-semibold text-[#2a4b78] transition hover:bg-[#cddff4]"
             >
               <MessageSquarePlus className="h-4 w-4" />
@@ -491,7 +525,7 @@ export default function ChatHistory() {
 
           <div className="max-h-[48vh] overflow-y-auto px-3 py-3 lg:h-[calc(100%-210px)] lg:max-h-none">
             {listLoading ? (
-              <p className="px-3 py-4 text-sm text-slate-500">
+              <p className="mt-4 text-sm leading-6 text-slate-600">
                 {UI_TEXT.loadingList}
               </p>
             ) : listError ? (
@@ -519,6 +553,7 @@ export default function ChatHistory() {
                           type="button"
                           onClick={() => setActiveSessionId(session.session_id)}
                           className="flex-1 text-left"
+                          disabled={isGuest}
                         >
                           <p className="line-clamp-2 text-sm font-semibold leading-5 text-slate-900">
                             {session.title}
@@ -533,6 +568,7 @@ export default function ChatHistory() {
                           <button
                             type="button"
                             disabled={
+                              isGuest ||
                               pendingActionSessionId === session.session_id
                             }
                             onClick={() => {
@@ -549,6 +585,7 @@ export default function ChatHistory() {
                           <button
                             type="button"
                             disabled={
+                              isGuest ||
                               pendingActionSessionId === session.session_id
                             }
                             onClick={() => {
@@ -596,10 +633,12 @@ export default function ChatHistory() {
                     <Bot className="h-8 w-8" />
                   </div>
                   <h3 className="mt-6 text-2xl font-semibold text-slate-900">
-                    {UI_TEXT.emptyThreadTitle}
+                    {isGuest
+                      ? "로그인 후 이용해주세요"
+                      : UI_TEXT.emptyThreadTitle}
                   </h3>
                   <p className="mt-3 text-sm leading-6 text-slate-500">
-                    {UI_TEXT.emptyThreadBody}
+                    {isGuest ? UI_TEXT.unauthorized : UI_TEXT.emptyThreadBody}
                   </p>
                 </div>
               </div>
@@ -671,7 +710,7 @@ export default function ChatHistory() {
                               size="sm"
                               className="rounded-full border-[#d6e2f0] bg-[#f8fbff] text-[#48627f] hover:bg-[#eef4fb] hover:text-[#2a4b78]"
                               onClick={() => void handleQuickReplyClick(reply)}
-                              disabled={composer.isStreaming}
+                              disabled={composer.isStreaming || isGuest}
                             >
                               {reply.label}
                             </Button>
@@ -700,6 +739,7 @@ export default function ChatHistory() {
                   }))
                 }
                 onKeyDown={(event) => {
+                  if (isGuest) return;
                   if (event.key === "Enter" && !event.shiftKey) {
                     event.preventDefault();
                     if (!composer.isStreaming && composer.value.trim()) {
@@ -708,13 +748,19 @@ export default function ChatHistory() {
                   }
                 }}
                 rows={1}
-                disabled={composer.isStreaming}
-                placeholder={UI_TEXT.inputPlaceholder}
+                disabled={composer.isStreaming || isGuest}
+                placeholder={
+                  isGuest
+                    ? "로그인 후에 이용해주세요."
+                    : UI_TEXT.inputPlaceholder
+                }
                 className="max-h-40 min-h-[48px] flex-1 resize-none rounded-[18px] border border-transparent bg-transparent px-5 py-3 text-sm leading-6 text-slate-900 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed disabled:bg-slate-100"
               />
               <button
                 type="submit"
-                disabled={composer.isStreaming || !composer.value.trim()}
+                disabled={
+                  composer.isStreaming || isGuest || !composer.value.trim()
+                }
                 className="flex h-12 w-12 items-center justify-center rounded-full bg-[#c7d7e8] text-[#5f7c9d] transition hover:bg-[#b7cade] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Send className="h-5 w-5" />
@@ -772,6 +818,7 @@ export default function ChatHistory() {
               type="button"
               onClick={() => void handleRenameSession()}
               disabled={
+                isGuest ||
                 !renameDialog.session ||
                 !renameDialog.value.trim() ||
                 pendingActionSessionId === renameDialog.session.session_id
