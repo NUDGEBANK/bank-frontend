@@ -69,13 +69,15 @@ export default function MessageMarkdown({
             const isExternalLink =
               linkHref.startsWith("http://") || linkHref.startsWith("https://");
 
+            if (isExternalLink) {
+              return null;
+            }
+
             return (
               <a
                 href={linkHref}
-                target={isExternalLink ? "_blank" : undefined}
-                rel={isExternalLink ? "noreferrer" : undefined}
                 className={cn(
-                  "font-medium underline underline-offset-4",
+                  "font-medium text-blue-500 underline underline-offset-4 hover:text-blue-700",
                   disabledLinks ? "cursor-not-allowed opacity-60" : "cursor-pointer",
                 )}
                 onClick={(event) => {
