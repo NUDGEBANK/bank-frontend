@@ -63,7 +63,7 @@ type MyProfile = {
 const DEFAULT_CARD_PREVIEW: CardPreview = {
     cardNumber: "1234 5678 9012 3456",
     expiredYm: "03/29",
-    cardHolderName: "HONG GIL DONG",
+    cardHolderName: "KIM SHIN HAN",
 };
 
 function formatPreviewCardNumber(cardNumber: string | null) {
