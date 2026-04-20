@@ -7,6 +7,7 @@ export default function Root() {
   const location = useLocation();
   const isAdminPage = location.pathname.startsWith("/admin/");
   const isHomePage = location.pathname === "/";
+  const isChatHistoryPage = location.pathname === "/help/chat-history";
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -18,8 +19,7 @@ export default function Root() {
         <div>
           <Footer />
         </div>
-        {!isAdminPage ? <ChatBot /> : null}{" "}
-      </div>
+        {!isAdminPage && !isChatHistoryPage ? <ChatBot /> : null}      </div>
     </div>
   );
 }
