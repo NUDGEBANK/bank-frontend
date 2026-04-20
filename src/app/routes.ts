@@ -7,7 +7,6 @@ import DepositApply from "./pages/account/DepositApply";
 import DepositManagement from "./pages/account/DepositManagement";
 import DepositProducts from "./pages/account/DepositProducts";
 import MyAccount from "./pages/account/MyAccount";
-import NudgeCardAccount from "./pages/account/NudgeCardAccount";
 import LoanProducts from "./pages/loan/LoanProducts";
 import LoanDetail from "./pages/loan/LoanDetail";
 import LoanApply from "./pages/loan/LoanApply";
@@ -37,7 +36,6 @@ export const router = createBrowserRouter([
       { path: "deposit/products/:productId/apply", Component: DepositApply },
       { path: "deposit/management", Component: DepositManagement },
       { path: "account/my", Component: MyAccount },
-      { path: "account/nudgecard", Component: NudgeCardAccount },
       { path: "loan/products", Component: LoanProducts },
       { path: "loan/apply-guide", Component: LoanApplicationGuide },
       { path: "loan/products/:productId", Component: LoanDetail },
