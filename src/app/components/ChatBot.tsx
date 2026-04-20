@@ -299,7 +299,7 @@ export default function ChatBot() {
 
   const handleQuickReplyClick = async (reply: ChatAction) => {
     if (reply.type === "navigate") {
-      setIsOpen(false);
+      //setIsOpen(false);
       navigate(reply.href);
       return;
     }
@@ -368,7 +368,7 @@ export default function ChatBot() {
                       onNavigateClick={
                         message.sender === "bot"
                           ? (href) => {
-                              setIsOpen(false);
+                              //setIsOpen(false);
                               navigate(href);
                             }
                           : undefined
