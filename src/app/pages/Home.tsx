@@ -11,7 +11,7 @@ import homeBanner3 from "../../assets/home/card.png";
 
 const heroSlides = [
     {
-        title: "카드 쓰고, 소비 흐름까지 보기",
+        title: "카드 쓰고, 소비 흐름까지",
         subtitle: "체크카드 이용 내역과 AI 소비 분석을 함께 관리",
         actionLabel: "카드 신청하기",
         actionTo: "/card/nudgecard",
