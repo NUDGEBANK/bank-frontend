@@ -65,6 +65,7 @@ type CardHistoryTransaction = {
   categoryName: string;
   amount: number;
   transactionDatetime: string;
+  menuName?: string | null;
 };
 
 type TrendTone = "increase" | "decrease" | "stable";
@@ -86,20 +87,40 @@ const GROUP_COLORS: Record<ConsumptionGroup, string> = {
 
 const EXCLUDED_CATEGORY_NAMES = new Set(["넛지뱅크", "대출", "대출 실행 입금"]);
 const EXCLUDED_MARKET_NAMES = new Set(["NudgeBank 대출 실행", "넛지뱅크"]);
+const EXCLUDED_MENU_NAMES = new Set(["대출금 자동상환"]);
+const LOAN_KEYWORD = "대출";
+const REPAYMENT_KEYWORD = "상환";
+
+function normalizeText(value: string | null | undefined) {
+  return (value ?? "").trim();
+}
 
 function isLoanDisbursementTransaction(transaction: CardHistoryTransaction) {
+  const marketName = normalizeText(transaction.marketName);
+  const categoryName = normalizeText(transaction.categoryName);
   return (
-      transaction.marketName === "NudgeBank 대출 실행" ||
-      transaction.categoryName === "대출 실행 입금"
+      marketName === "NudgeBank 대출 실행" ||
+      categoryName === "대출 실행 입금"
   );
 }
 
 function isExcludedConsumptionTransaction(transaction: CardHistoryTransaction) {
+  const categoryName = normalizeText(transaction.categoryName);
+  const marketName = normalizeText(transaction.marketName);
+  const menuName = normalizeText(transaction.menuName);
+
   return (
       transaction.amount <= 0 ||
       isLoanDisbursementTransaction(transaction) ||
-      EXCLUDED_CATEGORY_NAMES.has(transaction.categoryName) ||
-      EXCLUDED_MARKET_NAMES.has(transaction.marketName)
+      EXCLUDED_CATEGORY_NAMES.has(categoryName) ||
+      EXCLUDED_MARKET_NAMES.has(marketName) ||
+      EXCLUDED_MENU_NAMES.has(menuName) ||
+      categoryName.includes(LOAN_KEYWORD) ||
+      marketName.includes(LOAN_KEYWORD) ||
+      menuName.includes(LOAN_KEYWORD) ||
+      menuName.includes(REPAYMENT_KEYWORD) ||
+      categoryName.includes("입금") ||
+      marketName.includes("입금")
   );
 }
 
@@ -261,9 +282,15 @@ export default function SpendingAnalysis() {
     setIsPredicting(true);
     setPredictionMessage("");
     try {
-      await postJson("/api/consumption-analysis/me/prediction/run", {});
-      const refreshedOverview = await getJson<ConsumptionAnalysisOverviewResponse>("/api/consumption-analysis/me/overview");
-      setOverview(refreshedOverview);
+      const latestPrediction = await postJson<ConsumerPredictionResponse>("/api/consumption-analysis/me/prediction/run", {});
+      try {
+        const refreshedOverview = await getJson<ConsumptionAnalysisOverviewResponse>("/api/consumption-analysis/me/overview");
+        setOverview(refreshedOverview);
+      } catch {
+        // Prediction is already persisted; keep UI updated with returned latest prediction.
+        setOverview((prev) => (prev ? { ...prev, latestPrediction } : prev));
+      }
+      setErrorMessage("");
       setPredictionMessage("최신 결제 내역 기준으로 예측을 다시 계산했습니다.");
     } catch (error) {
       setErrorMessage("예측 계산 중 오류가 발생했습니다.");
@@ -304,8 +331,11 @@ export default function SpendingAnalysis() {
   }, [baseline, overview]);
 
   const categoryStats = useMemo(() => {
+    if (!viewModel) return [] as CategoryStat[];
+    const currentMonthKey = formatMonthKey(viewModel.currentMonthAnalysisYearMonth);
     const totalsByCategory = new Map<string, number>();
     for (const transaction of cardTransactions) {
+      if (formatMonthKey(transaction.transactionDatetime) !== currentMonthKey) continue;
       if (isExcludedConsumptionTransaction(transaction)) continue;
       totalsByCategory.set(transaction.categoryName, (totalsByCategory.get(transaction.categoryName) ?? 0) + transaction.amount);
     }
@@ -318,7 +348,7 @@ export default function SpendingAnalysis() {
           ratio: total === 0 ? 0 : value / total,
           color: GROUP_COLORS[classifyConsumptionGroup(name)],
         })) satisfies CategoryStat[];
-  }, [cardTransactions]);
+  }, [cardTransactions, viewModel]);
 
   const monthlyConsumptionFlow = useMemo(() => {
     const totalsByMonth = new Map<string, { essential: number; normal: number; discretionary: number; risk: number }>();
@@ -339,6 +369,48 @@ export default function SpendingAnalysis() {
           risk: values.risk,
         }));
   }, [cardTransactions]);
+
+  const currentMonthConsumptionStats = useMemo(() => {
+    if (!viewModel) {
+      return {
+        essentialRatio: 0,
+        normalRatio: 0,
+        discretionaryRatio: 0,
+        riskRatio: 0,
+        averageTransactionAmount: 0,
+      };
+    }
+
+    const currentMonthKey = formatMonthKey(viewModel.currentMonthAnalysisYearMonth);
+    let totalAmount = 0;
+    let totalCount = 0;
+    let essentialAmount = 0;
+    let normalAmount = 0;
+    let discretionaryAmount = 0;
+    let riskAmount = 0;
+
+    for (const transaction of cardTransactions) {
+      if (formatMonthKey(transaction.transactionDatetime) !== currentMonthKey) continue;
+      if (isExcludedConsumptionTransaction(transaction)) continue;
+
+      totalAmount += transaction.amount;
+      totalCount += 1;
+
+      const group = classifyConsumptionGroup(transaction.categoryName);
+      if (group === "essential") essentialAmount += transaction.amount;
+      if (group === "normal") normalAmount += transaction.amount;
+      if (group === "discretionary") discretionaryAmount += transaction.amount;
+      if (group === "risk") riskAmount += transaction.amount;
+    }
+
+    return {
+      essentialRatio: totalAmount === 0 ? 0 : essentialAmount / totalAmount,
+      normalRatio: totalAmount === 0 ? 0 : normalAmount / totalAmount,
+      discretionaryRatio: totalAmount === 0 ? 0 : discretionaryAmount / totalAmount,
+      riskRatio: totalAmount === 0 ? 0 : riskAmount / totalAmount,
+      averageTransactionAmount: totalCount === 0 ? 0 : totalAmount / totalCount,
+    };
+  }, [cardTransactions, viewModel]);
 
   const currentMonthRiskStats = useMemo(() => {
     if (!viewModel) return null;
@@ -412,7 +484,6 @@ export default function SpendingAnalysis() {
               >
                 <div>
                   <h2 className="text-2xl font-bold text-slate-900">AI 소비예측</h2>
-                  <p className="mt-1 text-base text-slate-500">XGBoost 모델 기반 다음 달 지출 분석</p>
                 </div>
                 <span className={toggleIconClass}>{isAiInsightOpen ? <ChevronUp /> : <ChevronDown />}</span>
               </button>
@@ -432,14 +503,20 @@ export default function SpendingAnalysis() {
                         <span style={{ color: "#fff" }}>{isPredicting ? "계산 중..." : "AI 예측 갱신"}</span>
                       </button>
                     </div>
+                    {predictionMessage ? (
+                        <p className="text-sm text-emerald-700">{predictionMessage}</p>
+                    ) : null}
+                    {errorMessage ? (
+                        <p className="text-sm text-rose-600">{errorMessage}</p>
+                    ) : null}
 
                     <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
                       {[
-                        { label: "필수소비", val: formatRatio(viewModel.essentialRatio) },
-                        { label: "일반소비", val: formatRatio(viewModel.normalRatio) },
-                        { label: "선택소비", val: formatRatio(viewModel.discretionaryRatio) },
-                        { label: "위험소비", val: formatRatio(viewModel.riskRatio) },
-                        { label: "평균 거래액", val: formatAmount(viewModel.averageSpending) },
+                        { label: "필수소비", val: formatRatio(currentMonthConsumptionStats.essentialRatio) },
+                        { label: "일반소비", val: formatRatio(currentMonthConsumptionStats.normalRatio) },
+                        { label: "선택소비", val: formatRatio(currentMonthConsumptionStats.discretionaryRatio) },
+                        { label: "위험소비", val: formatRatio(currentMonthConsumptionStats.riskRatio) },
+                        { label: "평균 거래액", val: formatAmount(currentMonthConsumptionStats.averageTransactionAmount) },
                       ].map((item, idx) => (
                           <div key={idx} className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
                             <p className="text-sm text-slate-500 font-medium">{item.label}</p>
@@ -465,7 +542,7 @@ export default function SpendingAnalysis() {
                   className="flex w-full items-center justify-between text-left"
               >
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900">위험 소비 분석</h2>
+                  <h2 className="text-2xl font-bold text-slate-900">이번 달 위험 소비 분석</h2>
                   <p className="mt-1 text-base text-slate-500">주점, 노래방 등 불필요한 지출 항목 체크</p>
                 </div>
                 <span className={toggleIconClass}>{isMonthlyInsightOpen ? <ChevronUp /> : <ChevronDown />}</span>
@@ -495,7 +572,7 @@ export default function SpendingAnalysis() {
                   className="flex w-full items-center justify-between text-left"
               >
                 <div>
-                  <h2 className="text-2xl font-bold text-slate-900">카테고리별 통계</h2>
+                  <h2 className="text-2xl font-bold text-slate-900">이번 달 카테고리별 통계</h2>
                   <p className="mt-1 text-base text-slate-500">결제 내역 기반 항목별 지출 비율</p>
                 </div>
                 <span className={toggleIconClass}>{isCategoryStatsOpen ? <ChevronUp /> : <ChevronDown />}</span>
