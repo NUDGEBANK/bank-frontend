@@ -70,7 +70,7 @@ export default function MessageMarkdown({
               linkHref.startsWith("http://") || linkHref.startsWith("https://");
 
             if (isExternalLink) {
-              return <span>{children}</span>;
+              return null;
             }
 
             return (
