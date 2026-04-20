@@ -7,12 +7,18 @@ type MessageMarkdownProps = {
   content: string;
   className?: string;
   invert?: boolean;
+  onAskClick?: (message: string) => void;
+  onNavigateClick?: (href: string) => void;
+  disabledLinks?: boolean;
 };
 
 export default function MessageMarkdown({
   content,
   className,
   invert = false,
+  onAskClick,
+  onNavigateClick,
+  disabledLinks = false,
 }: MessageMarkdownProps) {
   return (
     <div
@@ -56,16 +62,57 @@ export default function MessageMarkdown({
             <ol className="mt-3 list-decimal space-y-2 pl-5 first:mt-0">{children}</ol>
           ),
           li: ({ children }) => <li>{children}</li>,
-          a: ({ href, children }) => (
-            <a
-              href={href}
-              target="_blank"
-              rel="noreferrer"
-              className="font-medium underline underline-offset-4"
-            >
-              {children}
-            </a>
-          ),
+          a: ({ href, children }) => {
+            const linkHref = href ?? "";
+            const isAskLink = linkHref.startsWith("#ask=");
+            const isInternalLink = linkHref.startsWith("/");
+            const isExternalLink =
+              linkHref.startsWith("http://") || linkHref.startsWith("https://");
+
+            return (
+              <a
+                href={linkHref}
+                target={isExternalLink ? "_blank" : undefined}
+                rel={isExternalLink ? "noreferrer" : undefined}
+                className={cn(
+                  "font-medium underline underline-offset-4",
+                  disabledLinks ? "cursor-not-allowed opacity-60" : "cursor-pointer",
+                )}
+                onClick={(event) => {
+                  if (disabledLinks) {
+                    event.preventDefault();
+                    return;
+                  }
+
+                  if (isAskLink) {
+                    event.preventDefault();
+
+                    const encodedMessage = linkHref.slice("#ask=".length);
+                    let message = encodedMessage.trim();
+
+                    try {
+                      message = decodeURIComponent(encodedMessage).trim();
+                    } catch {
+                      message = encodedMessage.trim();
+                    }
+
+                    if (message) {
+                      onAskClick?.(message);
+                    }
+
+                    return;
+                  }
+
+                  if (isInternalLink) {
+                    event.preventDefault();
+                    onNavigateClick?.(linkHref);
+                  }
+                }}
+              >
+                {children}
+              </a>
+            );
+          },
           table: ({ children }) => (
             <div className="mt-3 overflow-x-auto first:mt-0">
               <table className="min-w-full border-collapse overflow-hidden rounded-2xl border border-slate-200 text-left text-sm">

@@ -133,13 +133,13 @@ export default function LoanProducts() {
       {/* 카드 영역 */}
       <div className="mx-auto max-w-6xl px-6 pb-14">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-          {/* ── 소비분석 대출 ── */}
+          {/* ── 넛지 대출 ── */}
           <div className="group flex flex-col overflow-hidden rounded-2xl bg-white shadow-[0_2px_20px_rgba(0,0,0,0.08)] transition-all hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
             {/* 이미지 */}
             <div className="relative h-56 overflow-hidden">
               <img
                 src={loanConsumptionImg}
-                alt="소비분석 대출"
+                alt="넛지 대출"
                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
               {/* 이미지 위 뱃지 */}
@@ -157,7 +157,7 @@ export default function LoanProducts() {
 
             {/* 콘텐츠 */}
             <div className="flex flex-1 flex-col px-6 pb-6 pt-5">
-              <h2 className="mb-1 text-xl font-bold text-slate-900">소비분석 대출</h2>
+              <h2 className="mb-1 text-xl font-bold text-slate-900">넛지 대출</h2>
               <p className="mb-4 text-sm text-slate-400">
                 소비 패턴을 분석하여 맞춤 금리를 제공합니다
               </p>
