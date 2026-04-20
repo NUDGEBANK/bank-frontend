@@ -20,7 +20,7 @@ const heroSlides = [
     {
         title: "내 조건에 맞는 상품 찾기",
         subtitle: "상품 비교부터 신청 가이드까지 한 화면에서 확인",
-        actionLabel: "상담하기",
+        actionLabel: "챗봇 상담하기",
         actionTo: "/help/chat-history",
         image: homeBanner2,
     },
