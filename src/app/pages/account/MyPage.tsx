@@ -797,7 +797,7 @@ export default function MyPage() {
                         <p className="text-sm text-slate-500">현재 보유한 계좌가 없습니다.</p>
                         <Link
                           to="/account/nudgecard"
-className="mt-4 inline-flex rounded-xl bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+                          className="mt-4 inline-flex rounded-xl bg-black px-4 py-3 text-sm font-semibold transition hover:bg-gray-800"
                           style={{ color: "#ffffff" }}
                         >
                           계좌 개설하러 가기
@@ -857,7 +857,7 @@ className="mt-4 inline-flex rounded-xl bg-black px-4 py-3 text-sm font-semibold 
                                 type="button"
                                 onClick={handleConfirmReveal}
                                 disabled={isVerifyingPassword}
-className="rounded-xl bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
+                                className="rounded-xl bg-black px-4 py-2 text-sm font-semibold transition hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
                                 style={isVerifyingPassword ? undefined : { color: "#ffffff" }}
                               >
                                 {isVerifyingPassword ? "확인 중" : "확인"}
@@ -909,7 +909,7 @@ className="rounded-xl bg-black px-4 py-2 text-sm font-semibold text-white transi
                         <p className="text-sm text-slate-500">현재 발급된 카드가 없습니다.</p>
                         <Link
                           to="/card/nudgecard"
-className="mt-4 inline-flex rounded-xl bg-black px-4 py-3 text-sm font-semibold text-white transition hover:bg-gray-800"
+                          className="mt-4 inline-flex rounded-xl bg-black px-4 py-3 text-sm font-semibold transition hover:bg-gray-800"
                           style={{ color: "#ffffff" }}
                         >
                           카드 신청하러 가기

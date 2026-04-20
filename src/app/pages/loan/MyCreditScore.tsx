@@ -101,6 +101,9 @@ export default function MyCreditScore() {
   const sectionToggleClass =
     "flex items-center justify-center p-0 text-slate-400 transition hover:text-slate-600";
   const sectionBodyClass = "mt-6 pl-6 pr-2";
+  const summaryLabelClass = "text-sm font-medium text-slate-500";
+  const summaryValueClass = "mt-4 break-keep text-xl font-bold tracking-tight text-slate-900 sm:text-2xl";
+  const summaryCaptionClass = "mt-2 text-sm text-slate-500";
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -118,41 +121,39 @@ export default function MyCreditScore() {
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-5 text-slate-900">
-                <p className="text-xs tracking-[0.12em] text-slate-500">내부 평가 점수</p>
-                <p className="mt-3 break-keep text-2xl font-semibold sm:text-3xl">
+                <p className={summaryLabelClass}>내부 평가 점수</p>
+                <p className={summaryValueClass}>
                   {isLoading ? "계산 중" : data ? `${data.creditScore}점` : "미평가"}
                 </p>
-                <p className="mt-2 text-sm text-slate-500">
+                <p className={summaryCaptionClass}>
                   {data ? "가장 최근 결과입니다." : "평가 후 점수가 표시됩니다."}
                 </p>
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-5">
-                <p className="text-sm font-medium text-slate-500">내부 평가 등급</p>
-                <p className="mt-4 break-keep text-xl font-bold text-slate-900 sm:text-2xl">
+                <p className={summaryLabelClass}>내부 평가 등급</p>
+                <p className={summaryValueClass}>
                   {isLoading ? "불러오는 중" : data?.creditGrade ?? "평가 대기"}
                 </p>
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-5">
-                <p className="text-sm font-medium text-slate-500">최근 변화</p>
-                <div className="mt-4 flex items-center gap-2">
-                  <p className="break-keep text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                    {isLoading
-                      ? "계산 중"
-                      : !data
-                        ? "미평가"
-                        : data.scoreChange === null
-                          ? "신규"
-                          : `${data.scoreChange > 0 ? "+" : ""}${data.scoreChange}점`}
-                  </p>
-                </div>
-                <p className="mt-2 text-sm text-slate-500">이전 결과와 비교한 변화입니다.</p>
+                <p className={summaryLabelClass}>최근 변화</p>
+                <p className={summaryValueClass}>
+                  {isLoading
+                    ? "계산 중"
+                    : !data
+                      ? "미평가"
+                      : data.scoreChange === null
+                        ? "신규"
+                        : `${data.scoreChange > 0 ? "+" : ""}${data.scoreChange}점`}
+                </p>
+                <p className={summaryCaptionClass}>이전 결과와 비교한 변화입니다.</p>
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-5">
-                <p className="text-sm font-medium text-slate-500">최근 평가일</p>
-                <p className="mt-4 text-lg font-bold leading-snug text-slate-900 sm:text-xl xl:text-2xl">
+                <p className={summaryLabelClass}>최근 평가일</p>
+                <p className={`${summaryValueClass} leading-snug`}>
                   {isLoading ? "계산 중" : data?.evaluatedAt ?? "평가 기록 없음"}
                 </p>
               </div>
