@@ -109,7 +109,7 @@ export default function LoanProducts() {
 
   const handleApply = (productId: string) => {
     if (isProductInUse(productId)) {
-      navigate("/loan/management");
+      navigate(`/loan/management?productKey=${productId}`);
       return;
     }
     navigate(`/loan/products/${productId}/apply`);

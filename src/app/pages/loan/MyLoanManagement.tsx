@@ -304,6 +304,10 @@ export default function MyLoanManagement() {
     const parsedValue = Number(value);
     return Number.isFinite(parsedValue) ? parsedValue : null;
   }, [location.search]);
+  const productKeyFromQuery = useMemo(
+    () => new URLSearchParams(location.search).get("productKey"),
+    [location.search],
+  );
 
   const isApplicationOnOrAfterCompletedLoan = (
     application: LoanApplicationSummary,
@@ -468,6 +472,13 @@ export default function MyLoanManagement() {
     [applications, completedLoans],
   );
   const preferredProductKeyFromQuery = useMemo(() => {
+    if (
+      productKeyFromQuery &&
+      activeApplications.some((application) => application.productKey === productKeyFromQuery)
+    ) {
+      return productKeyFromQuery;
+    }
+
     if (repaymentTransactionIdFromQuery === null) {
       return null;
     }
@@ -475,7 +486,7 @@ export default function MyLoanManagement() {
     return activeApplications.some((application) => application.productKey === "consumption-loan")
       ? "consumption-loan"
       : null;
-  }, [activeApplications, repaymentTransactionIdFromQuery]);
+  }, [activeApplications, productKeyFromQuery, repaymentTransactionIdFromQuery]);
 
   useEffect(() => {
     if (activeApplications.length === 0) {
