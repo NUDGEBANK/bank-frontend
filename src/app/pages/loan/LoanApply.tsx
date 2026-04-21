@@ -263,7 +263,7 @@ export default function LoanApply() {
         cardId: selectedCardId,
       });
       window.dispatchEvent(new Event("loan-application-change"));
-      navigate("/loan/management");
+      navigate(`/loan/management?productKey=${productId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "대출 신청에 실패했습니다.");
     } finally {
