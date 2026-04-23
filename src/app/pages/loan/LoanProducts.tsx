@@ -159,7 +159,7 @@ export default function LoanProducts() {
             <div className="flex flex-1 flex-col px-6 pb-6 pt-5">
               <h2 className="mb-1 text-xl font-bold text-slate-900">넛지 대출</h2>
               <p className="mb-4 text-sm text-slate-400">
-                소비 패턴을 분석하여 맞춤 금리를 제공합니다
+                자동상환으로 자연스러운 대출금 상환을 돕습니다.
               </p>
 
               <div className="mb-4 flex items-baseline gap-1">
