@@ -1497,14 +1497,21 @@ export default function MyLoanManagement() {
                           )}
 
                           <div className="pointer-events-none absolute inset-0 overflow-hidden">
-                            {(uploadStatus === "uploading" || uploadStatus === "completed") && (
+                            {uploadStatus === "uploading" && (
                               <>
                                 <div className="absolute inset-x-6 top-0 h-24 animate-[ocr-scan-line_2.2s_ease-in-out_infinite] rounded-full bg-[linear-gradient(180deg,rgba(56,189,248,0)_0%,rgba(56,189,248,0.12)_45%,rgba(34,197,94,0.38)_50%,rgba(56,189,248,0.12)_55%,rgba(56,189,248,0)_100%)] blur-sm" />
                                 <div className="absolute inset-x-8 top-0 h-px animate-[ocr-scan-line_2.2s_ease-in-out_infinite] bg-emerald-400/90 shadow-[0_0_24px_rgba(52,211,153,0.9)]" />
-                                <div className="absolute right-3 top-3 rounded-full bg-white px-2.5 py-0.5 text-xs font-medium text-slate-600">
-                                  {uploadStatus === "uploading" ? "문서 스캔 중" : "스캔 완료"}
-                                </div>
                               </>
+                            )}
+                            {uploadStatus === "uploading" && (
+                              <div className="absolute right-3 top-3 rounded-full bg-white px-2.5 py-0.5 text-xs font-medium text-slate-600">
+                                문서 스캔 중
+                              </div>
+                            )}
+                            {uploadStatus === "completed" && (
+                              <div className="absolute right-3 top-3 rounded-full bg-white/95 px-2.5 py-0.5 text-xs font-medium text-emerald-700 shadow-sm">
+                                스캔 완료
+                              </div>
                             )}
                           </div>
                         </>
